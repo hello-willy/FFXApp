@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.34301.259
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FFXApp", "FFXApp\FFXApp.vcxproj", "{15C8E75E-561E-4E66-893C-E0598CB680F9}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FFXUtils", "FFXUtils\FFXUtils.vcxproj", "{DA473DE9-C17F-4ABA-AB93-824EA1E2ADF0}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FFXCore", "FFXCore\FFXCore.vcxproj", "{980FDC71-81A9-4A6F-AFAB-CB3043FA6821}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,10 +17,10 @@ Global
 		{15C8E75E-561E-4E66-893C-E0598CB680F9}.Debug|x64.Build.0 = Debug|x64
 		{15C8E75E-561E-4E66-893C-E0598CB680F9}.Release|x64.ActiveCfg = Release|x64
 		{15C8E75E-561E-4E66-893C-E0598CB680F9}.Release|x64.Build.0 = Release|x64
-		{DA473DE9-C17F-4ABA-AB93-824EA1E2ADF0}.Debug|x64.ActiveCfg = Debug|x64
-		{DA473DE9-C17F-4ABA-AB93-824EA1E2ADF0}.Debug|x64.Build.0 = Debug|x64
-		{DA473DE9-C17F-4ABA-AB93-824EA1E2ADF0}.Release|x64.ActiveCfg = Release|x64
-		{DA473DE9-C17F-4ABA-AB93-824EA1E2ADF0}.Release|x64.Build.0 = Release|x64
+		{980FDC71-81A9-4A6F-AFAB-CB3043FA6821}.Debug|x64.ActiveCfg = Debug|x64
+		{980FDC71-81A9-4A6F-AFAB-CB3043FA6821}.Debug|x64.Build.0 = Debug|x64
+		{980FDC71-81A9-4A6F-AFAB-CB3043FA6821}.Release|x64.ActiveCfg = Release|x64
+		{980FDC71-81A9-4A6F-AFAB-CB3043FA6821}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

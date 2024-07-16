@@ -68,7 +68,7 @@ namespace FFX {
 	};
 	typedef std::shared_ptr<Progress> ProgressPtr;
 
-	class FFXUTILS_EXPORT FileHandler {
+	class FFXCORE_EXPORT FileHandler {
 	public:
 		virtual ~FileHandler() = default;
 
@@ -104,7 +104,7 @@ namespace FFX {
 
 	typedef std::shared_ptr<FileHandler> FileHandlerPtr;
 
-	class FFXUTILS_EXPORT ComposeFileHandler : public FileHandler {
+	class FFXCORE_EXPORT ComposeFileHandler : public FileHandler {
 	public:
 		ComposeFileHandler(FileHandlerPtr h1, FileHandlerPtr h2)
 			: mFileHandler1(h1)
@@ -127,7 +127,7 @@ namespace FFX {
 		FileHandlerPtr mFileHandler2;
 	};
 
-	class FFXUTILS_EXPORT PipelineFileHandler : public ComposeFileHandler {
+	class FFXCORE_EXPORT PipelineFileHandler : public ComposeFileHandler {
 	public:
 		PipelineFileHandler(FileHandlerPtr first, FileHandlerPtr second)
 			: ComposeFileHandler(first, second) {}
@@ -139,7 +139,7 @@ namespace FFX {
 		virtual bool Handle(const FileInfo& file, FileInfo& newFile, QString& error);
 	};
 
-	class FFXUTILS_EXPORT StreamFileHandler : public ComposeFileHandler {
+	class FFXCORE_EXPORT StreamFileHandler : public ComposeFileHandler {
 	public:
 		StreamFileHandler(FileHandlerPtr first, FileHandlerPtr second)
 			: ComposeFileHandler(first, second) {}
@@ -148,7 +148,7 @@ namespace FFX {
 		virtual QString Description() { return QStringLiteral("文件流处理器"); }
 	};
 
-	class FFXUTILS_EXPORT RegExpReplaceHandler : public FileHandler {
+	class FFXCORE_EXPORT RegExpReplaceHandler : public FileHandler {
 	public:
 		RegExpReplaceHandler(const QString& pattern, const QString& after, QRegExp::PatternSyntax syntax = QRegExp::Wildcard, 
 			bool caseSensitive = true, bool suffixInclude = false);
@@ -166,7 +166,7 @@ namespace FFX {
 		QRegExp mRegExp;
 	};
 
-	class FFXUTILS_EXPORT DuplicateHandler : public FileHandler {
+	class FFXCORE_EXPORT DuplicateHandler : public FileHandler {
 	public:
 		explicit DuplicateHandler(const QString& pattern = QStringLiteral("(N)"), int filedWidth = 4, int base = 10, QChar fill = '0', bool after = true);
 	public:
