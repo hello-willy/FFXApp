@@ -84,13 +84,11 @@ namespace FFX {
 		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress = std::make_shared<DebugProgress>()) = 0;
 		virtual void Unhandle() = 0;
 		virtual QString Name() = 0;
+		virtual std::shared_ptr<FileHandler> Clone() = 0;
 		virtual QString DisplayName() { return Name(); }
 		virtual QString Description() { return ""; }
 		virtual bool Undoable() { return false; }
 		virtual QString String();
-		virtual bool Batchable() { return false; }
-		virtual bool Cancellable() { return false; }
-		virtual void Cancel() {}
 
 	public:
 		FileHandler& SetArg(const QString& name, QVariant value);
@@ -109,6 +107,7 @@ namespace FFX {
 		CombineFileHandler(FileHandlerPtr handler){
 			mHandlers << handler;
 		}
+		CombineFileHandler(const CombineFileHandler& other);
 
 	public:
 		void Append(FileHandlerPtr handler) { mHandlers << handler; }
@@ -118,6 +117,7 @@ namespace FFX {
 	public:
 		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress = std::make_shared<DebugProgress>()) override;
 		virtual void Unhandle() override;
+		virtual std::shared_ptr<FileHandler> Clone() override;
 		virtual QString Name() { return QStringLiteral("CombineHandler"); }
 		virtual QString DisplayName() { return QObject::tr("CombineHandler"); }
 		virtual QString Description() { return QObject::tr("Input files to be handled by handler1 and hander2 in order."); }
@@ -131,9 +131,11 @@ namespace FFX {
 		PipeFileHandler() = default;
 		PipeFileHandler(FileHandlerPtr handler)
 			: CombineFileHandler(handler) {}
+		PipeFileHandler(const PipeFileHandler& other);
 
 	public:
 		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress = std::make_shared<DebugProgress>()) override;
+		virtual std::shared_ptr<FileHandler> Clone() override;
 		virtual void Unhandle() override;
 		virtual QString Name() { return QStringLiteral("PipeFileHandler"); }
 		virtual QString DisplayName() { return QObject::tr("PipeFileHandler"); }
@@ -147,6 +149,7 @@ namespace FFX {
 
 	public:
 		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress = std::make_shared<DebugProgress>()) override;
+		virtual std::shared_ptr<FileHandler> Clone() override;
 		virtual void Unhandle() override;
 		virtual QString Name() { return QStringLiteral("FileNameReplaceByExpHandler"); }
 		virtual QString DisplayName() { return QObject::tr("FileNameReplaceByExpHandler"); }
@@ -159,6 +162,7 @@ namespace FFX {
 		CaseTransformHandler(bool toUpper = true, bool suffixInc = true);
 	public:
 		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress = std::make_shared<DebugProgress>()) override;
+		virtual std::shared_ptr<FileHandler> Clone() override;
 		virtual void Unhandle() override;
 		virtual QString Name() { return QStringLiteral("CaseTransformHandler"); }
 		virtual QString DisplayName() { return QObject::tr("CaseTransformHandler"); }
@@ -171,6 +175,7 @@ namespace FFX {
 		explicit FileDuplicateHandler(const QString& pattern = QStringLiteral("(N)"), int filedWidth = 4, int base = 10, QChar fill = '0', bool after = true);
 	public:
 		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress = std::make_shared<DebugProgress>()) override;
+		virtual std::shared_ptr<FileHandler> Clone() override;
 		virtual void Unhandle() override;
 		virtual QString Name() { return QStringLiteral("DuplicateHandler"); }
 		virtual QString DisplayName() { return QObject::tr("DuplicateHandler"); }
@@ -187,6 +192,7 @@ namespace FFX {
 		
 	public:
 		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress = std::make_shared<DebugProgress>()) override;
+		virtual std::shared_ptr<FileHandler> Clone() override;
 		virtual void Unhandle() override;
 		virtual QString Name() { return QStringLiteral("FileRenameByExp"); }
 		virtual QString DisplayName() { return QObject::tr("FileRenameByExp"); }

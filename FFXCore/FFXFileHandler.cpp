@@ -46,6 +46,11 @@ namespace FFX {
 	* Class CombineFileHandler
 	*
 	*************************************************************************************************************************/
+	CombineFileHandler::CombineFileHandler(const CombineFileHandler& other) {
+		for (FileHandlerPtr handler : other.mHandlers) {
+			mHandlers << handler->Clone();
+		}
+	}
 	QFileInfoList CombineFileHandler::Handle(const QFileInfoList& files, ProgressPtr progress) {
 		int size = mHandlers.size();
 		QFileInfoList result;
@@ -55,6 +60,10 @@ namespace FFX {
 		return result;
 	}
 
+	std::shared_ptr<FileHandler> CombineFileHandler::Clone() {
+		return FileHandlerPtr(new CombineFileHandler(*this));
+	}
+
 	void CombineFileHandler::Unhandle() {
 	}
 
@@ -62,6 +71,12 @@ namespace FFX {
 	* Class PipeFileHandler
 	*
 	*************************************************************************************************************************/
+	PipeFileHandler::PipeFileHandler(const PipeFileHandler& other) {
+		for (FileHandlerPtr handler : other.mHandlers) {
+			mHandlers << handler->Clone();
+		}
+	}
+
 	QFileInfoList PipeFileHandler::Handle(const QFileInfoList& files, ProgressPtr progress) {
 		int size = mHandlers.size();
 		QFileInfoList result = files;
@@ -69,6 +84,10 @@ namespace FFX {
 			result = mHandlers[i]->Handle(result);
 		}
 		return result;
+	}
+
+	std::shared_ptr<FileHandler> PipeFileHandler::Clone() {
+		return FileHandlerPtr(new PipeFileHandler(*this));
 	}
 
 	void PipeFileHandler::Unhandle() {
@@ -123,6 +142,10 @@ namespace FFX {
 		return result;
 	}
 
+	std::shared_ptr<FileHandler> FileNameReplaceByExpHandler::Clone() {
+		return FileHandlerPtr(new FileNameReplaceByExpHandler(*this));
+	}
+
 	void FileNameReplaceByExpHandler::Unhandle() {
 		
 	}
@@ -152,6 +175,10 @@ namespace FFX {
 			result << files[i].absoluteDir().absoluteFilePath(str);
 		}
 		return result;
+	}
+
+	std::shared_ptr<FileHandler> CaseTransformHandler::Clone() {
+		return FileHandlerPtr(new CaseTransformHandler(*this));
 	}
 
 	void CaseTransformHandler::Unhandle() {}
@@ -216,6 +243,10 @@ namespace FFX {
 		return result;
 	}
 
+	std::shared_ptr<FileHandler> FileDuplicateHandler::Clone() {
+		return FileHandlerPtr(new FileDuplicateHandler(*this));
+	}
+
 	void FileDuplicateHandler::Unhandle() {
 
 	}
@@ -249,6 +280,10 @@ namespace FFX {
 		}
 		progress->OnComplete();
 		return result;
+	}
+
+	std::shared_ptr<FileHandler> FileRenameHandler::Clone() {
+		return FileHandlerPtr(new FileRenameHandler(*this));
 	}
 
 	void FileRenameHandler::Unhandle() {

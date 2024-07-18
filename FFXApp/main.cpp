@@ -17,7 +17,9 @@ int main(int argc, char *argv[])
     std::dynamic_pointer_cast<FFX::FileRenameHandler>(handler)->Append(std::make_shared<FFX::FileNameReplaceByExpHandler>("_", ""));
     std::dynamic_pointer_cast<FFX::FileRenameHandler>(handler)->Append(std::make_shared<FFX::CaseTransformHandler>(true, false));
     std::dynamic_pointer_cast<FFX::FileRenameHandler>(handler)->Append(std::make_shared<FFX::FileDuplicateHandler>());
-    QFileInfoList result = handler->Handle(toMatch, std::make_shared<FFX::DebugProgress>());
+
+    FFX::FileHandlerPtr h2 = handler->Clone();
+    QFileInfoList result = h2->Handle(toMatch, std::make_shared<FFX::DebugProgress>());
     for (const QFileInfo& f : result)
         qDebug() << f.filePath();
     FFXApp w;
