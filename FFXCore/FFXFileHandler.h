@@ -64,121 +64,95 @@ namespace FFX {
 	class Progress {
 	public:
 		virtual void OnProgress(double percent, const QString& msg = QString()) = 0;
-		virtual void OnComplete(bool success, const QString& msg = QString()) = 0;
+		virtual void OnFileComplete(const QFileInfo& input, const QFileInfo& output, bool success = true, const QString& msg = QString()) = 0;
+		virtual void OnComplete(bool success = true, const QString& msg = QString()) = 0;
 	};
 	typedef std::shared_ptr<Progress> ProgressPtr;
+
+	class FFXCORE_EXPORT DebugProgress : public Progress {
+	public:
+		virtual void OnProgress(double percent, const QString& msg = QString()) {}
+		virtual void OnFileComplete(const QFileInfo& input, const QFileInfo& output, bool success = true, const QString& msg = QString()) {};
+		virtual void OnComplete(bool success = true, const QString& msg = QString()) {};
+	};
 
 	class FFXCORE_EXPORT FileHandler {
 	public:
 		virtual ~FileHandler() = default;
 
 	public:
-		virtual bool Handle(const FileInfo& file, FileInfo& newFile, QString& error) = 0;
-		virtual FileInfo Unhandle(const FileInfo& file) = 0;
+		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress) = 0;
+		virtual void Unhandle() = 0;
 		virtual QString Name() = 0;
+		virtual QString DisplayName() { return Name(); }
 		virtual QString Description() { return ""; }
 		virtual bool Undoable() { return false; }
 		virtual QString String();
+		virtual bool Batchable() { return false; }
+		virtual bool Cancellable() { return false; }
+		virtual void Cancel() {}
 
 	public:
-		FileList Handle(const FileList& files);
-		void Unhandle();
-		void Cancel();
 		FileHandler& SetArg(const QString& name, QVariant value);
 		QVariant Arg(const QString& name, QVariant defaultValue = QVariant());
 		ArgumentMap ArgMap() const { return mArgMap; }
 
 	protected:
-		virtual void Filter(const FileList& files) {}
-		virtual bool DoingBefore() { return true; };
-		virtual bool DointAfter() { return true; }
-
-	protected:
 		ArgumentMap mArgMap;
-		bool mCancelled = false;
-		FileList mSourceFiles;
-		FileList mTargetFiles;
-		QList<bool> mStateList;
-		QList<QString> mErrorList;
 	};
-
 	typedef std::shared_ptr<FileHandler> FileHandlerPtr;
 
-	class FFXCORE_EXPORT ComposeFileHandler : public FileHandler {
+	class FFXCORE_EXPORT FileNameRegExpReplace : public FileHandler {
 	public:
-		ComposeFileHandler(FileHandlerPtr h1, FileHandlerPtr h2)
-			: mFileHandler1(h1)
-			, mFileHandler2(h2) {}
-	public:
-		virtual QString Name() { return QStringLiteral("组合"); };
-		virtual QString String();
-		virtual QString Description() { return QStringLiteral("组合文件处理器"); }
-
-	public:
-		FileHandlerPtr FirstHandler() const { return mFileHandler1; }
-		FileHandlerPtr SecondHandler() const { return mFileHandler2; }
-
-	protected:
-		virtual bool Handle(const FileInfo& file, FileInfo& FileInfo, QString& error);
-		virtual FileInfo Unhandle(const FileInfo& file);
-
-	protected:
-		FileHandlerPtr mFileHandler1;
-		FileHandlerPtr mFileHandler2;
-	};
-
-	class FFXCORE_EXPORT PipelineFileHandler : public ComposeFileHandler {
-	public:
-		PipelineFileHandler(FileHandlerPtr first, FileHandlerPtr second)
-			: ComposeFileHandler(first, second) {}
-	public:
-		virtual QString Name() { return QStringLiteral("管道"); };
-		virtual QString Description() { return QStringLiteral("管道文件处理器"); }
-
-	protected:
-		virtual bool Handle(const FileInfo& file, FileInfo& newFile, QString& error);
-	};
-
-	class FFXCORE_EXPORT StreamFileHandler : public ComposeFileHandler {
-	public:
-		StreamFileHandler(FileHandlerPtr first, FileHandlerPtr second)
-			: ComposeFileHandler(first, second) {}
-	public:
-		virtual QString Name() { return QStringLiteral("文件流"); };
-		virtual QString Description() { return QStringLiteral("文件流处理器"); }
-	};
-
-	class FFXCORE_EXPORT RegExpReplaceHandler : public FileHandler {
-	public:
-		RegExpReplaceHandler(const QString& pattern, const QString& after, QRegExp::PatternSyntax syntax = QRegExp::Wildcard, 
+		FileNameRegExpReplace(const QString& pattern, const QString& after, QRegExp::PatternSyntax syntax = QRegExp::Wildcard,
 			bool caseSensitive = true, bool suffixInclude = false);
 
 	public:
-		virtual QString Name() { return QStringLiteral("通配符文件名替换"); }
-		virtual QString Description() { return QStringLiteral("通过通配符将文件名替换为指定的文本,不写盘"); }
+		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress) override;
+		virtual void Unhandle() override;
+		virtual QString Name() { return QStringLiteral("RegExpReplaceHandler"); }
+		virtual QString DisplayName() { return QObject::tr("RegExpReplaceHandler"); }
+		virtual QString Description() { return QObject::tr("Replace file name with specified text through expression matching, without writing to disk."); }
 		virtual bool Undoable() { return false; }
 
-	protected:
-		virtual bool Handle(const FileInfo& file, FileInfo& newFile, QString& error) override;
-		virtual FileInfo Unhandle(const FileInfo& file) override;
-
-	private:
-		QRegExp mRegExp;
+		
 	};
 
-	class FFXCORE_EXPORT DuplicateHandler : public FileHandler {
+	class FFXCORE_EXPORT FileDuplicateHandler : public FileHandler {
 	public:
-		explicit DuplicateHandler(const QString& pattern = QStringLiteral("(N)"), int filedWidth = 4, int base = 10, QChar fill = '0', bool after = true);
+		explicit FileDuplicateHandler(const QString& pattern = QStringLiteral("(N)"), int filedWidth = 4, int base = 10, QChar fill = '0', bool after = true);
 	public:
-		virtual QString Name() { return QStringLiteral("重名处理器"); }
-		virtual QString Description() { return QStringLiteral("通过判别重名，对重名文件进行重命名"); }
+		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress) override;
+		virtual void Unhandle() override;
+		virtual QString Name() { return QStringLiteral("DuplicateHandler"); }
+		virtual QString DisplayName() { return QObject::tr("DuplicateHandler"); }
+		virtual QString Description() { return QObject::tr("Rename duplicate files by identifying duplicates without writing them to disk."); }
 		virtual bool Undoable() { return false; }
 
-	protected:
-		virtual bool Handle(const FileInfo& file, FileInfo& newFile, QString& error) override;
-		virtual FileInfo Unhandle(const FileInfo& file) override;
+	};
+
+	class FFXCORE_EXPORT FileRenameByExp : public FileHandler {
+	public:
+		FileRenameByExp(const QString& pattern, const QString& after, QRegExp::PatternSyntax syntax = QRegExp::Wildcard,
+			bool caseSensitive = true, bool suffixInclude = false);
+
+	public:
+		void AddExp(const QString& pattern, const QString& after, QRegExp::PatternSyntax syntax = QRegExp::Wildcard,
+			bool caseSensitive = true, bool suffixInclude = false);
+		void ClearExp();
+		void SetDuplicatedPolicy(const QString& pattern = QStringLiteral("(N)"), int filedWidth = 4, int base = 10, QChar fill = '0', bool after = true);
+
+	public:
+		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress) override;
+		virtual void Unhandle() override;
+		virtual QString Name() { return QStringLiteral("FileRenameByExp"); }
+		virtual QString DisplayName() { return QObject::tr("FileRenameByExp"); }
+		virtual QString Description() { return QObject::tr("Replace file name with specified text through expression matching."); }
+		virtual bool Undoable() { return false; }
+
 	private:
-		QMap<QString, int> mDuplicateChecker;
+		QList<FileHandlerPtr> mFileNameRegExpHandlerList;
+		FileHandlerPtr mFileDuplicateHandler;
 	};
 }
 

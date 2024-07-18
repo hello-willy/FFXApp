@@ -6,15 +6,21 @@
 #include <QSet>
 
 namespace FFX {
-	class FileInfo {
+	class File {
 	public:
 		static FFXCORE_EXPORT QSet<QString> CustomSuffix;
 
 	public:
-		FileInfo() = default;
-		FileInfo(const QString& path, bool isFile = true)
+		File() = default;
+		File(const QString& path, bool isFile = true)
 			: mPath(path)
 			, mIsFile(isFile) {
+			mPath = QDir::toNativeSeparators(QDir::cleanPath(mPath));
+			mDepth = mPath.split(QDir::separator()).size();
+		}
+		File(const QFileInfo& fi) 
+			: mPath(fi.filePath())
+			, mIsFile(fi.isFile()) {
 			mPath = QDir::toNativeSeparators(QDir::cleanPath(mPath));
 			mDepth = mPath.split(QDir::separator()).size();
 		}
@@ -63,19 +69,19 @@ namespace FFX {
 		QDir ParentDir() const {
 			return QFileInfo(mPath).absoluteDir();
 		}
-		bool operator>(const FileInfo& other) const {
+		bool operator>(const File& other) const {
 			return mDepth > other.mDepth;
 		}
-		bool operator>=(const FileInfo& other) const {
+		bool operator>=(const File& other) const {
 			return mDepth >= other.mDepth;
 		}
-		bool operator<(const FileInfo& other) const {
+		bool operator<(const File& other) const {
 			return mDepth < other.mDepth;
 		}
-		bool operator<=(const FileInfo& other) const {
+		bool operator<=(const File& other) const {
 			return mDepth <= other.mDepth;
 		}
-		bool operator==(const FileInfo& other) const {
+		bool operator==(const File& other) const {
 			return mPath == other.mPath;
 		}
 
@@ -84,7 +90,7 @@ namespace FFX {
 		int mDepth = 0;
 		bool mIsFile = true;
 	};
-	Q_DECLARE_METATYPE(FileInfo)
-	typedef QList<FileInfo> FileList;
+	typedef QList<File> FileList;
 }
 
+Q_DECLARE_METATYPE(FFX::File)
