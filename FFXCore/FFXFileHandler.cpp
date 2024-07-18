@@ -289,4 +289,23 @@ namespace FFX {
 	void FileRenameHandler::Unhandle() {
 
 	}
+
+	/************************************************************************************************************************
+	 * Class： FileSearchHandler
+	 *
+	 *
+	/************************************************************************************************************************/
+	FileSearchHandler::FileSearchHandler(FileFilterPtr filter)
+		: mFileFilter(filter) {}
+
+	QFileInfoList FileSearchHandler::Handle(const QFileInfoList& files, ProgressPtr progress = std::make_shared<DebugProgress>()) {
+
+	}
+
+	std::shared_ptr<FileHandler> FileSearchHandler::Clone() {
+	}
+
+	void FileSearchHandler::Unhandle() {
+
+	}
 }

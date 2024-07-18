@@ -1,7 +1,7 @@
 #ifndef _FFXFILEHANDLER_H_
 #define _FFXFILEHANDLER_H_
 #include "FFXFile.h"
-
+#include "FFXFileFilter.h"
 
 #include <QFileInfo>
 #include <QDir>
@@ -194,10 +194,25 @@ namespace FFX {
 		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress = std::make_shared<DebugProgress>()) override;
 		virtual std::shared_ptr<FileHandler> Clone() override;
 		virtual void Unhandle() override;
-		virtual QString Name() { return QStringLiteral("FileRenameByExp"); }
-		virtual QString DisplayName() { return QObject::tr("FileRenameByExp"); }
+		virtual QString Name() { return QStringLiteral("FileRenameHandler"); }
+		virtual QString DisplayName() { return QObject::tr("FileRenameHandler"); }
 		virtual QString Description() { return QObject::tr("Replace file name with specified text through expression matching."); }
 		virtual bool Undoable() { return false; }
+	};
+
+	class FFXCORE_EXPORT FileSearchHandler : public FileHandler {
+	public:
+		FileSearchHandler(FileFilterPtr filter);
+	public:
+		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress = std::make_shared<DebugProgress>()) override;
+		virtual std::shared_ptr<FileHandler> Clone() override;
+		virtual void Unhandle() override;
+		virtual QString Name() { return QStringLiteral("FileSearchHandler"); }
+		virtual QString DisplayName() { return QObject::tr("FileSearchHandler"); }
+		virtual QString Description() { return QObject::tr("Search for files that meet the criteria in the specified location."); }
+		virtual bool Undoable() { return false; }
+	private:
+		FileFilterPtr mFileFilter;
 	};
 }
 
