@@ -35,6 +35,12 @@
     <ClInclude Include="FFXCore.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="FFXFileFilterExpr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FFXString.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="FFXFile.cpp">
@@ -44,6 +50,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="FFXFileHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FFXFileFilterExpr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FFXString.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

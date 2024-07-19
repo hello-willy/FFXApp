@@ -1,5 +1,7 @@
 #pragma once
-#include "FFXFile.h"
+#include "FFXCore.h"
+
+#include <QFileInfo>
 
 #include <memory> // for std::shared_ptr
 
@@ -7,7 +9,7 @@
 namespace FFX {
 	class FileFilter {
 	public:
-		virtual bool Accept(const File& file) const = 0;
+		virtual bool Accept(const QFileInfo& file) const = 0;
 	};
 	typedef std::shared_ptr<FileFilter> FileFilterPtr;
 
@@ -35,7 +37,7 @@ namespace FFX {
 		AndFileFilter(FileFilterPtr left, FileFilterPtr right)
 			: ComposeFileFilter(left, right) {}
 	public:
-		virtual bool Accept(const File& file) const override;
+		virtual bool Accept(const QFileInfo& file) const override;
 	};
 
 	class FFXCORE_EXPORT OrFileFilter : public ComposeFileFilter
@@ -45,7 +47,7 @@ namespace FFX {
 			: ComposeFileFilter(left, right) {}
 
 	public:
-		virtual bool Accept(const File& file) const override;
+		virtual bool Accept(const QFileInfo& file) const override;
 	};
 
 	class FFXCORE_EXPORT NotFileFilter : public FileFilter
@@ -54,7 +56,7 @@ namespace FFX {
 		NotFileFilter(FileFilterPtr otherFilter)
 			: mOtherFilter(otherFilter) {}
 	public:
-		virtual bool Accept(const File& file) const override;
+		virtual bool Accept(const QFileInfo& file) const override;
 	private:
 		FileFilterPtr mOtherFilter;
 	};
@@ -62,13 +64,13 @@ namespace FFX {
 	class FFXCORE_EXPORT IsFileFilter : public FileFilter
 	{
 	public:
-		virtual bool Accept(const File& file) const override;
+		virtual bool Accept(const QFileInfo& file) const override;
 	};
 
 	class FFXCORE_EXPORT IsDirFilter : public FileFilter
 	{
 	public:
-		virtual bool Accept(const File& file) const override;
+		virtual bool Accept(const QFileInfo& file) const override;
 	};
 
 	class FFXCORE_EXPORT RegExpFileFilter : public FileFilter
@@ -78,7 +80,7 @@ namespace FFX {
 			: mRegExp(pattern, caseSenitive ? Qt::CaseSensitive : Qt::CaseInsensitive, syntax) {}
 		
 	public:
-		virtual bool Accept(const File& file) const override;
+		virtual bool Accept(const QFileInfo& file) const override;
 
 	private:
 		QRegExp mRegExp;

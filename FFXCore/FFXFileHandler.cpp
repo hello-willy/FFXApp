@@ -1,5 +1,6 @@
 #include "FFXFileHandler.h"
 #include <QDebug>
+#include <QDirIterator>
 
 namespace FFX {
 	/************************************************************************************************************************
@@ -64,9 +65,6 @@ namespace FFX {
 		return FileHandlerPtr(new CombineFileHandler(*this));
 	}
 
-	void CombineFileHandler::Unhandle() {
-	}
-
 	/************************************************************************************************************************
 	* Class PipeFileHandler
 	*
@@ -88,9 +86,6 @@ namespace FFX {
 
 	std::shared_ptr<FileHandler> PipeFileHandler::Clone() {
 		return FileHandlerPtr(new PipeFileHandler(*this));
-	}
-
-	void PipeFileHandler::Unhandle() {
 	}
 
 	/************************************************************************************************************************
@@ -146,10 +141,6 @@ namespace FFX {
 		return FileHandlerPtr(new FileNameReplaceByExpHandler(*this));
 	}
 
-	void FileNameReplaceByExpHandler::Unhandle() {
-		
-	}
-
 	/************************************************************************************************************************
 	 * Class： CaseTransformHandler
 	 * 
@@ -180,8 +171,6 @@ namespace FFX {
 	std::shared_ptr<FileHandler> CaseTransformHandler::Clone() {
 		return FileHandlerPtr(new CaseTransformHandler(*this));
 	}
-
-	void CaseTransformHandler::Unhandle() {}
 
 	/************************************************************************************************************************
 	 * Class： DuplicateHandler
@@ -247,10 +236,6 @@ namespace FFX {
 		return FileHandlerPtr(new FileDuplicateHandler(*this));
 	}
 
-	void FileDuplicateHandler::Unhandle() {
-
-	}
-
 	/************************************************************************************************************************
 	 * Class： FileRenameByExp
 	 *
@@ -286,10 +271,6 @@ namespace FFX {
 		return FileHandlerPtr(new FileRenameHandler(*this));
 	}
 
-	void FileRenameHandler::Unhandle() {
-
-	}
-
 	/************************************************************************************************************************
 	 * Class： FileSearchHandler
 	 *
@@ -298,14 +279,31 @@ namespace FFX {
 	FileSearchHandler::FileSearchHandler(FileFilterPtr filter)
 		: mFileFilter(filter) {}
 
-	QFileInfoList FileSearchHandler::Handle(const QFileInfoList& files, ProgressPtr progress = std::make_shared<DebugProgress>()) {
-
+	QFileInfoList FileSearchHandler::Handle(const QFileInfoList& files, ProgressPtr progress) {
+		QFileInfoList result;
+		for (QFileInfo file : files) {
+			if (file.isFile()) {
+				if (mFileFilter->Accept(file))
+					result << file;
+				continue;
+			}
+			if (file.isDir()) {
+				QDirIterator fit(file.absoluteFilePath(), QDir::Files | QDir::Dirs | QDir::NoSymLinks | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
+				while (fit.hasNext() && !mCancelled) {
+					fit.next();
+					QFileInfo fi = fit.fileInfo();
+					if (mFileFilter->Accept(fi)) {
+						result << fi;
+						progress->OnFileComplete(file, fi, true);
+					}
+				}
+			}
+		}
+		progress->OnComplete(true, QObject::tr("Finish, %1 files matched.").arg(result.size()));
+		return result;
 	}
 
 	std::shared_ptr<FileHandler> FileSearchHandler::Clone() {
-	}
-
-	void FileSearchHandler::Unhandle() {
-
+		return FileHandlerPtr(new FileSearchHandler(*this));
 	}
 }

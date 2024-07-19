@@ -75,19 +75,19 @@ namespace FFX {
 		virtual void OnFileComplete(const QFileInfo& input, const QFileInfo& output, bool success = true, const QString& msg = QString());
 		virtual void OnComplete(bool success = true, const QString& msg = QString());
 	};
+	extern ProgressPtr G_DebugProgress = std::make_shared<DebugProgress>();
 
 	class FFXCORE_EXPORT FileHandler {
 	public:
 		virtual ~FileHandler() = default;
 
 	public:
-		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress = std::make_shared<DebugProgress>()) = 0;
-		virtual void Unhandle() = 0;
+		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress = G_DebugProgress) = 0;
 		virtual QString Name() = 0;
 		virtual std::shared_ptr<FileHandler> Clone() = 0;
+		virtual void Cancel() {}
 		virtual QString DisplayName() { return Name(); }
 		virtual QString Description() { return ""; }
-		virtual bool Undoable() { return false; }
 		virtual QString String();
 
 	public:
@@ -115,8 +115,7 @@ namespace FFX {
 		int Count() const { return mHandlers.size(); }
 
 	public:
-		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress = std::make_shared<DebugProgress>()) override;
-		virtual void Unhandle() override;
+		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress = G_DebugProgress) override;
 		virtual std::shared_ptr<FileHandler> Clone() override;
 		virtual QString Name() { return QStringLiteral("CombineHandler"); }
 		virtual QString DisplayName() { return QObject::tr("CombineHandler"); }
@@ -134,9 +133,8 @@ namespace FFX {
 		PipeFileHandler(const PipeFileHandler& other);
 
 	public:
-		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress = std::make_shared<DebugProgress>()) override;
+		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress = G_DebugProgress) override;
 		virtual std::shared_ptr<FileHandler> Clone() override;
-		virtual void Unhandle() override;
 		virtual QString Name() { return QStringLiteral("PipeFileHandler"); }
 		virtual QString DisplayName() { return QObject::tr("PipeFileHandler"); }
 		virtual QString Description() { return QObject::tr("Input files to be handled by handler1, the result of handler1 will be handled by handler2."); }
@@ -148,9 +146,8 @@ namespace FFX {
 			bool caseSensitive = true, bool suffixInclude = false);
 
 	public:
-		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress = std::make_shared<DebugProgress>()) override;
+		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress = G_DebugProgress) override;
 		virtual std::shared_ptr<FileHandler> Clone() override;
-		virtual void Unhandle() override;
 		virtual QString Name() { return QStringLiteral("FileNameReplaceByExpHandler"); }
 		virtual QString DisplayName() { return QObject::tr("FileNameReplaceByExpHandler"); }
 		virtual QString Description() { return QObject::tr("Replace file name with specified text through expression matching, without writing to disk."); }
@@ -161,9 +158,8 @@ namespace FFX {
 	public:
 		CaseTransformHandler(bool toUpper = true, bool suffixInc = true);
 	public:
-		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress = std::make_shared<DebugProgress>()) override;
+		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress = G_DebugProgress) override;
 		virtual std::shared_ptr<FileHandler> Clone() override;
-		virtual void Unhandle() override;
 		virtual QString Name() { return QStringLiteral("CaseTransformHandler"); }
 		virtual QString DisplayName() { return QObject::tr("CaseTransformHandler"); }
 		virtual QString Description() { return QObject::tr("Set the file name to upper or lower case, without writing to disk."); }
@@ -174,9 +170,8 @@ namespace FFX {
 	public:
 		explicit FileDuplicateHandler(const QString& pattern = QStringLiteral("(N)"), int filedWidth = 4, int base = 10, QChar fill = '0', bool after = true);
 	public:
-		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress = std::make_shared<DebugProgress>()) override;
+		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress = G_DebugProgress) override;
 		virtual std::shared_ptr<FileHandler> Clone() override;
-		virtual void Unhandle() override;
 		virtual QString Name() { return QStringLiteral("DuplicateHandler"); }
 		virtual QString DisplayName() { return QObject::tr("DuplicateHandler"); }
 		virtual QString Description() { return QObject::tr("Rename duplicate files by identifying duplicates without writing them to disk."); }
@@ -191,9 +186,8 @@ namespace FFX {
 			: PipeFileHandler(handler) {}
 		
 	public:
-		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress = std::make_shared<DebugProgress>()) override;
+		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress = G_DebugProgress) override;
 		virtual std::shared_ptr<FileHandler> Clone() override;
-		virtual void Unhandle() override;
 		virtual QString Name() { return QStringLiteral("FileRenameHandler"); }
 		virtual QString DisplayName() { return QObject::tr("FileRenameHandler"); }
 		virtual QString Description() { return QObject::tr("Replace file name with specified text through expression matching."); }
@@ -204,15 +198,16 @@ namespace FFX {
 	public:
 		FileSearchHandler(FileFilterPtr filter);
 	public:
-		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress = std::make_shared<DebugProgress>()) override;
+		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress = G_DebugProgress) override;
 		virtual std::shared_ptr<FileHandler> Clone() override;
-		virtual void Unhandle() override;
 		virtual QString Name() { return QStringLiteral("FileSearchHandler"); }
 		virtual QString DisplayName() { return QObject::tr("FileSearchHandler"); }
 		virtual QString Description() { return QObject::tr("Search for files that meet the criteria in the specified location."); }
 		virtual bool Undoable() { return false; }
+		virtual void Cancel() { mCancelled = true; }
 	private:
 		FileFilterPtr mFileFilter;
+		bool mCancelled = false;
 	};
 }
 
