@@ -120,7 +120,6 @@ namespace FFX {
 		virtual QString Name() { return QStringLiteral("CombineHandler"); }
 		virtual QString DisplayName() { return QObject::tr("CombineHandler"); }
 		virtual QString Description() { return QObject::tr("Input files to be handled by handler1 and hander2 in order."); }
-		virtual bool Undoable() { return false; }
 	protected:
 		QList<FileHandlerPtr> mHandlers;
 	};
@@ -151,7 +150,6 @@ namespace FFX {
 		virtual QString Name() { return QStringLiteral("FileNameReplaceByExpHandler"); }
 		virtual QString DisplayName() { return QObject::tr("FileNameReplaceByExpHandler"); }
 		virtual QString Description() { return QObject::tr("Replace file name with specified text through expression matching, without writing to disk."); }
-		virtual bool Undoable() { return false; }
 	};
 
 	class FFXCORE_EXPORT CaseTransformHandler : public FileHandler {
@@ -163,7 +161,6 @@ namespace FFX {
 		virtual QString Name() { return QStringLiteral("CaseTransformHandler"); }
 		virtual QString DisplayName() { return QObject::tr("CaseTransformHandler"); }
 		virtual QString Description() { return QObject::tr("Set the file name to upper or lower case, without writing to disk."); }
-		virtual bool Undoable() { return false; }
 	};
 
 	class FFXCORE_EXPORT FileDuplicateHandler : public FileHandler {
@@ -175,8 +172,34 @@ namespace FFX {
 		virtual QString Name() { return QStringLiteral("DuplicateHandler"); }
 		virtual QString DisplayName() { return QObject::tr("DuplicateHandler"); }
 		virtual QString Description() { return QObject::tr("Rename duplicate files by identifying duplicates without writing them to disk."); }
-		virtual bool Undoable() { return false; }
 
+	};
+
+	class FFXCORE_EXPORT FileStatHandler : public FileHandler {
+	public:
+		FileStatHandler() = default;
+	public:
+		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress = G_DebugProgress) override;
+		virtual std::shared_ptr<FileHandler> Clone() override;
+		virtual QString Name() { return QStringLiteral("FileRenameHandler"); }
+		virtual QString DisplayName() { return QObject::tr("FileRenameHandler"); }
+		virtual QString Description() { return QObject::tr("Replace file name with specified text through expression matching."); }
+
+	public:
+		int DirCount() { return mDirCount; }
+		int FileCount() { return mFileCount + mLinkFileCount; }
+		qint64 TotalSize() { return mTotalSize; }
+
+	private:
+		void AppendFile(const QFileInfo& file);
+		void AppendLink(const QFileInfo& file);
+
+	private:
+		int mDirCount;
+		int mFileCount;
+		int mLinkFileCount;
+		int mHiddenFileCount;
+		qint64 mTotalSize;
 	};
 
 	class FFXCORE_EXPORT FileRenameHandler : public PipeFileHandler {
@@ -191,7 +214,6 @@ namespace FFX {
 		virtual QString Name() { return QStringLiteral("FileRenameHandler"); }
 		virtual QString DisplayName() { return QObject::tr("FileRenameHandler"); }
 		virtual QString Description() { return QObject::tr("Replace file name with specified text through expression matching."); }
-		virtual bool Undoable() { return false; }
 	};
 
 	class FFXCORE_EXPORT FileSearchHandler : public FileHandler {
@@ -203,11 +225,31 @@ namespace FFX {
 		virtual QString Name() { return QStringLiteral("FileSearchHandler"); }
 		virtual QString DisplayName() { return QObject::tr("FileSearchHandler"); }
 		virtual QString Description() { return QObject::tr("Search for files that meet the criteria in the specified location."); }
-		virtual bool Undoable() { return false; }
 		virtual void Cancel() { mCancelled = true; }
 	private:
 		FileFilterPtr mFileFilter;
 		bool mCancelled = false;
+	};
+
+	class FFXCORE_EXPORT FileCopyHandler : public FileHandler {
+	public:
+		FileCopyHandler(const QString& destPath, bool overwrite = false);
+	public:
+		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress = G_DebugProgress) override;
+		virtual std::shared_ptr<FileHandler> Clone() override;
+		virtual QString Name() { return QStringLiteral("FileCopyHandler"); }
+		virtual QString DisplayName() { return QObject::tr("FileCopyHandler"); }
+		virtual QString Description() { return QObject::tr("Copy files to the specified location."); }
+		virtual void Cancel() { mCancelled = true; }
+
+	private:
+		void CopyFile(const QFileInfo& file, const QString& dest, ProgressPtr progress = G_DebugProgress);
+		void CopyDir(const QFileInfo& dir, const QString& dest, ProgressPtr progress = G_DebugProgress);
+
+	private:
+		bool mCancelled = false;
+		int mCopiedFile = 0;
+		int mTotalFile = 0;
 	};
 }
 

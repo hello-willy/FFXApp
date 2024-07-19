@@ -237,6 +237,64 @@ namespace FFX {
 	}
 
 	/************************************************************************************************************************
+	 * Class： FileStatHandler
+	 *
+	 *
+	/************************************************************************************************************************/
+	QFileInfoList FileStatHandler::Handle(const QFileInfoList& files, ProgressPtr progress) {
+		if (files.isEmpty())
+			return QFileInfoList();
+		progress->OnProgress(-1, QObject::tr("Scanning..."));
+		for (const QFileInfo& file : files) {
+			if(file.isFile()) {
+				AppendFile(file);
+			} else if (file.isSymLink()) {
+				AppendLink(file);
+			} else if(file.isDir()) {
+				mDirCount++;
+				QDirIterator fit(file.absoluteFilePath(), QDir::Files | QDir::Dirs | QDir::System | QDir::Hidden | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
+				while (fit.hasNext())
+				{
+					fit.next();
+					QFileInfo fi = fit.fileInfo();
+					if (fi.isSymLink()) {
+						AppendLink(fi);
+					} else if (fi.isFile()) {
+						AppendFile(fi);
+						continue;
+					} else if (fi.isDir()) {
+						mDirCount++;
+					}
+				}
+			}
+		}
+		progress->OnComplete();
+		return QFileInfoList();
+	}
+
+	std::shared_ptr<FileHandler> FileStatHandler::Clone() {
+		return FileHandlerPtr(new FileStatHandler(*this));
+	}
+
+	void FileStatHandler::AppendFile(const QFileInfo& file) {
+		mTotalSize += file.size();
+		mFileCount++;
+		if (file.isHidden())
+			mHiddenFileCount++;
+	}
+
+	void FileStatHandler::AppendLink(const QFileInfo& file) {
+		QFile link(file.absoluteFilePath());
+		link.open(QIODevice::ReadOnly);
+		qint64 size = link.size();
+		link.close();
+		mTotalSize += size;
+		mLinkFileCount++;
+		if (file.isHidden())
+			mHiddenFileCount++;
+	}
+
+	/************************************************************************************************************************
 	 * Class： FileRenameByExp
 	 *
 	 *
@@ -305,5 +363,67 @@ namespace FFX {
 
 	std::shared_ptr<FileHandler> FileSearchHandler::Clone() {
 		return FileHandlerPtr(new FileSearchHandler(*this));
+	}
+
+	FileCopyHandler::FileCopyHandler(const QString& destPath, bool overwrite) {
+		mArgMap["DestPath"] = Argument("DestPath", QObject::tr("DestPath"), QObject::tr("Target directory for files copying."), destPath);
+		mArgMap["Overwrite"] = Argument("Overwrite", QObject::tr("Overwrite"), QObject::tr("Is it overwrite the existing file, default is false."), overwrite);
+	}
+
+	QFileInfoList FileCopyHandler::Handle(const QFileInfoList& files, ProgressPtr progress) {
+		FileStatHandler scaner;
+		scaner.Handle(files, progress);
+		mTotalFile = scaner.FileCount();
+
+		QFileInfoList result;
+		QString targetPath = mArgMap["DestPath"].Value().toString();
+		QDir targetDir(targetPath);
+		for (const QFileInfo& file : files) {
+			QString targetFile = targetDir.absoluteFilePath(file.fileName());
+			if (file.isDir()) {
+				targetDir.mkdir(file.fileName());
+				CopyDir(file, targetFile, progress);
+			} else {
+				CopyFile(file, targetFile, progress);
+			}
+			result << targetFile;
+		}
+		progress->OnComplete();
+		return result;
+	}
+
+	std::shared_ptr<FileHandler> FileCopyHandler::Clone() {
+		return FileHandlerPtr(new FileCopyHandler(*this));
+	}
+
+	void FileCopyHandler::CopyFile(const QFileInfo& file, const QString& dest, ProgressPtr progress) {
+		if (QFile::exists(dest) && !mArgMap["Overwrite"].Value().toBool())
+			return;
+
+		if(QFile::exists(dest)) {
+			QFile::setPermissions(dest, QFileDevice::ReadOther | QFileDevice::WriteOther);
+			QFile::remove(dest);
+		}
+		double p = (mCopiedFile++ / (double)mTotalFile) * 100;
+		progress->OnProgress(p, QObject::tr("Copying: %1").arg(file.absoluteFilePath()));
+		bool flag = QFile::copy(file.absoluteFilePath(), dest);
+		progress->OnFileComplete(file, dest, flag);
+	}
+
+	void FileCopyHandler::CopyDir(const QFileInfo& dir, const QString& dest, ProgressPtr progress) {
+		QDirIterator fit(dir.absoluteFilePath(), QDir::Files | QDir::Dirs | QDir::System | QDir::Hidden | QDir::NoDotAndDotDot);
+		while (fit.hasNext()) {
+			fit.next();
+			QFileInfo fi = fit.fileInfo();
+			QDir targetDir(dest);
+			if (fi.isDir()) {
+				// make dir first.
+				targetDir.mkdir(fi.fileName());
+				CopyDir(fi, targetDir.absoluteFilePath(fi.fileName()), progress);
+				continue;
+			}
+			QString theFilePath = fi.absoluteFilePath();
+			CopyFile(theFilePath, targetDir.absoluteFilePath(fi.fileName()), progress);
+		}
 	}
 }
