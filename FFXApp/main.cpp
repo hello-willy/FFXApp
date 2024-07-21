@@ -6,7 +6,8 @@
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    QDir root("D:\\Temp\\GeosDemo");
+    QDir root("D:\\Temp");
+    //bool flag = QFile::rename("D:\\Temp\\新文件夹\\1.txt", "E:\\Temp\\新文件夹\\2.txt");
     QFileInfoList toMatch = root.entryInfoList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot);
     /*
     FFX::FileHandlerPtr handler = std::make_shared<FFX::FileRenameHandler>(std::make_shared<FFX::FileNameReplaceByExpHandler>("(\\d+)", "", QRegExp::RegExp));
@@ -24,8 +25,8 @@ int main(int argc, char *argv[])
     //QFileInfoList r = finder->Handle(toMatch);
    // for (const QFileInfo& f : r)
     //    qDebug() << f.filePath();
-    FFX::FileHandlerPtr copy = std::make_shared<FFX::FileCopyHandler>(QStringLiteral("E:\\tmp\\新建文件夹"), true);
-    copy->Handle(toMatch);
+    FFX::FileHandlerPtr del = std::make_shared<FFX::FileDeleteHandler>();
+    del->Handle(toMatch);
     FFXApp w;
     w.show();
     return a.exec();

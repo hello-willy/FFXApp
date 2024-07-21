@@ -251,6 +251,47 @@ namespace FFX {
 		int mCopiedFile = 0;
 		int mTotalFile = 0;
 	};
+
+	class FFXCORE_EXPORT FileMoveHandler : public FileHandler {
+	public:
+		FileMoveHandler(const QString& destPath, bool overwrite = false);
+	public:
+		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress = G_DebugProgress) override;
+		virtual std::shared_ptr<FileHandler> Clone() override;
+		virtual QString Name() { return QStringLiteral("FileMoveHandler"); }
+		virtual QString DisplayName() { return QObject::tr("FileMoveHandler"); }
+		virtual QString Description() { return QObject::tr("Move files to the specified location."); }
+		virtual void Cancel() { mCancelled = true; }
+
+	private:
+		void MoveFile(const QFileInfo& file, const QString& dest, ProgressPtr progress = G_DebugProgress);
+		void MoveDir(const QFileInfo& dir, const QString& dest, ProgressPtr progress = G_DebugProgress);
+
+	private:
+		bool mCancelled = false;
+		int mMovedFile = 0;
+		int mTotalFile = 0;
+	};
+
+	class FFXCORE_EXPORT FileDeleteHandler : public FileHandler {
+	public:
+		FileDeleteHandler(bool forced = false);
+	public:
+		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress = G_DebugProgress) override;
+		virtual std::shared_ptr<FileHandler> Clone() override;
+		virtual QString Name() { return QStringLiteral("FileDeleteHandler"); }
+		virtual QString DisplayName() { return QObject::tr("FileDeleteHandler"); }
+		virtual QString Description() { return QObject::tr("Delete files to the specified location."); }
+		virtual void Cancel() { mCancelled = true; }
+
+	private:
+		void DeleteFile(const QFileInfo& file, ProgressPtr progress = G_DebugProgress);
+
+	private:
+		bool mCancelled = false;
+		int mDeletedFile = 0;
+		int mTotalFile = 0;
+	};
 }
 
 

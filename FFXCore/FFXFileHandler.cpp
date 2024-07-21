@@ -365,6 +365,11 @@ namespace FFX {
 		return FileHandlerPtr(new FileSearchHandler(*this));
 	}
 
+	/************************************************************************************************************************
+	 * Class： FileCopyHandler
+	 *
+	 *
+	/************************************************************************************************************************/
 	FileCopyHandler::FileCopyHandler(const QString& destPath, bool overwrite) {
 		mArgMap["DestPath"] = Argument("DestPath", QObject::tr("DestPath"), QObject::tr("Target directory for files copying."), destPath);
 		mArgMap["Overwrite"] = Argument("Overwrite", QObject::tr("Overwrite"), QObject::tr("Is it overwrite the existing file, default is false."), overwrite);
@@ -412,7 +417,7 @@ namespace FFX {
 
 	void FileCopyHandler::CopyDir(const QFileInfo& dir, const QString& dest, ProgressPtr progress) {
 		QDirIterator fit(dir.absoluteFilePath(), QDir::Files | QDir::Dirs | QDir::System | QDir::Hidden | QDir::NoDotAndDotDot);
-		while (fit.hasNext()) {
+		while (fit.hasNext() && mCancelled) {
 			fit.next();
 			QFileInfo fi = fit.fileInfo();
 			QDir targetDir(dest);
@@ -426,4 +431,125 @@ namespace FFX {
 			CopyFile(theFilePath, targetDir.absoluteFilePath(fi.fileName()), progress);
 		}
 	}
+
+	/************************************************************************************************************************
+	 * Class： FileMoveHandler
+	 *
+	 *
+	/************************************************************************************************************************/
+	FileMoveHandler::FileMoveHandler(const QString& destPath, bool overwrite) {
+		mArgMap["DestPath"] = Argument("DestPath", QObject::tr("DestPath"), QObject::tr("Target directory for files moving."), destPath);
+		mArgMap["Overwrite"] = Argument("Overwrite", QObject::tr("Overwrite"), QObject::tr("Is it overwrite the existing file, default is false."), overwrite);
+	}
+
+	QFileInfoList FileMoveHandler::Handle(const QFileInfoList& files, ProgressPtr progress) {
+		FileStatHandler scaner;
+		scaner.Handle(files, progress);
+		mTotalFile = scaner.FileCount();
+
+		QFileInfoList result;
+		QString targetPath = mArgMap["DestPath"].Value().toString();
+		QDir targetDir(targetPath);
+		for (const QFileInfo& file : files) {
+			QString targetFile = targetDir.absoluteFilePath(file.fileName());
+			if (file.isDir()) {
+				targetDir.mkdir(file.fileName());
+				MoveDir(file, targetFile, progress);
+				// Remove the dir
+				QDir(file.absoluteFilePath()).removeRecursively();
+			}
+			else {
+				MoveFile(file, targetFile, progress);
+			}
+			result << targetFile;
+		}
+		progress->OnComplete();
+		return result;
+	}
+
+	std::shared_ptr<FileHandler> FileMoveHandler::Clone() {
+		return FileHandlerPtr(new FileMoveHandler(*this));
+	}
+
+	void FileMoveHandler::MoveFile(const QFileInfo& file, const QString& dest, ProgressPtr progress) {
+		if (QFile::exists(dest) && !mArgMap["Overwrite"].Value().toBool())
+			return;
+
+		if (QFile::exists(dest)) {
+			QFile::setPermissions(dest, QFileDevice::ReadOther | QFileDevice::WriteOther);
+			QFile::remove(dest);
+		}
+		double p = (mMovedFile++ / (double)mTotalFile) * 100;
+		progress->OnProgress(p, QObject::tr("Moving: %1").arg(file.absoluteFilePath()));
+		bool flag = QFile::rename(file.absoluteFilePath(), dest);
+		progress->OnFileComplete(file, dest, flag);
+	}
+
+	void FileMoveHandler::MoveDir(const QFileInfo& dir, const QString& dest, ProgressPtr progress) {
+		QDirIterator fit(dir.absoluteFilePath(), QDir::Files | QDir::Dirs | QDir::System | QDir::Hidden | QDir::NoDotAndDotDot);
+		while (fit.hasNext() && mCancelled) {
+			fit.next();
+			QFileInfo fi = fit.fileInfo();
+			QDir targetDir(dest);
+			if (fi.isDir()) {
+				// make dir first.
+				targetDir.mkdir(fi.fileName());
+				MoveDir(fi, targetDir.absoluteFilePath(fi.fileName()), progress);
+				continue;
+			}
+			QString theFilePath = fi.absoluteFilePath();
+			MoveFile(theFilePath, targetDir.absoluteFilePath(fi.fileName()), progress);
+		}
+	}
+
+	/************************************************************************************************************************
+	 * Class： FileDeleteHandler
+	 *
+	 *
+	/************************************************************************************************************************/
+	FileDeleteHandler::FileDeleteHandler(bool forced) {
+		mArgMap["Forced"] = Argument("Overwrite", QObject::tr("Overwrite"), QObject::tr("Is it overwrite the existing file, default is false."), forced);
+	}
+
+	QFileInfoList FileDeleteHandler::Handle(const QFileInfoList& files, ProgressPtr progress) {
+		bool forced = mArgMap["Forced"].Value().toBool();
+		if (forced) {
+			FileStatHandler scaner;
+			scaner.Handle(files, progress);
+			mTotalFile = scaner.FileCount();
+			for (const QFileInfo& file : files) {
+				if (file.isFile())
+					DeleteFile(file, progress);
+				if (file.isDir()) {
+					QDirIterator fit(file.absoluteFilePath(), QDir::Files | QDir::System | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
+					while (fit.hasNext()) {
+						fit.next();
+						DeleteFile(fit.fileInfo(), progress);
+					}
+					QDir(file.absoluteFilePath()).removeRecursively();
+				}
+			}
+		} else {
+			for (const QFileInfo& file : files) {
+				bool flag = QFile::moveToTrash(file.absoluteFilePath());
+				progress->OnFileComplete(file, QFileInfo(), flag);
+			}
+		}
+		progress->OnComplete();
+		return QFileInfoList();
+	}
+
+	std::shared_ptr<FileHandler> FileDeleteHandler::Clone() {
+		return FileHandlerPtr(new FileDeleteHandler(*this));
+	}
+
+	void FileDeleteHandler::DeleteFile(const QFileInfo& file, ProgressPtr progress) {
+		// Modify the file attributes to delete.
+		QFile::setPermissions(file.absoluteFilePath(), QFileDevice::ReadOther | QFileDevice::WriteOther);
+		double p = (mDeletedFile++ / (double)mTotalFile) * 100;
+		progress->OnProgress(p, QObject::tr("Deleting: %1").arg(file.absoluteFilePath()));
+		bool flag = QFile::remove(file.absoluteFilePath());
+		progress->OnFileComplete(file, QFileInfo(), flag);
+	}
+
 }
