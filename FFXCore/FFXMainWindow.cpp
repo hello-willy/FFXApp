@@ -1,4 +1,6 @@
 #include "FFXMainWindow.h"
+#include "FFXPlugin.h"
+
 #include <QtWidgets/QMessageBox>
 
 namespace FFX {
@@ -13,6 +15,8 @@ namespace FFX {
 			abort();
 		}
 		sInstance = this;
+
+		mPluginManager = new PluginManager;
 	}
 
 	MainWindow::~MainWindow()
@@ -20,6 +24,10 @@ namespace FFX {
 
 	MainWindow* MainWindow::Instance() {
 		return sInstance;
+	}
+
+	PluginManager* MainWindow::PluginManagerPtr() {
+		return mPluginManager;
 	}
 }
 
