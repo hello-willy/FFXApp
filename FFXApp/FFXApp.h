@@ -11,6 +11,9 @@ public:
     FFXApp(QWidget *parent = nullptr);
     ~FFXApp();
 
+public:
+    static FFXApp* Instance();
+
 private:
-     
+    static FFXApp* sInstance;
 };

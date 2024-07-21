@@ -75,7 +75,7 @@ namespace FFX {
 		virtual void OnFileComplete(const QFileInfo& input, const QFileInfo& output, bool success = true, const QString& msg = QString());
 		virtual void OnComplete(bool success = true, const QString& msg = QString());
 	};
-	extern ProgressPtr G_DebugProgress = std::make_shared<DebugProgress>();
+	extern ProgressPtr G_DebugProgress;
 
 	class FFXCORE_EXPORT FileHandler {
 	public:
