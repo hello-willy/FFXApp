@@ -2,6 +2,11 @@
 #include <QPluginLoader>
 
 namespace FFX {
+    PluginManager::PluginManager(QObject* parent) 
+        : QObject(parent) {
+
+    }
+
 	void PluginManager::LoadPlugin(const QString& pluginPath) {
         if (!QLibrary::isLibrary(pluginPath))
             return;

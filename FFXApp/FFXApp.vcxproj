@@ -112,8 +112,6 @@
   <ItemGroup>
     <QtRcc Include="FFXApp.qrc" />
     <QtUic Include="FFXApp.ui" />
-    <QtMoc Include="FFXApp.h" />
-    <ClCompile Include="FFXApp.cpp" />
     <ClCompile Include="main.cpp" />
     <None Include="FFXApp.ico" />
     <ResourceCompile Include="FFXApp.rc" />

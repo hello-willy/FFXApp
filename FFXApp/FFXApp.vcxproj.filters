@@ -29,12 +29,6 @@
     <QtUic Include="FFXApp.ui">
       <Filter>Form Files</Filter>
     </QtUic>
-    <QtMoc Include="FFXApp.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
-    <ClCompile Include="FFXApp.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <None Include="FFXApp.ico">
       <Filter>Resource Files</Filter>
     </None>

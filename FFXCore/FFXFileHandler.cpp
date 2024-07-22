@@ -111,7 +111,7 @@ namespace FFX {
 		}
 		QRegExp exp(mArgMap["Pattern"].Value().toString(),
 			mArgMap["Case"].Value().toBool() ? Qt::CaseSensitive : Qt::CaseInsensitive,
-			(QRegExp::PatternSyntax)mArgMap["Pattern"].Value().toInt());
+			(QRegExp::PatternSyntax)mArgMap["Syntax"].Value().toInt());
 
 		bool suffixInc = mArgMap["SuffixInc"].Value().toBool();
 		QString after = mArgMap["After"].Value().toString();
@@ -297,28 +297,30 @@ namespace FFX {
 	}
 
 	/************************************************************************************************************************
-	 * Class： FileRenameByExp
+	 * Class： FileRenameHandler
 	 *
 	 *
 	/************************************************************************************************************************/
+	QFileInfoList FileRenameHandler::Filter(const QFileInfoList& files) {
+		QFileInfoList result(files);
+		SortByDepth(result, false);
+		return result;
+	}
+
 	QFileInfoList FileRenameHandler::Handle(const QFileInfoList& files, ProgressPtr progress) {
-		QFileInfoList tempFiles = PipeFileHandler::Handle(files);
-		//QFileInfoList tempFiles = files;
-		//for (FileHandlerPtr handler : mFileNameRegExpHandlerList) {
-		//	tempFiles = handler->Handle(tempFiles);
-		//}
-		//tempFiles = mFileDuplicateHandler->Handle(tempFiles);
-		if (files.size() != tempFiles.size()) {
+		QFileInfoList allfiles = Filter(files);
+		QFileInfoList tempFiles = PipeFileHandler::Handle(allfiles);
+		if (allfiles.size() != tempFiles.size()) {
 			progress->OnComplete(false, QObject::tr("Handled failed: %s").arg(QObject::tr("count of files not equals.")));
 			return files;
 		}
-		int size = files.size();
+		int size = allfiles.size();
 		double step = 100. / size;
 		double pencent = 0;
 		QFileInfoList result;
 		for (int i = 0; i < size; i++) {
-			bool flag = QFile::rename(files[i].absoluteFilePath(), tempFiles[i].absoluteFilePath());
-			progress->OnFileComplete(files[i], tempFiles[i], flag);
+			bool flag = QFile::rename(allfiles[i].absoluteFilePath(), tempFiles[i].absoluteFilePath());
+			progress->OnFileComplete(allfiles[i], tempFiles[i], flag);
 			if (flag)
 				result << tempFiles[i];
 			progress->OnProgress(pencent += step);

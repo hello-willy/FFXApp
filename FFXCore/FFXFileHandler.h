@@ -82,6 +82,7 @@ namespace FFX {
 		virtual ~FileHandler() = default;
 
 	public:
+		virtual QFileInfoList Filter(const QFileInfoList& files) { return files; }
 		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress = G_DebugProgress) = 0;
 		virtual QString Name() = 0;
 		virtual std::shared_ptr<FileHandler> Clone() = 0;
@@ -195,11 +196,11 @@ namespace FFX {
 		void AppendLink(const QFileInfo& file);
 
 	private:
-		int mDirCount;
-		int mFileCount;
-		int mLinkFileCount;
-		int mHiddenFileCount;
-		qint64 mTotalSize;
+		int mDirCount = 0;
+		int mFileCount = 0;
+		int mLinkFileCount = 0;
+		int mHiddenFileCount = 0;
+		qint64 mTotalSize = 0;
 	};
 
 	class FFXCORE_EXPORT FileRenameHandler : public PipeFileHandler {
@@ -209,6 +210,7 @@ namespace FFX {
 			: PipeFileHandler(handler) {}
 		
 	public:
+		virtual QFileInfoList Filter(const QFileInfoList& files) override;
 		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress = G_DebugProgress) override;
 		virtual std::shared_ptr<FileHandler> Clone() override;
 		virtual QString Name() { return QStringLiteral("FileRenameHandler"); }

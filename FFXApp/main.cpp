@@ -1,14 +1,15 @@
-#include "FFXApp.h"
 #include <QtWidgets/QApplication>
 #include <QDebug>
 #include "FFXFileHandler.h"
+#include "FFXMainWindow.h"
+
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    QDir root("D:\\Temp");
+    //QDir root("D:\\Temp");
     //bool flag = QFile::rename("D:\\Temp\\新文件夹\\1.txt", "E:\\Temp\\新文件夹\\2.txt");
-    QFileInfoList toMatch = root.entryInfoList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot);
+    //QFileInfoList toMatch = root.entryInfoList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot);
     /*
     FFX::FileHandlerPtr handler = std::make_shared<FFX::FileRenameHandler>(std::make_shared<FFX::FileNameReplaceByExpHandler>("(\\d+)", "", QRegExp::RegExp));
     std::dynamic_pointer_cast<FFX::FileRenameHandler>(handler)->Append(std::make_shared<FFX::FileNameReplaceByExpHandler>("_", ""));
@@ -25,9 +26,10 @@ int main(int argc, char *argv[])
     //QFileInfoList r = finder->Handle(toMatch);
    // for (const QFileInfo& f : r)
     //    qDebug() << f.filePath();
-    FFX::FileHandlerPtr del = std::make_shared<FFX::FileDeleteHandler>();
-    del->Handle(toMatch);
-    FFXApp w;
+    //FFX::FileHandlerPtr del = std::make_shared<FFX::FileDeleteHandler>();
+    //del->Handle(toMatch);
+    FFX::MainWindow w;
+    
     w.show();
     return a.exec();
 }

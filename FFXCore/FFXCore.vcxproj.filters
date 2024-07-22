@@ -67,6 +67,12 @@
     <ClCompile Include="FFXPlugin.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="FFXFileListView.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FFXActionManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="FFXTask.h">
@@ -78,5 +84,16 @@
     <QtMoc Include="FFXPlugin.h">
       <Filter>Header Files</Filter>
     </QtMoc>
+    <QtMoc Include="FFXFileListView.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="FFXActionManager.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+  </ItemGroup>
+  <ItemGroup>
+    <QtRcc Include="FFXCore.qrc">
+      <Filter>Resource Files</Filter>
+    </QtRcc>
   </ItemGroup>
 </Project>

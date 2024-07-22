@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/ffx">
+        <file>res/image/angle-left.svg</file>
+        <file>res/image/angle-right.svg</file>
+        <file>res/image/angle-up.svg</file>
+    </qresource>
+</RCC>

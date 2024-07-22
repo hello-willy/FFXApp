@@ -1,5 +1,7 @@
 #pragma once
 #include "FFXCore.h"
+#include "FFXFileListView.h"
+
 #include <QtWidgets/QMainWindow>
 
 namespace FFX {
@@ -19,9 +21,12 @@ namespace FFX {
 	public:
 		PluginManager* PluginManagerPtr();
 	
+	private:
+		void SetupUi();
 
 	private:
 		PluginManager* mPluginManager = nullptr;
+		FileMainView* mFileMainView;
 	};
 
 }

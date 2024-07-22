@@ -91,6 +91,12 @@ namespace FFX {
 		bool mIsFile = true;
 	};
 	typedef QList<File> FileList;
+	
+	QFileInfoList FileInfoList(const QStringList& files);
+	QFileInfoList FileInfoList(const QString& file);
+	int PathDepth(const QString& path);
+	void SortByDepth(QFileInfoList& files, bool asc = true);
+	void SortByDepth(QStringList& files, bool asc = true);
 }
 
 Q_DECLARE_METATYPE(FFX::File)

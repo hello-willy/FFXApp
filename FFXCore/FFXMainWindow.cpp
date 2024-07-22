@@ -16,11 +16,18 @@ namespace FFX {
 		}
 		sInstance = this;
 
+		SetupUi();
 		mPluginManager = new PluginManager;
 	}
 
 	MainWindow::~MainWindow()
 	{}
+
+	void MainWindow::SetupUi() {
+		mFileMainView = new FileMainView(this);
+		mFileMainView->SetRootPath(QString("D:\\"));
+		setCentralWidget(mFileMainView);
+	}
 
 	MainWindow* MainWindow::Instance() {
 		return sInstance;

@@ -94,14 +94,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="FFXActionManager.cpp" />
     <ClCompile Include="FFXFile.cpp" />
     <ClCompile Include="FFXFileFilter.cpp" />
     <ClCompile Include="FFXFileFilterExpr.cpp" />
     <ClCompile Include="FFXFileHandler.cpp" />
+    <ClCompile Include="FFXFileListView.cpp" />
     <ClCompile Include="FFXMainWindow.cpp" />
     <ClCompile Include="FFXPlugin.cpp" />
     <ClCompile Include="FFXString.cpp" />
     <ClCompile Include="FFXTask.cpp" />
+    <QtMoc Include="FFXActionManager.h" />
     <ClInclude Include="FFXFile.h" />
     <ClInclude Include="FFXFileFilter.h" />
     <ClInclude Include="FFXFileFilterExpr.h" />
@@ -109,8 +112,12 @@
     <ClInclude Include="FFXCore.h" />
     <QtMoc Include="FFXMainWindow.h" />
     <QtMoc Include="FFXPlugin.h" />
+    <QtMoc Include="FFXFileListView.h" />
     <ClInclude Include="FFXString.h" />
     <QtMoc Include="FFXTask.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtRcc Include="FFXCore.qrc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">
