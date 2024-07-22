@@ -1,4 +1,5 @@
 <RCC>
-    <qresource prefix="FFXApp">
+    <qresource prefix="/FFXApp">
+        <file>res/style/default.qss</file>
     </qresource>
 </RCC>
