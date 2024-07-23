@@ -125,8 +125,7 @@ namespace FFX {
 		QList<QString> files;
 		QItemSelectionModel* m = selectionModel();
 		QModelIndexList selection = m->selectedIndexes();
-		for (const QModelIndex& index : selection)
-		{
+		for (const QModelIndex& index : selection) {
 			if (index.column() != 0)
 				continue;
 			QString file = mFileModel->filePath(index);
@@ -249,6 +248,7 @@ namespace FFX {
 		mMainLayout->addWidget(mForwardButton);
 		mMainLayout->addWidget(mUpwardButton);
 		mMainLayout->addWidget(mRootPathEdit, 1);
+		mMainLayout->setMargin(0);
 		setLayout(mMainLayout);
 	}
 
@@ -257,7 +257,7 @@ namespace FFX {
 		SetupUi();
 	}
 
-	void FileMainView::SetRootPath(const QString& path) {
+	void FileMainView::Goto(const QString& path) {
 		mFileListView->SetRootPath(path);
 	}
 
@@ -267,6 +267,7 @@ namespace FFX {
 		mMainLayout = new QVBoxLayout;
 		mMainLayout->addWidget(mFileViewNavigator);
 		mMainLayout->addWidget(mFileListView, 1);
+		mMainLayout->setMargin(0);
 		setLayout(mMainLayout);
 	}
 }

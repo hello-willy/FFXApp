@@ -3,5 +3,9 @@
         <file>res/image/angle-left.svg</file>
         <file>res/image/angle-right.svg</file>
         <file>res/image/angle-up.svg</file>
+        <file>res/image/search.svg</file>
+        <file>res/image/search-case-sen.svg</file>
+        <file>res/image/search-file-only.svg</file>
+        <file>res/image/task.svg</file>
     </qresource>
 </RCC>

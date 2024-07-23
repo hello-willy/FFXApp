@@ -100,6 +100,7 @@
     <ClCompile Include="FFXFileFilterExpr.cpp" />
     <ClCompile Include="FFXFileHandler.cpp" />
     <ClCompile Include="FFXFileListView.cpp" />
+    <ClCompile Include="FFXFileSearchView.cpp" />
     <ClCompile Include="FFXMainWindow.cpp" />
     <ClCompile Include="FFXPlugin.cpp" />
     <ClCompile Include="FFXString.cpp" />
@@ -113,6 +114,7 @@
     <QtMoc Include="FFXMainWindow.h" />
     <QtMoc Include="FFXPlugin.h" />
     <QtMoc Include="FFXFileListView.h" />
+    <QtMoc Include="FFXFileSearchView.h" />
     <ClInclude Include="FFXString.h" />
     <QtMoc Include="FFXTask.h" />
   </ItemGroup>

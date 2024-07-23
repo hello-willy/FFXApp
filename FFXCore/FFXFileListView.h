@@ -118,7 +118,7 @@ namespace FFX {
 	public:
 		FileMainView(QWidget* parent = nullptr);
 	public:
-		void SetRootPath(const QString& path);
+		void Goto(const QString& path);
 
 	private:
 		void SetupUi();
