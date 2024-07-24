@@ -9,6 +9,7 @@
 #include <QVBoxLayout>
 #include <QAction>
 #include <QMessageBox>
+#include <QKeyEvent>
 
 #include "FFXFileHandler.h"
 
@@ -177,13 +178,28 @@ namespace FFX {
 			QModelIndex index = mFileModel->setRootPath(root.absoluteFilePath());
 			setRootIndex(index); // IMPORTANT! refresh the ui
 		}
-		// mRootPathChangeStack->push(new ChangeRootPathCommand(this, root, CurrentDir()));
 	}
 
 	void DefaultFileListView::OnItemDoubleClicked(const QModelIndex& index) {
 		QFileInfo currentFileInfo = mFileModel->fileInfo(index);
 		emit FileDoubleClicked(currentFileInfo);
 
+	}
+
+	void DefaultFileListView::keyPressEvent(QKeyEvent* event) {
+		if (!mEditing && (event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter)) {
+			QModelIndex idx = selectionModel()->currentIndex();
+			if (idx.isValid()) {
+				OnItemDoubleClicked(idx);
+				return;
+			}
+		}
+		QListView::keyPressEvent(event);
+	}
+
+	void DefaultFileListView::closeEditor(QWidget* editor, QAbstractItemDelegate::EndEditHint hint) {
+		QAbstractItemView::closeEditor(editor, hint);
+		mEditing = false;
 	}
 
 	/// <summary>
@@ -230,6 +246,9 @@ namespace FFX {
 	}
 
 	void DefaultFileListView::OnActionDelete() {
+		QMessageBox::StandardButton r = QMessageBox::warning(this, QObject::tr("Warning"), QStringLiteral("These files will be delete completely, Are you sure?"), QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
+		if (r == QMessageBox::No)
+			return;
 		FFX::FileHandlerPtr handler = std::make_shared<FFX::FileDeleteHandler>(true);
 		QStringList files = SelectedFiles();
 		if (files.isEmpty())

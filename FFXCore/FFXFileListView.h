@@ -57,6 +57,10 @@ namespace FFX {
 	public:
 		void SetRootPath(const QFileInfo& root);
 
+	protected:
+		void keyPressEvent(QKeyEvent* event) override;
+		void closeEditor(QWidget* editor, QAbstractItemDelegate::EndEditHint hint) override;
+
 	private slots:
 		void OnItemDoubleClicked(const QModelIndex& index);
 		void OnItemRenamed(const QString& path, const QString& oldName, const QString& newName);
