@@ -173,7 +173,7 @@ namespace FFX {
 		mMainLayout->addWidget(mSearchFileListView, 1, 0, 1, 3);
 		mMainLayout->setRowStretch(0, 1);
 		mMainLayout->setColumnStretch(1, 1);
-		mMainLayout->setMargin(0);
+		mMainLayout->setContentsMargins(0, 9, 5, 0); // Set the right margin to 5 pixels.
 		setLayout(mMainLayout);
 	}
 }

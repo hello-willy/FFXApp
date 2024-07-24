@@ -7,27 +7,38 @@
 #include <QLineEdit>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
+#include <QAction>
+#include <QMessageBox>
 
 #include "FFXFileHandler.h"
 
 namespace FFX {
-	ChangeRootPathCommand::ChangeRootPathCommand(DefaultFileListView* fileView, const QFileInfo& newPath, const QFileInfo& oldPath, QUndoCommand* parent) 
+	/************************************************************************************************************************
+	 * Class： ChangeRootPathCommand
+	 *
+	 *
+	/************************************************************************************************************************/
+	ChangeRootPathCommand::ChangeRootPathCommand(DefaultFileListViewNavigator* navigator, const QFileInfo& newPath, const QFileInfo& oldPath, QUndoCommand* parent)
 		: QUndoCommand(parent)
-		, mFileView(fileView)
+		, mFileListViewNavigator(navigator)
 		, mNewPath(newPath)
 		, mOldPath(oldPath)	{
 
 	}
 
 	void ChangeRootPathCommand::undo() {
-		QString s = mOldPath.absoluteFilePath();
-		mFileView->ChangeRoot(mOldPath);
+		mFileListViewNavigator->ChangePath(mOldPath.absoluteFilePath());
 	}
 
 	void ChangeRootPathCommand::redo() {
-		mFileView->ChangeRoot(mNewPath);
+		mFileListViewNavigator->ChangePath(mNewPath.absoluteFilePath());
 	}
 
+	/************************************************************************************************************************
+	 * Class： DefaultFileListViewModel
+	 *
+	 *
+	/************************************************************************************************************************/
 	DefaultFileListViewModel::DefaultFileListViewModel(QObject* parent)
 		: QFileSystemModel(parent)
 	{}
@@ -53,6 +64,11 @@ namespace FFX {
 		return true;
 	}
 
+	/************************************************************************************************************************
+	 * Class： DefaultFileListViewEditDelegate
+	 *
+	 *
+	/************************************************************************************************************************/
 	DefaultFileListViewEditDelegate::DefaultFileListViewEditDelegate(QFileSystemModel* fileModel, QObject* parent) 
 		: QStyledItemDelegate(parent)
 		, mFileModel(fileModel) {
@@ -88,6 +104,11 @@ namespace FFX {
 			}, Qt::QueuedConnection);
 	}
 
+	/************************************************************************************************************************
+	 * Class： DefaultFileListView
+	 *
+	 *
+	/************************************************************************************************************************/
 	DefaultFileListView::DefaultFileListView(QWidget* parent)
 		: QListView(parent) {
 		mFileModel = new DefaultFileListViewModel(this);
@@ -103,8 +124,6 @@ namespace FFX {
 			});
 		setItemDelegate(itemEditDelegate);
 
-		mRootPathChangeStack = new QUndoStack(this);
-
 		connect(this, &QListView::doubleClicked, this, &DefaultFileListView::OnItemDoubleClicked);
 		connect(mFileModel, &QFileSystemModel::fileRenamed, this, &DefaultFileListView::OnItemRenamed);
 		connect(this, &QListView::customContextMenuRequested, this, &DefaultFileListView::OnCustomContextMenuRequested);
@@ -115,9 +134,6 @@ namespace FFX {
 		mMoveToTrashShortcut = new QShortcut(Qt::Key_Delete, this);
 		mMoveToTrashShortcut->setContext(Qt::WidgetShortcut);
 		connect(mMoveToTrashShortcut, &QShortcut::activated, this, &DefaultFileListView::OnActionMoveToTrash);
-		mBackwardShortcut = new QShortcut(Qt::Key_Backspace, this);
-		mBackwardShortcut->setContext(Qt::WidgetShortcut);
-		connect(mBackwardShortcut, &QShortcut::activated, this, [this]() { this->Forward(); });
 		mInvertSelectShortcut = new QShortcut(QKeySequence("Ctrl+Alt+A"), this);
 		mInvertSelectShortcut->setContext(Qt::WidgetShortcut);
 		connect(mInvertSelectShortcut, &QShortcut::activated, this, &DefaultFileListView::OnInvertSelect);
@@ -150,51 +166,24 @@ namespace FFX {
 	void DefaultFileListView::Refresh() {
 		QString root = CurrentDir();
 		mFileModel->setRootPath("");
-		ChangeRoot(root);
+		SetRootPath(root);
 	}
 
 	void DefaultFileListView::SetRootPath(const QFileInfo& root) {
 		if (CurrentDir() == root.absoluteFilePath())
 			return;
-		mRootPathChangeStack->push(new ChangeRootPathCommand(this, root, CurrentDir()));
-	}
 
-	void DefaultFileListView::Forward() {
-		int count = mRootPathChangeStack->count();
-		int index = mRootPathChangeStack->index();
-		if (index - 1 > 0)
-			mRootPathChangeStack->undo();
-	}
-
-	void DefaultFileListView::Backward() {
-		int count = mRootPathChangeStack->count();
-		int index = mRootPathChangeStack->index();
-		if (index < count)
-			mRootPathChangeStack->redo();
-	}
-
-	void DefaultFileListView::Upward() {
-		QDir dir(CurrentDir());
-		if (dir.cdUp()) {
-			SetRootPath(QFileInfo(dir.absolutePath()));
-		}
-	}
-
-	void DefaultFileListView::ChangeRoot(const QFileInfo& root) {
 		if (root.isDir()) {
 			QModelIndex index = mFileModel->setRootPath(root.absoluteFilePath());
 			setRootIndex(index); // IMPORTANT! refresh the ui
 		}
+		// mRootPathChangeStack->push(new ChangeRootPathCommand(this, root, CurrentDir()));
 	}
 
 	void DefaultFileListView::OnItemDoubleClicked(const QModelIndex& index) {
 		QFileInfo currentFileInfo = mFileModel->fileInfo(index);
-		if (currentFileInfo.isDir()) {
-			SetRootPath(currentFileInfo);
-		}
-		else if (currentFileInfo.isFile()) {
-			QDesktopServices::openUrl(QUrl::fromLocalFile(currentFileInfo.absoluteFilePath()));
-		}
+		emit FileDoubleClicked(currentFileInfo);
+
 	}
 
 	/// <summary>
@@ -272,7 +261,12 @@ namespace FFX {
 		}
 	}
 
-	DefaultFileListViewNavigator::DefaultFileListViewNavigator(QWidget* parent) 
+	/************************************************************************************************************************
+	 * Class： DefaultFileListViewNavigator
+	 *
+	 *
+	/************************************************************************************************************************/
+	DefaultFileListViewNavigator::DefaultFileListViewNavigator(QWidget* parent)
 		: QWidget(parent) {
 		SetupUi();
 	}
@@ -280,27 +274,84 @@ namespace FFX {
 	void DefaultFileListViewNavigator::SetupUi() {
 		mBackwardButton = new QToolButton;
 		mBackwardButton->setIcon(QIcon(":/ffx/res/image/angle-left.svg"));
+		connect(mBackwardButton, &QToolButton::clicked, this, &DefaultFileListViewNavigator::OnBackward);
 		mForwardButton = new QToolButton;
 		mForwardButton->setIcon(QIcon(":/ffx/res/image/angle-right.svg"));
+		connect(mForwardButton, &QToolButton::clicked, this, &DefaultFileListViewNavigator::OnForward);
 		mUpwardButton = new QToolButton;
 		mUpwardButton->setIcon(QIcon(":/ffx/res/image/angle-up.svg"));
+		connect(mUpwardButton, &QToolButton::clicked, this, &DefaultFileListViewNavigator::OnUpward);
 		mRootPathEdit = new QLineEdit;
 		mMainLayout = new QHBoxLayout;
 		mMainLayout->addWidget(mBackwardButton);
 		mMainLayout->addWidget(mForwardButton);
 		mMainLayout->addWidget(mUpwardButton);
 		mMainLayout->addWidget(mRootPathEdit, 1);
-		mMainLayout->setMargin(0);
+		mMainLayout->setContentsMargins(0, 9, 0, 0);
 		setLayout(mMainLayout);
+
+		mRootPathChangeStack = new QUndoStack(this);
+		connect(mRootPathEdit, &QLineEdit::returnPressed, this, [=]() { Goto(mRootPathEdit->text()); });
+
+		mBackwardShortcut = new QShortcut(Qt::Key_Backspace, this);
+		mBackwardShortcut->setContext(Qt::WindowShortcut);
+		connect(mBackwardShortcut, &QShortcut::activated, this, &DefaultFileListViewNavigator::OnBackward);
 	}
 
+	void DefaultFileListViewNavigator::Goto(const QString& path) {
+		if (path == mCurrentPath)
+			return;
+		if (!QFileInfo::exists(path)) {
+			QMessageBox::warning(this, QObject::tr("Warning"), QObject::tr("Invalid directory path."));
+			return;
+		}
+		mRootPathChangeStack->push(new ChangeRootPathCommand(this, path, mCurrentPath));
+	}
+
+	void DefaultFileListViewNavigator::ChangePath(const QString& path) {
+		mCurrentPath = path;
+		mRootPathEdit->setText(mCurrentPath);
+		emit RootPathChanged(mCurrentPath);
+	}
+
+	void DefaultFileListViewNavigator::OnBackward() {
+		int count = mRootPathChangeStack->count();
+		int index = mRootPathChangeStack->index();
+		if (index - 1 > 0)
+			mRootPathChangeStack->undo();
+	}
+
+	void DefaultFileListViewNavigator::OnForward() {
+		int count = mRootPathChangeStack->count();
+		int index = mRootPathChangeStack->index();
+		if (index < count)
+			mRootPathChangeStack->redo();
+	}
+
+	void DefaultFileListViewNavigator::OnUpward() {
+		QString root = mCurrentPath;
+		QDir dir(root);
+		if (dir.cdUp()) {
+			Goto(dir.absolutePath());
+			//SetRootPath(QFileInfo(dir.absolutePath()));
+		}
+	}
+
+	/************************************************************************************************************************
+	 * Class： FileMainView
+	 *
+	 *
+	/************************************************************************************************************************/
 	FileMainView::FileMainView(QWidget* parent) 
 		: QWidget(parent) {
 		SetupUi();
 	}
 
 	void FileMainView::Goto(const QString& path) {
-		mFileListView->SetRootPath(path);
+		if (path.isEmpty()) {
+			return;
+		}
+		mFileViewNavigator->Goto(path);
 	}
 
 	void FileMainView::SetupUi() {
@@ -311,6 +362,20 @@ namespace FFX {
 		mMainLayout->addWidget(mFileListView, 1);
 		mMainLayout->setMargin(0);
 		setLayout(mMainLayout);
+
+		connect(mFileViewNavigator, &DefaultFileListViewNavigator::RootPathChanged, this, [=](const QString& path) { 
+			mFileListView->SetRootPath(path);
+			});
+		connect(mFileListView, &DefaultFileListView::FileDoubleClicked, this, &FileMainView::OnFileDoubleClicked);
+	}
+
+	void FileMainView::OnFileDoubleClicked(const QFileInfo& file) {
+		if (file.isDir()) {
+			Goto(file.absoluteFilePath());
+		}
+		else if (file.isFile()) {
+			QDesktopServices::openUrl(QUrl::fromLocalFile(file.absoluteFilePath()));
+		}
 	}
 }
 

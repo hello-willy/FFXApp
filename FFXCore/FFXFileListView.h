@@ -13,23 +13,6 @@ class QHBoxLayout;
 class QVBoxLayout;
 
 namespace FFX {
-
-	class DefaultFileListView;
-	class ChangeRootPathCommand : public QUndoCommand
-	{
-	public:
-		ChangeRootPathCommand(DefaultFileListView* fileView, const QFileInfo& newPath, const QFileInfo& oldPath, QUndoCommand* parent = nullptr);
-		virtual ~ChangeRootPathCommand() = default;
-	public:
-		void undo() override;
-		void redo() override;
-
-	private:
-		DefaultFileListView* mFileView;
-		QFileInfo mNewPath;
-		QFileInfo mOldPath;
-	};
-
 	class DefaultFileListViewModel : public QFileSystemModel
 	{
 		Q_OBJECT
@@ -73,12 +56,6 @@ namespace FFX {
 
 	public:
 		void SetRootPath(const QFileInfo& root);
-		void Forward();
-		void Backward();
-		void Upward();
-
-	private:
-		void ChangeRoot(const QFileInfo& root);
 
 	private slots:
 		void OnItemDoubleClicked(const QModelIndex& index);
@@ -88,12 +65,14 @@ namespace FFX {
 		void OnActionMoveToTrash();
 		void OnInvertSelect();
 
+	Q_SIGNALS:
+		void FileDoubleClicked(const QFileInfo& file);
+
 	private:
 		DefaultFileListViewModel* mFileModel;
-		QUndoStack* mRootPathChangeStack;
+		
 		bool mEditing = false;
 		//! Shortcut
-		QShortcut* mBackwardShortcut;
 		QShortcut* mDeleteForceShortcut;
 		QShortcut* mMoveToTrashShortcut;
 		QShortcut* mInvertSelectShortcut;
@@ -103,27 +82,64 @@ namespace FFX {
 		Q_OBJECT
 	public:
 		DefaultFileListViewNavigator(QWidget* parent = nullptr);
+		friend class ChangeRootPathCommand;
+
+	public:
+		void Goto(const QString& path);
+
+	Q_SIGNALS:
+		void RootPathChanged(const QString& newPath);
+
+	private slots:
+		void OnBackward();
+		void OnForward();
+		void OnUpward();
 
 	private:
+		void ChangePath(const QString& path);
 		void SetupUi();
 
 	private:
+		QUndoStack* mRootPathChangeStack;
 		QToolButton* mBackwardButton;
 		QToolButton* mForwardButton;
 		QToolButton* mUpwardButton;
 		QLineEdit* mRootPathEdit;
 		QHBoxLayout* mMainLayout;
+		QString mCurrentPath;
+		QShortcut* mBackwardShortcut;
+	};
+
+	class ChangeRootPathCommand : public QUndoCommand
+	{
+	public:
+		ChangeRootPathCommand(DefaultFileListViewNavigator* navigator, const QFileInfo& newPath, const QFileInfo& oldPath, QUndoCommand* parent = nullptr);
+		virtual ~ChangeRootPathCommand() = default;
+
+	public:
+		void undo() override;
+		void redo() override;
+
+	private:
+		DefaultFileListViewNavigator* mFileListViewNavigator;
+		QFileInfo mNewPath;
+		QFileInfo mOldPath;
 	};
 
 	class FileMainView : public QWidget {
 		Q_OBJECT
 	public:
 		FileMainView(QWidget* parent = nullptr);
+
 	public:
 		void Goto(const QString& path);
 
+	private slots:
+		void OnFileDoubleClicked(const QFileInfo& file);
+
 	private:
 		void SetupUi();
+
 	private:
 		DefaultFileListViewNavigator* mFileViewNavigator;
 		DefaultFileListView* mFileListView;
