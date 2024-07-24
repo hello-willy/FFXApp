@@ -1,6 +1,7 @@
 #include "FFXFile.h"
 
 namespace FFX {
+	QString G_FILE_VALIDATOR = "^[^/\\\\:*?\"<>|]+$";
 	QSet<QString> File::CustomSuffix = { "shp.xml", "sbnand.sbx", "fbnand.fbx", "ainand.aih" };
 
 	QFileInfoList FileInfoList(const QStringList& files) {

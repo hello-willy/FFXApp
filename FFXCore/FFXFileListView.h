@@ -86,6 +86,7 @@ namespace FFX {
 		void OnCustomContextMenuRequested(const QPoint& pos);
 		void OnActionDelete();
 		void OnActionMoveToTrash();
+		void OnInvertSelect();
 
 	private:
 		DefaultFileListViewModel* mFileModel;
@@ -95,6 +96,7 @@ namespace FFX {
 		QShortcut* mBackwardShortcut;
 		QShortcut* mDeleteForceShortcut;
 		QShortcut* mMoveToTrashShortcut;
+		QShortcut* mInvertSelectShortcut;
 	};
 
 	class DefaultFileListViewNavigator : public QWidget {

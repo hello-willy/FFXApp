@@ -6,6 +6,7 @@
 #include <QSet>
 
 namespace FFX {
+	extern QString G_FILE_VALIDATOR;
 	class File {
 	public:
 		static FFXCORE_EXPORT QSet<QString> CustomSuffix;

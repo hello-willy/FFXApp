@@ -61,7 +61,7 @@ namespace FFX {
 	QWidget* DefaultFileListViewEditDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const {
 		QLineEdit* editor = new QLineEdit(parent);
 		// ignored illegal char
-		QRegExpValidator* validator = new QRegExpValidator(QRegExp("^[^/\\\\:*?\"<>|]+$"));
+		QRegExpValidator* validator = new QRegExpValidator(QRegExp(G_FILE_VALIDATOR));
 		editor->setValidator(validator);
 		return editor;
 	}
@@ -83,7 +83,7 @@ namespace FFX {
 			if (file.isDir())
 				selectLen = file.fileName().size();
 			else
-				selectLen = file.completeBaseName().size();
+				selectLen = File(file).BaseName().size();
 			le->setSelection(0, selectLen);
 			}, Qt::QueuedConnection);
 	}
@@ -94,6 +94,7 @@ namespace FFX {
 		mFileModel->setReadOnly(false); // Set list view editable
 		setEditTriggers(QAbstractItemView::SelectedClicked | QAbstractItemView::EditKeyPressed); // Set edit mode.
 		setSelectionMode(QAbstractItemView::ExtendedSelection); // Multi selection.
+		setSelectionRectVisible(true); // Set select rubber bound visible.
 		setModel(mFileModel);
 
 		DefaultFileListViewEditDelegate* itemEditDelegate = new DefaultFileListViewEditDelegate(mFileModel);
@@ -115,7 +116,11 @@ namespace FFX {
 		mMoveToTrashShortcut->setContext(Qt::WidgetShortcut);
 		connect(mMoveToTrashShortcut, &QShortcut::activated, this, &DefaultFileListView::OnActionMoveToTrash);
 		mBackwardShortcut = new QShortcut(Qt::Key_Backspace, this);
+		mBackwardShortcut->setContext(Qt::WidgetShortcut);
 		connect(mBackwardShortcut, &QShortcut::activated, this, [this]() { this->Forward(); });
+		mInvertSelectShortcut = new QShortcut(QKeySequence("Ctrl+Alt+A"), this);
+		mInvertSelectShortcut->setContext(Qt::WidgetShortcut);
+		connect(mInvertSelectShortcut, &QShortcut::activated, this, &DefaultFileListView::OnInvertSelect);
 	}
 
 	DefaultFileListView::~DefaultFileListView()
@@ -192,16 +197,43 @@ namespace FFX {
 		}
 	}
 
+	/// <summary>
+	/// Rules of rename:
+	/// 1. if suffix changed, the suffix included is true
+	/// 2. if suffix not changed, the suffix indclude is false, and use the base name to match
+	/// </summary>
+	/// <param name="path"></param>
+	/// <param name="oldName"></param>
+	/// <param name="newName"></param>
 	void DefaultFileListView::OnItemRenamed(const QString& path, const QString& oldName, const QString& newName) {
 		if (newName.isEmpty())
 			return;
 		QStringList files = SelectedFiles();
 		if (files.isEmpty())
 			return;
-
-		FFX::FileHandlerPtr handler = std::make_shared<FFX::FileRenameHandler>(std::make_shared<FFX::FileNameReplaceByExpHandler>("*", newName));
+		bool suffixInc = false;
+		QString after = newName;
+		QString oldsuffix = File(oldName).Suffix();
+		QString newsuffix = File(newName).Suffix();
+		if (oldsuffix != newsuffix) {
+			suffixInc = true;
+		} else if (!newsuffix.isEmpty()) {
+			after = File(newName).BaseName();
+		}
+		FFX::FileHandlerPtr handler = std::make_shared<FFX::FileRenameHandler>(std::make_shared<FFX::FileNameReplaceByExpHandler>("*", after, QRegExp::Wildcard, true, suffixInc));
 		std::dynamic_pointer_cast<FFX::FileRenameHandler>(handler)->Append(std::make_shared<FFX::FileDuplicateHandler>());
-		handler->Handle(FileInfoList(files));
+		QFileInfoList result = handler->Handle(FileInfoList(files));
+
+		//! Set new file selected
+		QModelIndex first = mFileModel->index(QDir(path).absoluteFilePath(newName));
+		for (const QFileInfo& fi : result) {
+			QModelIndex idx = mFileModel->index(fi.absoluteFilePath());
+			if (idx.isValid() && !first.isValid()) {
+				first = idx;
+				break;
+			}
+		}
+		setCurrentIndex(first);
 	}
 
 	void DefaultFileListView::OnCustomContextMenuRequested(const QPoint& pos) {
@@ -228,6 +260,16 @@ namespace FFX {
 			fileInfoList << file;
 		}
 		handler->Handle(fileInfoList);
+	}
+
+	void DefaultFileListView::OnInvertSelect() {
+		QModelIndexList selection = selectionModel()->selectedIndexes();
+		selectAll();
+		for (const QModelIndex& index : selection) {
+			if (index.column() != 0)
+				continue;
+			selectionModel()->select(index, QItemSelectionModel::Deselect);
+		}
 	}
 
 	DefaultFileListViewNavigator::DefaultFileListViewNavigator(QWidget* parent) 
