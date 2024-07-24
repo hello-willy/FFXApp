@@ -11,6 +11,16 @@ QTreeView
     border: transparent;
 }
 
+QTreeView::item
+{
+    height: 32px;
+}
+
+QListView::item
+{
+    height: 32px;
+}
+
 QLabel
 {
     background-color: transparent;

@@ -105,6 +105,13 @@ namespace FFX {
 			}, Qt::QueuedConnection);
 	}
 
+	void DefaultFileListViewEditDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const {
+		QStyleOptionViewItem opt = option;
+		if (opt.state & QStyle::State_HasFocus && !(opt.state & QStyle::State_Selected))
+			opt.state &= ~QStyle::State_HasFocus;
+		QStyledItemDelegate::paint(painter, opt, index);
+	}
+
 	/************************************************************************************************************************
 	 * Class： DefaultFileListView
 	 *
@@ -138,6 +145,9 @@ namespace FFX {
 		mInvertSelectShortcut = new QShortcut(QKeySequence("Ctrl+Alt+A"), this);
 		mInvertSelectShortcut->setContext(Qt::WidgetShortcut);
 		connect(mInvertSelectShortcut, &QShortcut::activated, this, &DefaultFileListView::OnInvertSelect);
+
+		//! Set row spacing to 2.
+		setSpacing(2);
 	}
 
 	DefaultFileListView::~DefaultFileListView()
