@@ -14,12 +14,12 @@ namespace FFX {
 		return !mOtherFilter->Accept(file);
 	}
 
-	bool IsFileFilter::Accept(const QFileInfo& file) const {
+	bool OnlyFileFilter::Accept(const QFileInfo& file) const {
 		return file.isFile();
 	}
 
-	bool IsDirFilter::Accept(const QFileInfo& file) const {
-		return !file.isDir();
+	bool OnlyDirFilter::Accept(const QFileInfo& file) const {
+		return file.isDir();
 	}
 
 	bool RegExpFileFilter::Accept(const QFileInfo& file) const {

@@ -308,6 +308,13 @@ namespace FFX {
 			return;
 		msgItem->setText(msg);
 
+		QProgressBar* pb = static_cast<QProgressBar*>(mTaskTable->cellWidget(row, HEADER["PROG"]));
+		if (pb != nullptr) {
+			pb->setMinimum(0);
+			pb->setMaximum(100);
+			pb->setValue(100);
+		}
+
 		// transfer the task complete signals.
 		emit TaskComplete(taskId, success);
 	}

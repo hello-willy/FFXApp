@@ -167,7 +167,7 @@ namespace FFX {
 		connect(mSearchEdit, &QLineEdit::returnPressed, this, &FileSearchView::OnSearch);
 
 		mSearchAction = new QAction(QIcon(":/ffx/res/image/search.svg"), "", mSearchFileListView);
-		connect(mSearchAction, &QAction::triggered, this, &FileSearchView::OnSearch);
+		connect(mSearchAction, &QAction::triggered, this, &FileSearchView::OnSearchActionTriggered);
 		mSearchEdit->addAction(mSearchAction, QLineEdit::TrailingPosition);
 		mSearchFileOnlyButton = new QToolButton;
 		mSearchFileOnlyButton->setIcon(QIcon(":/ffx/res/image/search-file-only.svg"));
@@ -192,6 +192,12 @@ namespace FFX {
 
 	void FileSearchView::SetSearchDir(const QString& dir) {
 		mSearchDir = dir;
+		QFileInfo fileInfo(mSearchDir);
+		QString name = fileInfo.fileName();
+		if (name.isEmpty()) {
+			name = fileInfo.absoluteFilePath();
+		}
+		mSearchEdit->setPlaceholderText(QObject::tr("Search in [%1]").arg(name));
 	}
 
 	void FileSearchView::OnSearchComplete(int taskId, bool success) {
@@ -216,19 +222,27 @@ namespace FFX {
 	}
 
 	void FileSearchView::SetWorking(bool work) {
-		mSearchEdit->setEnabled(!work);
+		mSearchEdit->setReadOnly(work);
 		mSearchFileOnlyButton->setEnabled(!work);
 		mSearchCaseButton->setEnabled(!work);
 		mSearchAction->setIcon(work ? QIcon(":/ffx/res/image/cancel.svg") : QIcon(":/ffx/res/image/search.svg"));
 	}
 
 	void FileSearchView::OnSearch() {
+		if (mSearchTaskId > 0) {
+			return;
+		}
+
+		mSearchFileListView->RemoveAll();
 		QString expression = mSearchEdit->text();
 		if (expression.isEmpty()) {
 			return;
 		}
 		FileFilterExpr fe(expression.toStdString(), mSearchCaseButton->isChecked());
 		FileFilterPtr filter = fe.Filter();
+		if (mSearchFileOnlyButton->isChecked()) {
+			filter = std::make_shared<AndFileFilter>(filter, std::make_shared<OnlyFileFilter>());
+		}
 		SetWorking();
 		mSearchTaskId = MainWindow::Instance()->TaskPanelPtr()->Submit(FileInfoList(mSearchDir), std::make_shared<FileSearchHandler>(filter));
 	}

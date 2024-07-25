@@ -61,13 +61,13 @@ namespace FFX {
 		FileFilterPtr mOtherFilter;
 	};
 
-	class FFXCORE_EXPORT IsFileFilter : public FileFilter
+	class FFXCORE_EXPORT OnlyFileFilter : public FileFilter
 	{
 	public:
 		virtual bool Accept(const QFileInfo& file) const override;
 	};
 
-	class FFXCORE_EXPORT IsDirFilter : public FileFilter
+	class FFXCORE_EXPORT OnlyDirFilter : public FileFilter
 	{
 	public:
 		virtual bool Accept(const QFileInfo& file) const override;

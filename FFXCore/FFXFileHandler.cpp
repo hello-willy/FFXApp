@@ -346,6 +346,7 @@ namespace FFX {
 		QFileInfoList result;
 		for (QFileInfo file : files) {
 			if (file.isFile()) {
+				progress->OnProgress(-1, QObject::tr("Matching: %1").arg(file.absoluteFilePath()));
 				if (mFileFilter->Accept(file))
 					result << file;
 				continue;
@@ -355,6 +356,7 @@ namespace FFX {
 				while (fit.hasNext() && !mCancelled) {
 					fit.next();
 					QFileInfo fi = fit.fileInfo();
+					progress->OnProgress(-1, QObject::tr("Matching: %1").arg(fi.absoluteFilePath()));
 					if (mFileFilter->Accept(fi)) {
 						result << fi;
 						progress->OnFileComplete(file, fi, true);
