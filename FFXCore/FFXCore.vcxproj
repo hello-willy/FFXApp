@@ -105,6 +105,8 @@
     <ClCompile Include="FFXPlugin.cpp" />
     <ClCompile Include="FFXString.cpp" />
     <ClCompile Include="FFXTask.cpp" />
+    <ClCompile Include="FFXTaskPanel.cpp" />
+    <QtMoc Include="FFXTaskPanel.h" />
     <QtMoc Include="FFXActionManager.h" />
     <ClInclude Include="FFXFile.h" />
     <ClInclude Include="FFXFileFilter.h" />

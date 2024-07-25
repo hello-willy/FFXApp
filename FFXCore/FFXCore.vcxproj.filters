@@ -76,6 +76,9 @@
     <ClCompile Include="FFXFileSearchView.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="FFXTaskPanel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="FFXTask.h">
@@ -94,6 +97,9 @@
       <Filter>Header Files</Filter>
     </QtMoc>
     <QtMoc Include="FFXFileSearchView.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="FFXTaskPanel.h">
       <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>

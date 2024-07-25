@@ -3,7 +3,8 @@
 #include <QDirIterator>
 
 namespace FFX {
-	ProgressPtr G_DebugProgress = std::make_shared<DebugProgress>();
+	static DebugProgress dp;
+	ProgressPtr G_DebugProgress = &dp;
 
 	/************************************************************************************************************************
 	* Class DebugProgress

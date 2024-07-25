@@ -66,11 +66,23 @@ namespace FFX {
 	public:
 		FileSearchView(QWidget* parent);
 		~FileSearchView();
+		friend class MainWindow;
+	public:
+		void SetSearchDir(const QString& dir);
+
+	private slots:
+		void OnSearch();
+		void OnSearchActionTriggered();
+		void OnSearchComplete(int taskId, bool success);
+		void OnSearchFileMatched(int taskId, const QFileInfo& fileInput, const QFileInfo& fileOutput, bool success, const QString& message);
 
 	private:
 		void SetupUi();
+		void SetWorking(bool work = true);
 
 	private:
+		QString mSearchDir;
+		int mSearchTaskId = -1;
 		SearchFileListView* mSearchFileListView;
 		QAction* mSearchAction;
 		QLineEdit* mSearchEdit;

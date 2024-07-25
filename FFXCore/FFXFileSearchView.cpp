@@ -1,5 +1,8 @@
 #include "FFXFileSearchView.h"
 #include "FFXMainWindow.h"
+#include "FFXFileHandler.h"
+#include "FFXFileFilterExpr.h"
+#include "FFXTaskPanel.h"
 
 #include <QPainter>
 #include <QFileIconProvider>
@@ -160,12 +163,22 @@ namespace FFX {
 	void FileSearchView::SetupUi() {
 		mSearchFileListView = new SearchFileListView;
 		mSearchEdit = new QLineEdit;
+		mSearchEdit->setFixedHeight(32);
+		connect(mSearchEdit, &QLineEdit::returnPressed, this, &FileSearchView::OnSearch);
+
 		mSearchAction = new QAction(QIcon(":/ffx/res/image/search.svg"), "", mSearchFileListView);
+		connect(mSearchAction, &QAction::triggered, this, &FileSearchView::OnSearch);
 		mSearchEdit->addAction(mSearchAction, QLineEdit::TrailingPosition);
 		mSearchFileOnlyButton = new QToolButton;
 		mSearchFileOnlyButton->setIcon(QIcon(":/ffx/res/image/search-file-only.svg"));
+		mSearchFileOnlyButton->setFixedSize(QSize(32, 32));
+		mSearchFileOnlyButton->setCheckable(true);
+		mSearchFileOnlyButton->setChecked(true);
 		mSearchCaseButton = new QToolButton;
 		mSearchCaseButton->setIcon(QIcon(":/ffx/res/image/search-case-sen.svg"));
+		mSearchCaseButton->setFixedSize(QSize(32, 32));
+		mSearchCaseButton->setCheckable(true);
+		mSearchCaseButton->setChecked(true);
 		mMainLayout = new QGridLayout;
 		mMainLayout->addWidget(mSearchEdit, 0, 0, 1, 1);
 		mMainLayout->addWidget(mSearchFileOnlyButton, 0, 1, 1, 1);
@@ -175,5 +188,48 @@ namespace FFX {
 		mMainLayout->setColumnStretch(1, 1);
 		mMainLayout->setContentsMargins(0, 9, 5, 0); // Set the right margin to 5 pixels.
 		setLayout(mMainLayout);
+	}
+
+	void FileSearchView::SetSearchDir(const QString& dir) {
+		mSearchDir = dir;
+	}
+
+	void FileSearchView::OnSearchComplete(int taskId, bool success) {
+		if (mSearchTaskId == taskId) {
+			mSearchTaskId = -1;
+			SetWorking(false);
+		}
+	}
+
+	void FileSearchView::OnSearchFileMatched(int taskId, const QFileInfo& fileInput, const QFileInfo& fileOutput, bool success, const QString& message) {
+		if (taskId != mSearchTaskId || !success)
+			return;
+		mSearchFileListView->AddItem(fileOutput.absoluteFilePath());
+	}
+
+	void FileSearchView::OnSearchActionTriggered() {
+		if (mSearchTaskId > 0) {
+			MainWindow::Instance()->TaskPanelPtr()->Cancel(mSearchTaskId);
+			return;
+		}
+		OnSearch();
+	}
+
+	void FileSearchView::SetWorking(bool work) {
+		mSearchEdit->setEnabled(!work);
+		mSearchFileOnlyButton->setEnabled(!work);
+		mSearchCaseButton->setEnabled(!work);
+		mSearchAction->setIcon(work ? QIcon(":/ffx/res/image/cancel.svg") : QIcon(":/ffx/res/image/search.svg"));
+	}
+
+	void FileSearchView::OnSearch() {
+		QString expression = mSearchEdit->text();
+		if (expression.isEmpty()) {
+			return;
+		}
+		FileFilterExpr fe(expression.toStdString(), mSearchCaseButton->isChecked());
+		FileFilterPtr filter = fe.Filter();
+		SetWorking();
+		mSearchTaskId = MainWindow::Instance()->TaskPanelPtr()->Submit(FileInfoList(mSearchDir), std::make_shared<FileSearchHandler>(filter));
 	}
 }

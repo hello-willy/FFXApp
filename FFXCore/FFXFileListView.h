@@ -141,6 +141,9 @@ namespace FFX {
 	public:
 		void Goto(const QString& path);
 
+	Q_SIGNALS:
+		void CurrentPathChanged(const QString& newPath);
+
 	private slots:
 		void OnFileDoubleClicked(const QFileInfo& file);
 

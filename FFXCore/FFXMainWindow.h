@@ -7,11 +7,13 @@ class QMenuBar;
 class QToolBar;
 class QStatusBar;
 class QToolButton;
-
+class QDockWidget;
 namespace FFX {
 	class PluginManager;
 	class FileMainView;
 	class FileSearchView;
+	class TaskPanel;
+
 	class FFXCORE_EXPORT MainWindow : public QMainWindow
 	{
 		Q_OBJECT
@@ -27,12 +29,16 @@ namespace FFX {
 	public:
 		PluginManager* PluginManagerPtr();
 		FileMainView* FileMainViewPtr();
+		TaskPanel* TaskPanelPtr();
 
 	private:
 		void SetupUi();
 
 	private:
 		QMenuBar* mMenuBar;
+		QMenu* mFileMenu;
+		QMenu* mViewMenu;
+
 		QToolBar* mMainToolBar;
 		QStatusBar* mStatusBar;
 		QToolButton* mShowTaskBoardButton;
@@ -40,6 +46,8 @@ namespace FFX {
 		PluginManager* mPluginManager = nullptr;
 		FileMainView* mFileMainView;
 		FileSearchView* mFileSearchView;
+		QDockWidget* mTaskDocker;
+		TaskPanel* mTaskPanel;
 	};
 
 }

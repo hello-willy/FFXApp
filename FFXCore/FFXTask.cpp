@@ -21,10 +21,14 @@ namespace FFX {
 
 	Task::Task(long taskId, const QFileInfoList& files, FileHandlerPtr handler, QObject* parent)
 		: QObject(parent)
-	{}
+		, mTaskId(taskId)
+		, mSourceFiles(files)
+		, mHandler(handler) {
+		setAutoDelete(true);
+	}
 
-	Task::~Task()
-	{}
+	Task::~Task() {
+	}
 
 	Task::State Task::Status() {
 		QMutexLocker lock(&mStateMutex);
@@ -44,7 +48,19 @@ namespace FFX {
 	void Task::run() {
 		SetStatus(State::Running);
 		mTimeStart = QDateTime::currentMSecsSinceEpoch();
-		mResultFiles = mHandler->Handle(mSourceFiles, ProgressPtr(this));
+		QFileInfoList r = mHandler->Handle(mSourceFiles, ProgressPtr(this));
+		if (true) {
+			int a = 0;
+		}
+	}
+
+	void Task::Cancel() {
+		QMutexLocker lock(&mStateMutex);
+		//! Only running tasks can be cancelled
+		if (mState != State::Running) {
+			return;
+		}
+		mHandler->Cancel();
 	}
 
 	void Task::OnProgress(double percent, const QString& msg) {
@@ -59,6 +75,6 @@ namespace FFX {
 
 	void Task::OnComplete(bool success, const QString& msg) {
 		SetStatus(success ? State::Succeeded : State::Failed);
-		emit TaskComplete(Id(), success, QDateTime::currentMSecsSinceEpoch() - mTimeStart);
+		emit TaskComplete(Id(), success, msg, QDateTime::currentMSecsSinceEpoch() - mTimeStart);
 	}
 }

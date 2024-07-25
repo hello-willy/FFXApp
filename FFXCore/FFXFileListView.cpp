@@ -303,14 +303,18 @@ namespace FFX {
 	void DefaultFileListViewNavigator::SetupUi() {
 		mBackwardButton = new QToolButton;
 		mBackwardButton->setIcon(QIcon(":/ffx/res/image/angle-left.svg"));
+		mBackwardButton->setFixedSize(QSize(32, 32));
 		connect(mBackwardButton, &QToolButton::clicked, this, &DefaultFileListViewNavigator::OnBackward);
 		mForwardButton = new QToolButton;
 		mForwardButton->setIcon(QIcon(":/ffx/res/image/angle-right.svg"));
+		mForwardButton->setFixedSize(QSize(32, 32));
 		connect(mForwardButton, &QToolButton::clicked, this, &DefaultFileListViewNavigator::OnForward);
 		mUpwardButton = new QToolButton;
 		mUpwardButton->setIcon(QIcon(":/ffx/res/image/angle-up.svg"));
+		mUpwardButton->setFixedSize(QSize(32, 32));
 		connect(mUpwardButton, &QToolButton::clicked, this, &DefaultFileListViewNavigator::OnUpward);
 		mRootPathEdit = new QLineEdit;
+		mRootPathEdit->setFixedHeight(32);
 		mMainLayout = new QHBoxLayout;
 		mMainLayout->addWidget(mBackwardButton);
 		mMainLayout->addWidget(mForwardButton);
@@ -389,11 +393,12 @@ namespace FFX {
 		mMainLayout = new QVBoxLayout;
 		mMainLayout->addWidget(mFileViewNavigator);
 		mMainLayout->addWidget(mFileListView, 1);
-		mMainLayout->setMargin(0);
+		mMainLayout->setContentsMargins(5, 0, 0, 0);
 		setLayout(mMainLayout);
 
 		connect(mFileViewNavigator, &DefaultFileListViewNavigator::RootPathChanged, this, [=](const QString& path) { 
 			mFileListView->SetRootPath(path);
+			emit CurrentPathChanged(path); // Transfer the signals for 
 			});
 		connect(mFileListView, &DefaultFileListView::FileDoubleClicked, this, &FileMainView::OnFileDoubleClicked);
 	}
@@ -401,8 +406,7 @@ namespace FFX {
 	void FileMainView::OnFileDoubleClicked(const QFileInfo& file) {
 		if (file.isDir()) {
 			Goto(file.absoluteFilePath());
-		}
-		else if (file.isFile()) {
+		} else if (file.isFile()) {
 			QDesktopServices::openUrl(QUrl::fromLocalFile(file.absoluteFilePath()));
 		}
 	}

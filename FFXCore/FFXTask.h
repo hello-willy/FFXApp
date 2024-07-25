@@ -35,11 +35,12 @@ namespace FFX {
 		long Id() const { return mTaskId; }
 		State Status();
 		void SetStatus(State state);
+		void Cancel();
 
 	private:
 		QMutex mStateMutex;
 		State mState = State::Queued;
-		long mTaskId;
+		long mTaskId = 0;
 		qint64 mTimeStart = 0;
 		FileHandlerPtr mHandler;
 		QFileInfoList mSourceFiles;
@@ -48,7 +49,7 @@ namespace FFX {
 
 	Q_SIGNALS:
 		void TaskStateChanged(int taskId, int oldState, int state);
-		void TaskComplete(int taskId, bool success, qint64 timeCost);
+		void TaskComplete(int taskId, bool success, const QString& msg, qint64 timeCost);
 		void TaskProgressChanged(int taskId, const QString& message, int pos);
 		void TaskFileHandled(int taskId, const QFileInfo& fileInput, const QFileInfo& fileOutput, bool success, const QString& message);
 	};

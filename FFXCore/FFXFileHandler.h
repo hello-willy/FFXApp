@@ -67,7 +67,7 @@ namespace FFX {
 		virtual void OnFileComplete(const QFileInfo& input, const QFileInfo& output, bool success = true, const QString& msg = QString()) = 0;
 		virtual void OnComplete(bool success = true, const QString& msg = QString()) = 0;
 	};
-	typedef std::shared_ptr<Progress> ProgressPtr;
+	typedef Progress* ProgressPtr;
 
 	class FFXCORE_EXPORT DebugProgress : public Progress {
 	public:
