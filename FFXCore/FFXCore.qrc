@@ -10,5 +10,7 @@
         <file>res/image/cancel.svg</file>
         <file>res/image/delete.svg</file>
         <file>res/image/plus.svg</file>
+        <file>res/image/close.svg</file>
+        <file>res/image/float.svg</file>
     </qresource>
 </RCC>

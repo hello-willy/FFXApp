@@ -5,6 +5,23 @@ QWidget
     font-family: Microsoft YaHei;
 }
 
+QDockWidget
+{
+    titlebar-close-icon: url(:/ffx/res/image/close.svg);
+    titlebar-normal-icon: url(:/ffx/res/image/float.svg);
+}
+
+QDockWidget::close-button, QDockWidget::float-button {
+    background-color: transparent;
+    width: 14px;
+    height: 14px;
+}
+
+QDockWidget::close-button:hover, QDockWidget::float-button:hover {
+    background-color: #E0E0E0;
+    border: 1px solid #999999;
+}
+
 QTreeView
 {
     padding: 6px;
