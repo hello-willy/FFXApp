@@ -71,6 +71,10 @@ namespace FFX {
 		mViewMenu->addAction(mTaskDocker->toggleViewAction());
 
 		mTaskDocker->toggleViewAction()->setIcon(QIcon(":/ffx/res/image/task.svg"));
+
+		QSize statusBarSize = mStatusBar->sizeHint();
+		mShowTaskBoardButton->setFixedSize(QSize(statusBarSize.height() - 8, statusBarSize.height() - 8));
+		mShowTaskBoardButton->setIconSize(QSize(20, 20));
 		mShowTaskBoardButton->setDefaultAction(mTaskDocker->toggleViewAction());
 
 		//! Setup signals/slots

@@ -171,11 +171,13 @@ namespace FFX {
 		mSearchEdit->addAction(mSearchAction, QLineEdit::TrailingPosition);
 		mSearchFileOnlyButton = new QToolButton;
 		mSearchFileOnlyButton->setIcon(QIcon(":/ffx/res/image/search-file-only.svg"));
+		mSearchFileOnlyButton->setIconSize(QSize(20,20));
 		mSearchFileOnlyButton->setFixedSize(QSize(32, 32));
 		mSearchFileOnlyButton->setCheckable(true);
 		mSearchFileOnlyButton->setChecked(true);
 		mSearchCaseButton = new QToolButton;
 		mSearchCaseButton->setIcon(QIcon(":/ffx/res/image/search-case-sen.svg"));
+		mSearchCaseButton->setIconSize(QSize(20, 20));
 		mSearchCaseButton->setFixedSize(QSize(32, 32));
 		mSearchCaseButton->setCheckable(true);
 		mSearchCaseButton->setChecked(true);
