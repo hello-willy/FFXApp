@@ -49,6 +49,20 @@ namespace FFX {
 
 		//! Init main toolbar
 		addToolBar(mMainToolBar);
+		mMainToolBar->addAction(mFileMainView->MakeDirAction());
+		QList<QAction*> makefileActions = mFileMainView->MakeFileActions();
+		mMainToolBar->addAction(makefileActions[0]);
+		
+		//! Init File Menu
+		mFileMenu->addAction(mFileMainView->MakeDirAction());
+		QMenu* makefileMenu = new QMenu(QObject::tr("Make File..."));
+		mFileMenu->addAction(makefileMenu->menuAction());
+		for (int i = 0; i < makefileActions.size(); i++) {
+			makefileMenu->addAction(makefileActions[i]);
+		}
+		mFileMenu->addSeparator();
+		mFileMenu->addAction(mFileMainView->PasteFilesAction());
+		mFileMenu->addAction(mFileMainView->MoveFilesAction());
 
 		//! Init status bar
 		mShowTaskBoardButton = new QToolButton;

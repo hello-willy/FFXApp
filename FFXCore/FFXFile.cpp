@@ -18,6 +18,13 @@ namespace FFX {
 		return fileInfoList;
 	}
 
+	QFileInfoList FileInfoList(const QList<QUrl> urls) {
+		QFileInfoList fileInfoList;
+		for (const QUrl& url : urls)
+			fileInfoList << url.toLocalFile();
+		return fileInfoList;
+	}
+
 	int PathDepth(const QString& path) {
 		QString thePath(path);
 		thePath = QDir::toNativeSeparators(QDir::cleanPath(thePath));

@@ -50,6 +50,7 @@ namespace FFX {
 		DefaultFileListView(QWidget* parent = nullptr);
 		~DefaultFileListView();
 		friend class ChangeRootPathCommand;
+		friend class FileMainView;
 
 	public:
 		virtual QStringList SelectedFiles();
@@ -60,6 +61,10 @@ namespace FFX {
 	public:
 		void SetRootPath(const QFileInfo& root);
 
+	public slots:
+		void MakeDirAndEdit();
+		void MakeFileAndEdit(const QString& name);
+		
 	protected:
 		void keyPressEvent(QKeyEvent* event) override;
 		void closeEditor(QWidget* editor, QAbstractItemDelegate::EndEditHint hint) override;
@@ -71,6 +76,10 @@ namespace FFX {
 		void OnActionDelete();
 		void OnActionMoveToTrash();
 		void OnInvertSelect();
+		void OnCollectFiles();
+		void OnAppendCollectFiles();
+		void OnCopyFiles();
+		void OnMoveFiles();
 
 	Q_SIGNALS:
 		void FileDoubleClicked(const QFileInfo& file);
@@ -83,6 +92,10 @@ namespace FFX {
 		QShortcut* mDeleteForceShortcut;
 		QShortcut* mMoveToTrashShortcut;
 		QShortcut* mInvertSelectShortcut;
+		QShortcut* mPasteFilesShortcut;
+		QShortcut* mMoveFilesShortcut;
+		QShortcut* mCollectFilesShortcut;
+		QShortcut* mAppendCollectFilesShortcut;
 	};
 
 	class DefaultFileListViewNavigator : public QWidget {
@@ -140,6 +153,11 @@ namespace FFX {
 
 	public:
 		void Goto(const QString& path);
+		QAction* MakeDirAction();
+		void AddMakeFileAction(QAction* action);
+		QList<QAction*> MakeFileActions();
+		QAction* PasteFilesAction();
+		QAction* MoveFilesAction();
 
 	Q_SIGNALS:
 		void CurrentPathChanged(const QString& newPath);
@@ -154,6 +172,13 @@ namespace FFX {
 		DefaultFileListViewNavigator* mFileViewNavigator;
 		DefaultFileListView* mFileListView;
 		QVBoxLayout* mMainLayout;
+		//! Actions
+		QAction* mMakeDirAction;
+		QList<QAction*> mMakeFileActions;
+
+		QAction* mMakeFileActionDefault;
+		QAction* mPasteFilesAction;
+		QAction* mMoveFilesAction;
 	};
 }
 

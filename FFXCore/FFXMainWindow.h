@@ -42,6 +42,8 @@ namespace FFX {
 		QToolBar* mMainToolBar;
 		QStatusBar* mStatusBar;
 		QToolButton* mShowTaskBoardButton;
+		//QToolButton* mMakeFileButton;
+		//QMenu* mMakeFileMenu;
 
 		PluginManager* mPluginManager = nullptr;
 		FileMainView* mFileMainView;

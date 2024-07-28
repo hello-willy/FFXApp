@@ -400,7 +400,7 @@ namespace FFX {
 			}
 			result << targetFile;
 		}
-		progress->OnComplete();
+		progress->OnComplete(true, QObject::tr("Finish, Total %1 files copied.").arg(mTotalFile));
 		return result;
 	}
 
@@ -470,7 +470,7 @@ namespace FFX {
 			}
 			result << targetFile;
 		}
-		progress->OnComplete();
+		progress->OnComplete(true, QObject::tr("Finish, Total %1 files moved.").arg(mTotalFile));
 		return result;
 	}
 

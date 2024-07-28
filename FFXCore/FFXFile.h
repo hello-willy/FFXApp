@@ -4,6 +4,7 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QSet>
+#include <QUrl>
 
 namespace FFX {
 	extern QString G_FILE_VALIDATOR;
@@ -95,6 +96,7 @@ namespace FFX {
 	
 	QFileInfoList FileInfoList(const QStringList& files);
 	QFileInfoList FileInfoList(const QString& file);
+	QFileInfoList FileInfoList(const QList<QUrl> urls);
 	int PathDepth(const QString& path);
 	void SortByDepth(QFileInfoList& files, bool asc = true);
 	void SortByDepth(QStringList& files, bool asc = true);

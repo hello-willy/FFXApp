@@ -1,4 +1,8 @@
 #include "FFXFileListView.h"
+#include "FFXFileHandler.h"
+#include "FFXMainWindow.h"
+#include "FFXTaskPanel.h"
+
 #include <QLineEdit>
 #include <QDesktopServices>
 #include <QUrl>
@@ -10,8 +14,10 @@
 #include <QAction>
 #include <QMessageBox>
 #include <QKeyEvent>
+#include <QClipboard>
+#include <QMimeData>
+#include <QApplication>
 
-#include "FFXFileHandler.h"
 
 namespace FFX {
 	/************************************************************************************************************************
@@ -145,7 +151,18 @@ namespace FFX {
 		mInvertSelectShortcut = new QShortcut(QKeySequence("Ctrl+Alt+A"), this);
 		mInvertSelectShortcut->setContext(Qt::WidgetShortcut);
 		connect(mInvertSelectShortcut, &QShortcut::activated, this, &DefaultFileListView::OnInvertSelect);
-
+		mCollectFilesShortcut = new QShortcut(QKeySequence("Ctrl+C"), this);
+		mCollectFilesShortcut->setContext(Qt::WidgetShortcut);
+		connect(mCollectFilesShortcut, &QShortcut::activated, this, &DefaultFileListView::OnCollectFiles);
+		mAppendCollectFilesShortcut = new QShortcut(QKeySequence("Ctrl+Shift+C"), this);
+		mAppendCollectFilesShortcut->setContext(Qt::WidgetShortcut);
+		connect(mAppendCollectFilesShortcut, &QShortcut::activated, this, &DefaultFileListView::OnAppendCollectFiles);
+		mPasteFilesShortcut = new QShortcut(QKeySequence("Ctrl+V"), this);
+		mPasteFilesShortcut->setContext(Qt::WidgetShortcut);
+		connect(mPasteFilesShortcut, &QShortcut::activated, this, &DefaultFileListView::OnCopyFiles);
+		mMoveFilesShortcut = new QShortcut(QKeySequence("Ctrl+X"), this);
+		mMoveFilesShortcut->setContext(Qt::WidgetShortcut);
+		connect(mMoveFilesShortcut, &QShortcut::activated, this, &DefaultFileListView::OnMoveFiles);
 		//! Set row spacing to 2.
 		setSpacing(2);
 	}
@@ -290,6 +307,111 @@ namespace FFX {
 		}
 	}
 
+	void DefaultFileListView::OnCollectFiles() {
+		QClipboard* clipboard = QApplication::clipboard();
+		clipboard->clear();
+		QList<QString> files = SelectedFiles();
+		if (files.isEmpty())
+			return;
+
+		QList<QUrl> urls;
+		for (const QString& file : files)
+			urls << QUrl::fromLocalFile(file);
+		QMimeData* mimeData = new QMimeData;
+		mimeData->setUrls(urls);
+		clipboard->setMimeData(mimeData);
+	}
+
+	void DefaultFileListView::OnAppendCollectFiles() {
+		QList<QString> files = SelectedFiles();
+		if (files.isEmpty())
+			return;
+
+		QList<QUrl> urls;
+		for (const QString& file : files)
+			urls << QUrl::fromLocalFile(file);
+
+		QSet<QUrl> urlset(urls.begin(), urls.end());
+		QClipboard* clipboard = QApplication::clipboard();
+		const QMimeData* mimeData = clipboard->mimeData();
+		QList<QUrl> curUrls = mimeData->urls();
+		if (mimeData != nullptr && mimeData->hasUrls())
+			urlset += QSet<QUrl>(curUrls.begin(), curUrls.end());
+
+		QMimeData* newMimeData = new QMimeData;
+		newMimeData->setUrls(urlset.values());
+		clipboard->clear();
+		clipboard->setMimeData(newMimeData);
+	}
+
+	void DefaultFileListView::OnCopyFiles() {
+		QClipboard* clipboard = QApplication::clipboard();
+		const QMimeData* mimeData = clipboard->mimeData();
+		if (mimeData == nullptr || !mimeData->hasUrls())
+			return;
+
+		QList<QUrl> urls = mimeData->urls();
+		QString targetDir = CurrentDir();
+		MainWindow::Instance()->TaskPanelPtr()->Submit(FileInfoList(urls), std::make_shared<FileCopyHandler>(targetDir));
+	}
+
+	void DefaultFileListView::OnMoveFiles() {
+		QClipboard* clipboard = QApplication::clipboard();
+		const QMimeData* mimeData = clipboard->mimeData();
+		if (mimeData == nullptr || !mimeData->hasUrls())
+			return;
+
+		QList<QUrl> urls = mimeData->urls();
+		QString targetDir = CurrentDir();
+		QFileInfoList files;
+		for (const QUrl& url : urls)
+		{
+			QFileInfo file(url.toLocalFile());
+			//! if the target dir equals with the file's parent, ignored!
+			if (file.absolutePath() == targetDir)
+				continue;
+			files << file;
+		}
+		if (files.isEmpty())
+			return;
+		MainWindow::Instance()->TaskPanelPtr()->Submit(FileInfoList(urls), std::make_shared<FileMoveHandler>(targetDir));
+	}
+
+	void DefaultFileListView::MakeDirAndEdit() {
+		QDir dir(CurrentDir());
+		QString baseNewDirName(QObject::tr("New Directory"));
+		int count = 1;
+		QString newDirName = baseNewDirName;
+		while (QFileInfo::exists(dir.absoluteFilePath(newDirName))) {
+			newDirName = QStringLiteral("%1_%2").arg(baseNewDirName).arg(count++);
+		}
+		dir.mkdir(newDirName);
+		QModelIndex idx = IndexOf(dir.absoluteFilePath(newDirName));
+		setCurrentIndex(idx);
+		edit(idx);
+	}
+
+	void DefaultFileListView::MakeFileAndEdit(const QString& name) {
+		QDir dir(CurrentDir());
+		QString baseNewFileName(name.isEmpty() ? QObject::tr("New File") : name);
+		int count = 1;
+		QString newFileName = baseNewFileName;
+		while (QFileInfo::exists(dir.absoluteFilePath(newFileName))) {
+			newFileName = QStringLiteral("%1_%2").arg(baseNewFileName).arg(count++);
+		}
+		
+		QFile file(dir.absoluteFilePath(newFileName));
+		if (!file.open(QIODevice::WriteOnly)) {
+			QMessageBox::critical(this, QObject::tr("Error"), QObject::tr("Create file failed:%1").arg(file.errorString()));
+			return;
+		}
+		file.close();
+
+		QModelIndex idx = IndexOf(dir.absoluteFilePath(newFileName));
+		setCurrentIndex(idx);
+		edit(idx);
+	}
+
 	/************************************************************************************************************************
 	 * Class： DefaultFileListViewNavigator
 	 *
@@ -391,6 +513,16 @@ namespace FFX {
 		mFileViewNavigator = new DefaultFileListViewNavigator;
 		mFileListView = new DefaultFileListView;
 		mMainLayout = new QVBoxLayout;
+		mMakeDirAction = new QAction(QIcon(":/ffx/res/image/mk-folder.svg"), QObject::tr("Make Directory"));
+		mMakeFileActionDefault = new QAction(QIcon(":/ffx/res/image/mk-file.svg"), QObject::tr("New File"));
+		mPasteFilesAction = new QAction(QIcon(":/ffx/res/image/paste-files.svg"), QObject::tr("Copy Files"));
+		//mPasteFilesAction->setShortcut(QKeySequence("Ctrl+V"));
+		mMoveFilesAction = new QAction(QIcon(":/ffx/res/image/move-files.svg"), QObject::tr("Move Files"));
+		//mMoveFilesAction->setShortcut(QKeySequence("Ctrl+X"));
+
+		mMakeFileActions.append(mMakeFileActionDefault);
+		mMakeFileActions.append(new QAction("New Zip File"));
+
 		mMainLayout->addWidget(mFileViewNavigator);
 		mMainLayout->addWidget(mFileListView, 1);
 		mMainLayout->setContentsMargins(5, 0, 0, 0);
@@ -401,6 +533,32 @@ namespace FFX {
 			emit CurrentPathChanged(path); // Transfer the signals for 
 			});
 		connect(mFileListView, &DefaultFileListView::FileDoubleClicked, this, &FileMainView::OnFileDoubleClicked);
+
+		connect(mMakeDirAction, &QAction::triggered, mFileListView, &DefaultFileListView::MakeDirAndEdit);
+		connect(mMakeFileActionDefault, &QAction::triggered, mFileListView, [=]() { mFileListView->MakeFileAndEdit(""); });
+
+		connect(mPasteFilesAction, &QAction::triggered, mFileListView, &DefaultFileListView::OnCopyFiles);
+		connect(mMoveFilesAction, &QAction::triggered, mFileListView, &DefaultFileListView::OnMoveFiles);
+	}
+
+	QAction* FileMainView::MakeDirAction() {
+		return mMakeDirAction;
+	}
+
+	void FileMainView::AddMakeFileAction(QAction* action) {
+		mMakeFileActions.append(action);
+	}
+
+	QList<QAction*> FileMainView::MakeFileActions() {
+		return mMakeFileActions;
+	}
+
+	QAction* FileMainView::PasteFilesAction() {
+		return mPasteFilesAction;
+	}
+
+	QAction* FileMainView::MoveFilesAction() {
+		return mMoveFilesAction;
 	}
 
 	void FileMainView::OnFileDoubleClicked(const QFileInfo& file) {
@@ -410,5 +568,6 @@ namespace FFX {
 			QDesktopServices::openUrl(QUrl::fromLocalFile(file.absoluteFilePath()));
 		}
 	}
+
 }
 

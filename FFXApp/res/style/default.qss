@@ -30,12 +30,12 @@ QTreeView
 
 QTreeView::item
 {
-    height: 32px;
+    height: 40px;
 }
 
 QListView::item
 {
-    height: 32px;
+    height: 40px;
 }
 
 QLabel
@@ -70,7 +70,6 @@ QToolButton::menu-button:hover {
     background-color: #E0E0E0;
     border: 1px solid #999999;
 }
-
 
 QToolButton:disabled
 {
@@ -165,12 +164,12 @@ QToolBar {
 
 QMenuBar {
     background-color: transparent;
-    min-height: 40px;
+    min-height: 32px;
     spacing: 3px; /* spacing between menu bar items */
 }
 
 QMenuBar::item {
-    padding: 0px 15px 0px 15px;
+    padding: 0px 9px 0px 9px;
     background: transparent;
     border-radius: 4px;
 }
@@ -182,8 +181,8 @@ QMenuBar::item:selected
 
 QMenu {
 	border: 1px solid #CCCCCC;
-	border-radius: 5px;
-	padding: 6px 6px 6px 6px;
+	border-radius: 3px;
+	padding: 1px 3px 1px 3px;
 }
 
 QMenu::icon
@@ -194,12 +193,12 @@ QMenu::icon
 QMenu::item 
 {
 	border: 0px solid transparent;
-    border-radius: 5px;
+    border-radius: 3px;
 	background-color: transparent;
 	color: #222;
 	min-height: 50px;
     min-width:300px;
-	margin: 8px 6px 8px 6px;
+	margin: 8px 3px 8px 3px;
     padding-left: 20px;
 }
 

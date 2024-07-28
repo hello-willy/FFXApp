@@ -12,5 +12,9 @@
         <file>res/image/plus.svg</file>
         <file>res/image/close.svg</file>
         <file>res/image/float.svg</file>
+        <file>res/image/mk-folder.svg</file>
+        <file>res/image/mk-file.svg</file>
+        <file>res/image/move-files.svg</file>
+        <file>res/image/paste-files.svg</file>
     </qresource>
 </RCC>
