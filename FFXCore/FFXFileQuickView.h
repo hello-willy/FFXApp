@@ -3,49 +3,89 @@
 #include <QWidget>
 #include <QFrame>
 #include <QToolButton>
+#include <QTreeView>
+#include <QFileSystemModel>
 
+class QHBoxLayout;
 class QVBoxLayout;
 class QLabel;
-
+class QListWidget;
+class QListWidgetItem;
 namespace FFX {
-	
-	class ActionLabel : public QToolButton {
+
+	class FileQuickViewHeader : public QWidget {
 		Q_OBJECT
+	public:
+		FileQuickViewHeader(QWidget* parent = nullptr);
 
 	public:
-		/** Constructor.
-		  */
-		explicit ActionLabel(QWidget* parent = 0);
+		void AddAction(QAction* action);
 
-		/** Constructor. Creates ActionLabel from the action.
-		  \since 0.2
-		  */
-		explicit ActionLabel(QAction* action, QWidget* parent = 0);
+	private:
+		void SetupUi();
 
-		virtual ~ActionLabel() {}
-
-		virtual QSize sizeHint() const override;
-		virtual QSize minimumSizeHint() const override;
-
-	protected:
-		void Init();
+	private:
+		QLabel* mHeaderLabel;
+		QList<QAction*> mActions;
+		QHBoxLayout* mMainLayout;
 	};
 
-	class ActionBox : public QFrame {
+	class QuickNavigatePanel : public QWidget {
+		Q_OBJECT
 	public:
-		ActionBox(const QPixmap& icon, const QString& headerText, QWidget* parent = 0);
-		void SetIcon(const QPixmap& icon);
-		inline const QPixmap* Icon() const;
-		inline ActionLabel* Header() const;
-		ActionLabel* CreateItem(const QString& text, QAction* action = nullptr);
+		QuickNavigatePanel(QWidget* parent = 0);
+
+	public:
+		void AddItem(const QString& dir);
+		bool IsDirFixed(const QString& dir);
+		void RemoveItem(const QString& dir);
+		bool IsFull() const;
 
 	private:
-		void Init();
+		void SetupUi();
+
+	private slots:
+		void OnCurrentItemChanged(QListWidgetItem* current, QListWidgetItem* previous);
 
 	private:
+		FileQuickViewHeader* mHeader;
+		QListWidget* mItemList;
 		QVBoxLayout* mMainLayout;
-		QLabel* mIconLabel;
-		ActionLabel* mHeaderLabel;
+
+	Q_SIGNALS:
+		void RootPathChanged(const QFileInfo& file);
+	};
+
+	class FileTreeViewModel : public QFileSystemModel
+	{
+		Q_OBJECT
+	public:
+		FileTreeViewModel(QObject* parent = nullptr) : QFileSystemModel(parent) {}
+		//! for hide the other columns.
+		int columnCount(const QModelIndex& parent) const override {
+			return 1;
+		}
+	};
+
+	class FileTreeNavigatePanel : public QTreeView {
+		Q_OBJECT
+	public:
+		FileTreeNavigatePanel(QWidget* parent = nullptr);
+
+	protected:
+		void mousePressEvent(QMouseEvent* event) override;
+
+	private:
+		void SetupUi();
+
+	private slots:
+		void onCurrentChanged(const QModelIndex& current, const QModelIndex& previous);
+
+	private:
+		FileTreeViewModel* mFileSystemModel;
+
+	Q_SIGNALS:
+		void RootPathChanged(const QFileInfo& file);
 	};
 
 	class FileQuickView : public QWidget {
@@ -54,6 +94,21 @@ namespace FFX {
 	public:
 		FileQuickView(QWidget* parent = nullptr);
 		~FileQuickView();
+
+	public:
+		QuickNavigatePanel* QuickNaviPanelPtr() { return mQuickNaviPanel; }
+		FileTreeNavigatePanel* FileTreeNaviPanelPtr() { return mFileTreeNavigatePanel; }
+
+	protected:
+		virtual void paintEvent(QPaintEvent* event) override;
+
+	private:
+		void SetupUi();
+
+	private:
+		QuickNavigatePanel* mQuickNaviPanel;
+		FileTreeNavigatePanel* mFileTreeNavigatePanel;
+		QVBoxLayout* mMainLayout;
 	};
 
 }

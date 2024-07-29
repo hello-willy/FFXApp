@@ -56,6 +56,7 @@ namespace FFX {
 		//! Init File Menu
 		mFileMenu->addAction(mFileMainView->MakeDirAction());
 		QMenu* makefileMenu = new QMenu(QObject::tr("Make File..."));
+		makefileMenu->setIcon(QIcon(":/ffx/res/image/plus.svg"));
 		mFileMenu->addAction(makefileMenu->menuAction());
 		for (int i = 0; i < makefileActions.size(); i++) {
 			makefileMenu->addAction(makefileActions[i]);
@@ -71,10 +72,12 @@ namespace FFX {
 
 		//! Init central widget
 		QSplitter* splitterMain = new QSplitter(Qt::Horizontal);
+		//splitterMain->addWidget(mFileQuickView);
 		splitterMain->addWidget(mFileMainView);
 		splitterMain->addWidget(mFileSearchView);
 		splitterMain->setStretchFactor(0, 4);
 		splitterMain->setStretchFactor(1, 1);
+		//splitterMain->setStretchFactor(2, 1);
 		setCentralWidget(splitterMain);
 
 		//! Init task panel

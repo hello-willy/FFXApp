@@ -2,6 +2,7 @@
 #include "FFXFileHandler.h"
 #include "FFXMainWindow.h"
 #include "FFXTaskPanel.h"
+#include "FFXFileQuickView.h"
 
 #include <QLineEdit>
 #include <QDesktopServices>
@@ -17,6 +18,8 @@
 #include <QClipboard>
 #include <QMimeData>
 #include <QApplication>
+#include <QSplitter>
+#include <QMenu>
 
 
 namespace FFX {
@@ -163,6 +166,8 @@ namespace FFX {
 		mMoveFilesShortcut = new QShortcut(QKeySequence("Ctrl+X"), this);
 		mMoveFilesShortcut->setContext(Qt::WidgetShortcut);
 		connect(mMoveFilesShortcut, &QShortcut::activated, this, &DefaultFileListView::OnMoveFiles);
+
+		setContextMenuPolicy(Qt::CustomContextMenu);
 		//! Set row spacing to 2.
 		setSpacing(2);
 	}
@@ -269,7 +274,34 @@ namespace FFX {
 	}
 
 	void DefaultFileListView::OnCustomContextMenuRequested(const QPoint& pos) {
+		QMenu* menu = new QMenu(this);
+		menu->setWindowFlags(Qt::Popup | Qt::FramelessWindowHint | Qt::NoDropShadowWindowHint);
+		menu->setAttribute(Qt::WA_TranslucentBackground);
+		menu->setMinimumWidth(200);
+		QList<QString> selectFiles = SelectedFiles();
+		
+		if (selectFiles.isEmpty()) {
+			menu->addAction(MainWindow::Instance()->FileMainViewPtr()->RefreshAction());
+			menu->addAction(MainWindow::Instance()->FileMainViewPtr()->FixedToQuickPanelAction());
+			menu->addSeparator();
+			menu->addAction(MainWindow::Instance()->FileMainViewPtr()->MakeDirAction());
+			QMenu* makefileMenu = new QMenu(QObject::tr("Make File..."));
+			makefileMenu->setIcon(QIcon(":/ffx/res/image/plus.svg"));
+			menu->addAction(makefileMenu->menuAction());
+			QList<QAction*> makefileActions = MainWindow::Instance()->FileMainViewPtr()->MakeFileActions();
+			for (int i = 0; i < makefileActions.size(); i++) {
+				makefileMenu->addAction(makefileActions[i]);
+			}
 
+			menu->addAction(MainWindow::Instance()->FileMainViewPtr()->PasteFilesAction());
+			menu->addAction(MainWindow::Instance()->FileMainViewPtr()->MoveFilesAction());
+		} else if(selectFiles.size() == 1) {
+			if (QFileInfo(selectFiles[0]).isDir()) {
+				menu->addAction(MainWindow::Instance()->FileMainViewPtr()->FixedToQuickPanelAction());
+			}
+		}
+		menu->exec(QCursor::pos());
+		delete menu;
 	}
 
 	void DefaultFileListView::OnActionDelete() {
@@ -512,33 +544,46 @@ namespace FFX {
 	void FileMainView::SetupUi() {
 		mFileViewNavigator = new DefaultFileListViewNavigator;
 		mFileListView = new DefaultFileListView;
+		mFileQuickView = new FileQuickView;
 		mMainLayout = new QVBoxLayout;
 		mMakeDirAction = new QAction(QIcon(":/ffx/res/image/mk-folder.svg"), QObject::tr("Make Directory"));
-		mMakeFileActionDefault = new QAction(QIcon(":/ffx/res/image/mk-file.svg"), QObject::tr("New File"));
+		mMakeFileAction = new QAction(QIcon(":/ffx/res/image/mk-file.svg"), QObject::tr("New File"));
 		mPasteFilesAction = new QAction(QIcon(":/ffx/res/image/paste-files.svg"), QObject::tr("Copy Files"));
-		//mPasteFilesAction->setShortcut(QKeySequence("Ctrl+V"));
+		mRefreshAction = new QAction(QIcon(":/ffx/res/image/refresh.svg"), QObject::tr("Refresh"));
 		mMoveFilesAction = new QAction(QIcon(":/ffx/res/image/move-files.svg"), QObject::tr("Move Files"));
 		//mMoveFilesAction->setShortcut(QKeySequence("Ctrl+X"));
+		mFixedToQuickPanelAction = new QAction(QIcon(":/ffx/res/image/pin.svg"), QObject::tr("Fix to quick panel"));
+		connect(mFixedToQuickPanelAction, &QAction::triggered, this, &FileMainView::OnFixedToQuickPanel);
 
-		mMakeFileActions.append(mMakeFileActionDefault);
+		mMakeFileActions.append(mMakeFileAction);
 		mMakeFileActions.append(new QAction("New Zip File"));
 
 		mMainLayout->addWidget(mFileViewNavigator);
-		mMainLayout->addWidget(mFileListView, 1);
+		QSplitter* splitter = new QSplitter(Qt::Horizontal);
+		splitter->addWidget(mFileQuickView);
+		splitter->addWidget(mFileListView);
+		splitter->setStretchFactor(0, 1);
+		splitter->setStretchFactor(1, 4);
+		mMainLayout->addWidget(splitter, 1);
+
 		mMainLayout->setContentsMargins(5, 0, 0, 0);
 		setLayout(mMainLayout);
 
-		connect(mFileViewNavigator, &DefaultFileListViewNavigator::RootPathChanged, this, [=](const QString& path) { 
+		connect(mFileViewNavigator, &DefaultFileListViewNavigator::RootPathChanged, this, [=](const QString& path) {
 			mFileListView->SetRootPath(path);
 			emit CurrentPathChanged(path); // Transfer the signals for 
 			});
+		connect(mFileQuickView->QuickNaviPanelPtr(), &QuickNavigatePanel::RootPathChanged, this, &FileMainView::OnRootPathChanged);
+		connect(mFileQuickView->FileTreeNaviPanelPtr(), &FileTreeNavigatePanel::RootPathChanged, this, &FileMainView::OnRootPathChanged);
 		connect(mFileListView, &DefaultFileListView::FileDoubleClicked, this, &FileMainView::OnFileDoubleClicked);
 
 		connect(mMakeDirAction, &QAction::triggered, mFileListView, &DefaultFileListView::MakeDirAndEdit);
-		connect(mMakeFileActionDefault, &QAction::triggered, mFileListView, [=]() { mFileListView->MakeFileAndEdit(""); });
+		connect(mMakeFileAction, &QAction::triggered, mFileListView, [=]() { mFileListView->MakeFileAndEdit(""); });
 
 		connect(mPasteFilesAction, &QAction::triggered, mFileListView, &DefaultFileListView::OnCopyFiles);
 		connect(mMoveFilesAction, &QAction::triggered, mFileListView, &DefaultFileListView::OnMoveFiles);
+
+		connect(mRefreshAction, &QAction::triggered, mFileListView, &DefaultFileListView::Refresh);
 	}
 
 	QAction* FileMainView::MakeDirAction() {
@@ -561,6 +606,10 @@ namespace FFX {
 		return mMoveFilesAction;
 	}
 
+	QAction* FileMainView::FixedToQuickPanelAction() {
+		return mFixedToQuickPanelAction;
+	}
+
 	void FileMainView::OnFileDoubleClicked(const QFileInfo& file) {
 		if (file.isDir()) {
 			Goto(file.absoluteFilePath());
@@ -569,5 +618,25 @@ namespace FFX {
 		}
 	}
 
+	void FileMainView::OnRootPathChanged(const QFileInfo& file) {
+		Goto(file.absoluteFilePath());
+	}
+
+	void FileMainView::OnFixedToQuickPanel() {
+		QString root = mFileListView->CurrentDir();
+		QStringList selectedFiles = mFileListView->SelectedFiles();
+		if (selectedFiles.size() == 1 && QFileInfo(selectedFiles[0]).isDir()) {
+			root = selectedFiles[0];
+		}
+
+		if (mFileQuickView->QuickNaviPanelPtr()->IsDirFixed(root)) {
+			mFileQuickView->QuickNaviPanelPtr()->RemoveItem(root);
+			return;
+		}
+
+		if(!mFileQuickView->QuickNaviPanelPtr()->IsFull()) {
+			mFileQuickView->QuickNaviPanelPtr()->AddItem(root);
+		}
+	}
 }
 

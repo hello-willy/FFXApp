@@ -13,6 +13,7 @@ namespace FFX {
 	class FileMainView;
 	class FileSearchView;
 	class TaskPanel;
+	class FileQuickView;
 
 	class FFXCORE_EXPORT MainWindow : public QMainWindow
 	{
@@ -51,5 +52,4 @@ namespace FFX {
 		QDockWidget* mTaskDocker;
 		TaskPanel* mTaskPanel;
 	};
-
 }

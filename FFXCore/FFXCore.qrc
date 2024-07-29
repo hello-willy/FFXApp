@@ -16,5 +16,7 @@
         <file>res/image/mk-file.svg</file>
         <file>res/image/move-files.svg</file>
         <file>res/image/paste-files.svg</file>
+        <file>res/image/pin.svg</file>
+        <file>res/image/refresh.svg</file>
     </qresource>
 </RCC>

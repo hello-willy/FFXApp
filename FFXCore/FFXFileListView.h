@@ -13,6 +13,8 @@ class QHBoxLayout;
 class QVBoxLayout;
 
 namespace FFX {
+	class FileQuickView;
+
 	class DefaultFileListViewModel : public QFileSystemModel
 	{
 		Q_OBJECT
@@ -56,7 +58,7 @@ namespace FFX {
 		virtual QStringList SelectedFiles();
 		virtual QString CurrentDir();
 		virtual QModelIndex IndexOf(const QString& file);
-		virtual void Refresh();
+		
 
 	public:
 		void SetRootPath(const QFileInfo& root);
@@ -80,6 +82,7 @@ namespace FFX {
 		void OnAppendCollectFiles();
 		void OnCopyFiles();
 		void OnMoveFiles();
+		virtual void Refresh();
 
 	Q_SIGNALS:
 		void FileDoubleClicked(const QFileInfo& file);
@@ -96,6 +99,8 @@ namespace FFX {
 		QShortcut* mMoveFilesShortcut;
 		QShortcut* mCollectFilesShortcut;
 		QShortcut* mAppendCollectFilesShortcut;
+		//! Actions
+		
 	};
 
 	class DefaultFileListViewNavigator : public QWidget {
@@ -158,12 +163,16 @@ namespace FFX {
 		QList<QAction*> MakeFileActions();
 		QAction* PasteFilesAction();
 		QAction* MoveFilesAction();
+		QAction* FixedToQuickPanelAction();
+		QAction* RefreshAction() { return mRefreshAction; }
 
 	Q_SIGNALS:
 		void CurrentPathChanged(const QString& newPath);
 
 	private slots:
 		void OnFileDoubleClicked(const QFileInfo& file);
+		void OnRootPathChanged(const QFileInfo& file);
+		void OnFixedToQuickPanel();
 
 	private:
 		void SetupUi();
@@ -171,14 +180,17 @@ namespace FFX {
 	private:
 		DefaultFileListViewNavigator* mFileViewNavigator;
 		DefaultFileListView* mFileListView;
+		FileQuickView* mFileQuickView;
 		QVBoxLayout* mMainLayout;
 		//! Actions
 		QAction* mMakeDirAction;
 		QList<QAction*> mMakeFileActions;
 
-		QAction* mMakeFileActionDefault;
+		QAction* mMakeFileAction;
 		QAction* mPasteFilesAction;
 		QAction* mMoveFilesAction;
+		QAction* mFixedToQuickPanelAction;
+		QAction* mRefreshAction;
 	};
 }
 
