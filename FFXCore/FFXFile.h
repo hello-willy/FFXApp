@@ -94,12 +94,12 @@ namespace FFX {
 	};
 	typedef QList<File> FileList;
 	
-	QFileInfoList FileInfoList(const QStringList& files);
-	QFileInfoList FileInfoList(const QString& file);
-	QFileInfoList FileInfoList(const QList<QUrl> urls);
-	int PathDepth(const QString& path);
-	void SortByDepth(QFileInfoList& files, bool asc = true);
-	void SortByDepth(QStringList& files, bool asc = true);
+	FFXCORE_EXPORT QFileInfoList FileInfoList(const QStringList& files);
+	FFXCORE_EXPORT QFileInfoList FileInfoList(const QString& file);
+	FFXCORE_EXPORT QFileInfoList FileInfoList(const QList<QUrl> urls);
+	FFXCORE_EXPORT int PathDepth(const QString& path);
+	FFXCORE_EXPORT void SortByDepth(QFileInfoList& files, bool asc = true);
+	FFXCORE_EXPORT void SortByDepth(QStringList& files, bool asc = true);
 }
 
 Q_DECLARE_METATYPE(FFX::File)

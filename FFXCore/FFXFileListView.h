@@ -1,4 +1,5 @@
 #pragma once
+#include "FFXCore.h"
 
 #include <QListView>
 #include <QUndoCommand>
@@ -151,13 +152,17 @@ namespace FFX {
 		QFileInfo mOldPath;
 	};
 
-	class FileMainView : public QWidget {
+	class FFXCORE_EXPORT FileMainView : public QWidget {
 		Q_OBJECT
 	public:
 		FileMainView(QWidget* parent = nullptr);
 
 	public:
 		void Goto(const QString& path);
+		QStringList SelectedFiles();
+		QString RootPath();
+
+	public:
 		QAction* MakeDirAction();
 		void AddMakeFileAction(QAction* action);
 		QList<QAction*> MakeFileActions();

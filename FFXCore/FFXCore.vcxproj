@@ -60,6 +60,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+    <IntDir>..\build\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
   </PropertyGroup>
@@ -109,6 +110,7 @@
     <ClCompile Include="FFXTaskPanel.cpp" />
     <QtMoc Include="FFXTaskPanel.h" />
     <QtMoc Include="FFXActionManager.h" />
+    <ClInclude Include="FFXApplication.h" />
     <ClInclude Include="FFXFile.h" />
     <ClInclude Include="FFXFileFilter.h" />
     <ClInclude Include="FFXFileFilterExpr.h" />

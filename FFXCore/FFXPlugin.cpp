@@ -1,10 +1,18 @@
 #include "FFXPlugin.h"
+#include "FFXMainWindow.h"
+
 #include <QPluginLoader>
+#include <QDir>
+#include <QCoreApplication>
 
 namespace FFX {
+    Application* Plugin::App() {
+        return MainWindow::Instance();
+    }
+
     PluginManager::PluginManager(QObject* parent) 
         : QObject(parent) {
-
+        AutoLoad();
     }
 
 	void PluginManager::LoadPlugin(const QString& pluginPath) {
@@ -37,4 +45,16 @@ namespace FFX {
         delete loader;
         mPluginMap.erase(it);
 	}
+
+    void PluginManager::AutoLoad() {
+        QDir currentDir(QCoreApplication::applicationDirPath());
+        currentDir.cd("ffxplugins");
+        currentDir.setFilter(QDir::Dirs | QDir::NoDotAndDotDot);
+        QFileInfoList fileList = currentDir.entryInfoList();
+        foreach(QFileInfo fileInfo, fileList) {
+            QDir pluginDir(fileInfo.absoluteFilePath());
+            QString pluginPath = pluginDir.absoluteFilePath(fileInfo.fileName() + ".dll");
+            LoadPlugin(pluginPath);
+        }
+    }
 }

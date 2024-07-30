@@ -5,6 +5,7 @@
 
 class QPluginLoader;
 namespace FFX {
+	class Application;
 	class FFXCORE_EXPORT Plugin {
 	public:
 		virtual ~Plugin() {}
@@ -12,8 +13,11 @@ namespace FFX {
 		virtual void Install() = 0;
 		virtual void Uninstall() = 0;
 		virtual QString Id() = 0;
-		QString name() { return "Unknown"; }
-		QString description() { return ""; }
+		virtual QString Name() { return "Unknown"; }
+		virtual QString Description() { return ""; }
+
+	public:
+		Application* App();
 	};
 
 	class FFXCORE_EXPORT PluginManager : public QObject {
@@ -23,6 +27,7 @@ namespace FFX {
 		~PluginManager() = default;
 
 	public:
+		void AutoLoad();
 		void LoadPlugin(const QString& pluginPath);
 		void UnloadPlugin(const QString& pluginId);
 	private:

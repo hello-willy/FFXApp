@@ -424,7 +424,7 @@ namespace FFX {
 
 	void FileCopyHandler::CopyDir(const QFileInfo& dir, const QString& dest, ProgressPtr progress) {
 		QDirIterator fit(dir.absoluteFilePath(), QDir::Files | QDir::Dirs | QDir::System | QDir::Hidden | QDir::NoDotAndDotDot);
-		while (fit.hasNext() && mCancelled) {
+		while (fit.hasNext() && !mCancelled) {
 			fit.next();
 			QFileInfo fi = fit.fileInfo();
 			QDir targetDir(dest);

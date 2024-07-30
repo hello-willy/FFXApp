@@ -117,5 +117,25 @@ namespace FFX {
 	TaskPanel* MainWindow::TaskPanelPtr() {
 		return mTaskPanel;
 	}
+
+	void MainWindow::AddMenu(QMenu* menu) {
+		mMenuBar->insertAction(mViewMenu->menuAction(), menu->menuAction());
+	}
+
+	void MainWindow::RemoveMenu(QMenu* menu) {
+		mMenuBar->removeAction(menu->menuAction());
+	}
+
+	void MainWindow::AddToolbar(QToolBar* toolbar, Qt::ToolBarArea area) {
+		addToolBar(area, toolbar);
+	}
+
+	void MainWindow::RemoveToolbar(QToolBar* toolbar) {
+		removeToolBar(toolbar);
+	}
+
+	void MainWindow::ShowMessage(const QString& message, int timeout) {
+		mStatusBar->showMessage(message, timeout);
+	}
 }
 

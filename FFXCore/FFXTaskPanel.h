@@ -21,7 +21,7 @@ namespace FFX {
 		int mAutoincreamentId = 1;
 	};
 
-	class TaskPanel : public QWidget {
+	class FFXCORE_EXPORT TaskPanel : public QWidget {
 		Q_OBJECT
 	public:
 		TaskPanel(QWidget* parent = nullptr);

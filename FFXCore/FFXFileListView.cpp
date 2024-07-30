@@ -586,6 +586,14 @@ namespace FFX {
 		connect(mRefreshAction, &QAction::triggered, mFileListView, &DefaultFileListView::Refresh);
 	}
 
+	QStringList FileMainView::SelectedFiles() {
+		return mFileListView->SelectedFiles();
+	}
+
+	QString FileMainView::RootPath() {
+		return mFileListView->CurrentDir();
+	}
+
 	QAction* FileMainView::MakeDirAction() {
 		return mMakeDirAction;
 	}

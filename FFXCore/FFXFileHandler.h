@@ -29,10 +29,10 @@ namespace FFX {
 			, mValue(value) {}
 
 	public:
-		QString Name() { return mName; }
-		QString DisplayName() { return mDisplayName; }
-		QString Description() { return mDescription; }
-		QVariant Value() { return mValue; }
+		QString Name() const { return mName; }
+		QString DisplayName() const { return mDisplayName; }
+		QString Description() const { return mDescription; }
+		QVariant Value() const { return mValue; }
 		Argument& SetName(const QString& name) {
 			mName = name;
 			return *this;
