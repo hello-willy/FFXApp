@@ -244,9 +244,14 @@ namespace FFX {
 	 *
 	 *
 	/************************************************************************************************************************/
+	FileStatHandler::FileStatHandler(bool recursion) {
+		mArgMap["Recursion"] = Argument("Recursion", QObject::tr("Recursion"), QObject::tr("Recursive statistics of all directories, default is true"), recursion);
+	}
+
 	QFileInfoList FileStatHandler::Handle(const QFileInfoList& files, ProgressPtr progress) {
 		if (files.isEmpty())
 			return QFileInfoList();
+		bool r = mArgMap["Recursion"].Value().toBool();
 		progress->OnProgress(-1, QObject::tr("Scanning..."));
 		for (const QFileInfo& file : files) {
 			if(file.isFile()) {
@@ -256,7 +261,7 @@ namespace FFX {
 			} else if(file.isDir()) {
 				mDirCount++;
 				QDirIterator fit(file.absoluteFilePath(), QDir::Files | QDir::Dirs | QDir::System | QDir::Hidden | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
-				while (fit.hasNext())
+				while (fit.hasNext() && r)
 				{
 					fit.next();
 					QFileInfo fi = fit.fileInfo();

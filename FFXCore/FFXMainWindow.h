@@ -9,6 +9,8 @@ class QToolBar;
 class QStatusBar;
 class QToolButton;
 class QDockWidget;
+class QLabel;
+
 namespace FFX {
 	class PluginManager;
 	class FileMainView;
@@ -42,6 +44,8 @@ namespace FFX {
 
 	private:
 		void SetupUi();
+		void UpdateCurrentDirInfo();
+		void UpdateSelectFilesInfo(QStringList files);
 
 	private:
 		QMenuBar* mMenuBar;
@@ -51,6 +55,9 @@ namespace FFX {
 		QToolBar* mMainToolBar;
 		QStatusBar* mStatusBar;
 		QToolButton* mShowTaskBoardButton;
+
+		QLabel* mCurrentDirInfoLabel;
+		QLabel* mSelectFilesInfoLabel;
 
 		PluginManager* mPluginManager = nullptr;
 		FileMainView* mFileMainView;

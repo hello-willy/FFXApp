@@ -520,7 +520,6 @@ namespace FFX {
 		QDir dir(root);
 		if (dir.cdUp()) {
 			Goto(dir.absolutePath());
-			//SetRootPath(QFileInfo(dir.absolutePath()));
 		}
 	}
 
@@ -584,6 +583,8 @@ namespace FFX {
 		connect(mMoveFilesAction, &QAction::triggered, mFileListView, &DefaultFileListView::OnMoveFiles);
 
 		connect(mRefreshAction, &QAction::triggered, mFileListView, &DefaultFileListView::Refresh);
+
+		connect(mFileListView->selectionModel(), &QItemSelectionModel::selectionChanged, this, [=]() { emit SelectionChanged(mFileListView->SelectedFiles()); });
 	}
 
 	QStringList FileMainView::SelectedFiles() {

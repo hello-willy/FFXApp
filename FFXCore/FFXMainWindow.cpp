@@ -3,6 +3,7 @@
 #include "FFXFileListView.h"
 #include "FFXFileSearchView.h"
 #include "FFXTaskPanel.h"
+#include "FFXString.h"
 
 #include <QtWidgets/QMessageBox>
 #include <QSplitter>
@@ -11,6 +12,7 @@
 #include <QStatusBar>
 #include <QToolButton>
 #include <QDockWidget>
+#include <QLabel>
 
 namespace FFX {
 	MainWindow* MainWindow::sInstance = nullptr;
@@ -67,6 +69,10 @@ namespace FFX {
 
 		//! Init status bar
 		mShowTaskBoardButton = new QToolButton;
+		mCurrentDirInfoLabel = new QLabel;
+		mSelectFilesInfoLabel = new QLabel;
+		mStatusBar->addPermanentWidget(mCurrentDirInfoLabel);
+		mStatusBar->addPermanentWidget(mSelectFilesInfoLabel);
 		mStatusBar->addPermanentWidget(mShowTaskBoardButton);
 		setStatusBar(mStatusBar);
 
@@ -95,10 +101,16 @@ namespace FFX {
 		mShowTaskBoardButton->setDefaultAction(mTaskDocker->toggleViewAction());
 
 		//! Setup signals/slots
-		connect(mFileMainView, &FileMainView::CurrentPathChanged, this, [=](const QString& path) { mFileSearchView->SetSearchDir(path); });
+		connect(mFileMainView, &FileMainView::CurrentPathChanged, this, [=](const QString& path) { 
+			mFileSearchView->SetSearchDir(path); 
+			UpdateCurrentDirInfo();
+			UpdateSelectFilesInfo(QStringList());
+			});
 		connect(mTaskPanel, &TaskPanel::TaskComplete, mFileSearchView, &FileSearchView::OnSearchComplete);
 		connect(mTaskPanel, &TaskPanel::TaskFileHandled, mFileSearchView, &FileSearchView::OnSearchFileMatched);
-
+		connect(mFileMainView, &FileMainView::SelectionChanged, this, [=](QStringList files) {
+			UpdateSelectFilesInfo(files);
+			});
 		mFileMainView->Goto(QString("D:\\"));
 	}
 
@@ -136,6 +148,30 @@ namespace FFX {
 
 	void MainWindow::ShowMessage(const QString& message, int timeout) {
 		mStatusBar->showMessage(message, timeout);
+	}
+
+	void MainWindow::UpdateCurrentDirInfo() {
+		QString root = mFileMainView->RootPath();
+		QDir f(root);
+		QFileInfoList files = f.entryInfoList(QDir::AllEntries | QDir::NoDotAndDotDot);
+		FileStatHandler handler(false);
+		handler.Handle(files);
+		QString info = QObject::tr("%1 files%2 %3, %4 directories").arg(handler.FileCount()).arg(handler.HiddenFileCount() > 0 ? QObject::tr("(%1 Hidden files/directories)").arg(handler.HiddenFileCount()) : "")
+			.arg(String::BytesHint(handler.TotalSize())).arg(handler.DirCount());
+
+		mCurrentDirInfoLabel->setText(info);
+	}
+
+	void MainWindow::UpdateSelectFilesInfo(QStringList files) {
+		if (files.isEmpty()) {
+			mSelectFilesInfoLabel->setText("");
+			return;
+		}
+		FileStatHandler handler(false);
+		handler.Handle(FileInfoList(files));
+		QString info = QObject::tr("%1 files %2 directories selected (%3)").arg(handler.FileCount())
+			.arg(handler.DirCount()).arg(String::BytesHint(handler.TotalSize()));
+		mSelectFilesInfoLabel->setText(info);
 	}
 }
 

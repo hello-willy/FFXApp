@@ -178,7 +178,7 @@ namespace FFX {
 
 	class FFXCORE_EXPORT FileStatHandler : public FileHandler {
 	public:
-		FileStatHandler() = default;
+		FileStatHandler(bool recursion = true);
 	public:
 		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress = G_DebugProgress) override;
 		virtual std::shared_ptr<FileHandler> Clone() override;
@@ -189,6 +189,7 @@ namespace FFX {
 	public:
 		int DirCount() { return mDirCount; }
 		int FileCount() { return mFileCount + mLinkFileCount; }
+		int HiddenFileCount() { return mHiddenFileCount; }
 		qint64 TotalSize() { return mTotalSize; }
 
 	private:

@@ -173,6 +173,7 @@ namespace FFX {
 
 	Q_SIGNALS:
 		void CurrentPathChanged(const QString& newPath);
+		void SelectionChanged(QStringList files);
 
 	private slots:
 		void OnFileDoubleClicked(const QFileInfo& file);
