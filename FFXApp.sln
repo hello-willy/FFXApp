@@ -11,6 +11,9 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FFXCore", "FFXCore\FFXCore.vcxproj", "{980FDC71-81A9-4A6F-AFAB-CB3043FA6821}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FFXPdf", "FFXPdf\FFXPdf.vcxproj", "{F6BC4A09-EB7C-49D4-A497-78EB6EE2E9CF}"
+	ProjectSection(ProjectDependencies) = postProject
+		{980FDC71-81A9-4A6F-AFAB-CB3043FA6821} = {980FDC71-81A9-4A6F-AFAB-CB3043FA6821}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

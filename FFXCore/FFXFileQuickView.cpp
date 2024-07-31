@@ -94,6 +94,8 @@ namespace FFX {
     }
 
     void QuickNavigatePanel::OnCurrentItemChanged(QListWidgetItem* current, QListWidgetItem* previous) {
+        if (current == nullptr)
+            return;
         QString path = current->data(Qt::UserRole).toString();
         emit RootPathChanged(path);
     }

@@ -33,8 +33,8 @@ namespace FFX {
 
 	class ImageToPdfHandler : public PdfHandler {
 	public:
-		ImageToPdfHandler(const QString& outPdf, const QSize& size = QSize(595, 842), 
-			bool portrait = true, bool autoRotate = false, const QRect& margins = QRect(0, 0, 0, 0));
+		ImageToPdfHandler(const QString& outPdf, const QSize& size = QSize(595, 842), const QRect& boundary = QRect(),
+			bool portrait = true, bool autoRotate = false, bool strech = false);
 
 	public:
 		virtual QString Name() override { return QStringLiteral("ImageToPdfHander"); }
@@ -47,6 +47,7 @@ namespace FFX {
 		virtual QFileInfoList DoHandle(const QFileInfoList& files, ProgressPtr progress) override;
 
 	private:
+		bool CreateImagePage(pdf_document* doc, const char* image, const char* imageName, const fz_rect& pageSize, bool portrait);
 		fz_matrix CalcImageMatrix(int width, int height) const;
 
 	private:
