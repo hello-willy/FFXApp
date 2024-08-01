@@ -24,6 +24,7 @@ namespace FFX {
 
 	protected:
 		bool Init(ProgressPtr progress);
+		virtual std::string FilterExpression() = 0;
 		virtual QFileInfoList DoHandle(const QFileInfoList& files, ProgressPtr progress) = 0;
 
 	protected:
@@ -37,6 +38,7 @@ namespace FFX {
 			bool portrait = true, bool autoRotate = false, bool strech = false);
 
 	public:
+		virtual std::string FilterExpression();
 		virtual QString Name() override { return QStringLiteral("ImageToPdfHander"); }
 		virtual std::shared_ptr<FileHandler> Clone() override;
 		virtual void Cancel() override;
@@ -52,6 +54,33 @@ namespace FFX {
 
 	private:
 		bool mCancelled = false;
+	};
+
+	class AddWaterMarkToPdfHandler : public PdfHandler {
+
+	};
+
+	class MergePdfHandler : public PdfHandler {
+	public:
+		MergePdfHandler(const QString& outPdf, bool compress = false);
+
+	public:
+		virtual QString Name() override { return QStringLiteral("MergePdfHandler"); }
+		virtual std::shared_ptr<FileHandler> Clone() override;
+		virtual void Cancel() override;
+		virtual QString DisplayName() override { return QObject::tr("MergePdfHandler"); }
+		virtual QString Description() override { return QObject::tr("Merge the given PDF files into one PDF file."); }
+
+	protected:
+		virtual std::string FilterExpression() override;
+		virtual QFileInfoList DoHandle(const QFileInfoList& files, ProgressPtr progress) override;
+
+	private:
+		void Merge(pdf_document* doc_src, pdf_document* doc_des);
+
+	private:
+		bool mCancelled = false;
+		int mTotalMergedPageCount = 0;
 	};
 }
 
