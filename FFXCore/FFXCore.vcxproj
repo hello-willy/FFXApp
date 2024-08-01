@@ -96,6 +96,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="FFXActionManager.cpp" />
+    <ClCompile Include="FFXClipboardPanel.cpp" />
+    <ClCompile Include="FFXCommonFileListView.cpp" />
     <ClCompile Include="FFXFile.cpp" />
     <ClCompile Include="FFXFileFilter.cpp" />
     <ClCompile Include="FFXFileFilterExpr.cpp" />
@@ -111,6 +113,8 @@
     <QtMoc Include="FFXTaskPanel.h" />
     <QtMoc Include="FFXActionManager.h" />
     <ClInclude Include="FFXApplication.h" />
+    <QtMoc Include="FFXClipboardPanel.h" />
+    <QtMoc Include="FFXCommonFileListView.h" />
     <ClInclude Include="FFXFile.h" />
     <ClInclude Include="FFXFileFilter.h" />
     <ClInclude Include="FFXFileFilterExpr.h" />

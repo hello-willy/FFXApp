@@ -4,6 +4,7 @@
 #include "FFXFileSearchView.h"
 #include "FFXTaskPanel.h"
 #include "FFXString.h"
+#include "FFXClipboardPanel.h"
 
 #include <QtWidgets/QMessageBox>
 #include <QSplitter>
@@ -13,6 +14,9 @@
 #include <QToolButton>
 #include <QDockWidget>
 #include <QLabel>
+#include <QClipboard>
+#include <QApplication>
+#include <QMimeData>
 
 namespace FFX {
 	MainWindow* MainWindow::sInstance = nullptr;
@@ -71,19 +75,21 @@ namespace FFX {
 		mShowTaskBoardButton = new QToolButton;
 		mCurrentDirInfoLabel = new QLabel;
 		mSelectFilesInfoLabel = new QLabel;
+		mClipboardButton = new QToolButton;
+		mClipboardButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+		
 		mStatusBar->addPermanentWidget(mCurrentDirInfoLabel);
 		mStatusBar->addPermanentWidget(mSelectFilesInfoLabel);
+		mStatusBar->addPermanentWidget(mClipboardButton);
 		mStatusBar->addPermanentWidget(mShowTaskBoardButton);
 		setStatusBar(mStatusBar);
 
 		//! Init central widget
 		QSplitter* splitterMain = new QSplitter(Qt::Horizontal);
-		//splitterMain->addWidget(mFileQuickView);
 		splitterMain->addWidget(mFileMainView);
 		splitterMain->addWidget(mFileSearchView);
 		splitterMain->setStretchFactor(0, 4);
 		splitterMain->setStretchFactor(1, 1);
-		//splitterMain->setStretchFactor(2, 1);
 		setCentralWidget(splitterMain);
 
 		//! Init task panel
@@ -92,12 +98,23 @@ namespace FFX {
 		mTaskDocker->setWindowTitle(QObject::tr("Task Panel"));
 		addDockWidget(Qt::BottomDockWidgetArea, mTaskDocker);
 		mViewMenu->addAction(mTaskDocker->toggleViewAction());
-
 		mTaskDocker->toggleViewAction()->setIcon(QIcon(":/ffx/res/image/task.svg"));
 
-		QSize statusBarSize = mStatusBar->sizeHint();
-		mShowTaskBoardButton->setFixedSize(QSize(statusBarSize.height() - 8, statusBarSize.height() - 8));
-		mShowTaskBoardButton->setIconSize(QSize(20, 20));
+		//! Init clipboard panel
+		mClipboardPanel = new ClipboardPanel;
+		mClipboardPanelDocker = new QDockWidget;
+		mClipboardPanelDocker->setWidget(mClipboardPanel);
+		mClipboardPanelDocker->setWindowTitle(QObject::tr("Clipboard Panel"));
+		addDockWidget(Qt::RightDockWidgetArea, mClipboardPanelDocker);
+		mClipboardPanelDocker->setHidden(true);
+		mViewMenu->addAction(mClipboardPanelDocker->toggleViewAction());
+		mClipboardPanelDocker->toggleViewAction()->setIcon(QIcon(":/ffx/res/image/clipboard.svg"));
+		mClipboardPanelDocker->toggleViewAction()->setText(QObject::tr(" %1 items").arg(0));
+		mClipboardButton->setDefaultAction(mClipboardPanelDocker->toggleViewAction());
+
+		//QSize statusBarSize = mStatusBar->sizeHint();
+		//mShowTaskBoardButton->setFixedSize(QSize(statusBarSize.height() - 8, statusBarSize.height() - 8));
+		//mShowTaskBoardButton->setIconSize(QSize(20, 20));
 		mShowTaskBoardButton->setDefaultAction(mTaskDocker->toggleViewAction());
 
 		//! Setup signals/slots
@@ -111,6 +128,9 @@ namespace FFX {
 		connect(mFileMainView, &FileMainView::SelectionChanged, this, [=](QStringList files) {
 			UpdateSelectFilesInfo(files);
 			});
+		QClipboard* clipboard = QApplication::clipboard();
+		connect(clipboard, &QClipboard::dataChanged, this, &MainWindow::OnClipboardDataChanged);
+
 		mFileMainView->Goto(QString("D:\\"));
 	}
 
@@ -172,6 +192,16 @@ namespace FFX {
 		QString info = QObject::tr("%1 files %2 directories selected (%3)").arg(handler.FileCount())
 			.arg(handler.DirCount()).arg(String::BytesHint(handler.TotalSize()));
 		mSelectFilesInfoLabel->setText(info);
+	}
+
+	void MainWindow::OnClipboardDataChanged() {
+		QClipboard* clipboard = QApplication::clipboard();
+		const QMimeData* mimeData = clipboard->mimeData();
+		int count = 0;
+		if (!(mimeData == nullptr || !mimeData->hasUrls())) {
+			count = mimeData->urls().size();
+		}
+		mClipboardButton->setText(QObject::tr(" %1 items").arg(count));
 	}
 }
 

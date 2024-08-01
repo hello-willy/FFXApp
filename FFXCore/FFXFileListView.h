@@ -60,7 +60,6 @@ namespace FFX {
 		virtual QString CurrentDir();
 		virtual QModelIndex IndexOf(const QString& file);
 		
-
 	public:
 		void SetRootPath(const QFileInfo& root);
 
@@ -75,7 +74,7 @@ namespace FFX {
 	private slots:
 		void OnItemDoubleClicked(const QModelIndex& index);
 		void OnItemRenamed(const QString& path, const QString& oldName, const QString& newName);
-		void OnCustomContextMenuRequested(const QPoint& pos);
+		virtual void OnCustomContextMenuRequested(const QPoint& pos);
 		void OnActionDelete();
 		void OnActionMoveToTrash();
 		void OnInvertSelect();

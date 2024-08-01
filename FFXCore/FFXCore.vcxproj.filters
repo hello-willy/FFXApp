@@ -85,6 +85,12 @@
     <ClCompile Include="FFXFileQuickView.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="FFXClipboardPanel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FFXCommonFileListView.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="FFXTask.h">
@@ -109,6 +115,12 @@
       <Filter>Header Files</Filter>
     </QtMoc>
     <QtMoc Include="FFXFileQuickView.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="FFXClipboardPanel.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="FFXCommonFileListView.h">
       <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>

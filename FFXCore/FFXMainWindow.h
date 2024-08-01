@@ -17,6 +17,7 @@ namespace FFX {
 	class FileSearchView;
 	class TaskPanel;
 	class FileQuickView;
+	class ClipboardPanel;
 
 	class FFXCORE_EXPORT MainWindow : public QMainWindow, public Application
 	{
@@ -47,22 +48,28 @@ namespace FFX {
 		void UpdateCurrentDirInfo();
 		void UpdateSelectFilesInfo(QStringList files);
 
+	private slots:
+		void OnClipboardDataChanged();
+
 	private:
 		QMenuBar* mMenuBar;
 		QMenu* mFileMenu;
 		QMenu* mViewMenu;
 
 		QToolBar* mMainToolBar;
+		
 		QStatusBar* mStatusBar;
 		QToolButton* mShowTaskBoardButton;
-
 		QLabel* mCurrentDirInfoLabel;
 		QLabel* mSelectFilesInfoLabel;
+		QToolButton* mClipboardButton;
 
 		PluginManager* mPluginManager = nullptr;
 		FileMainView* mFileMainView;
 		FileSearchView* mFileSearchView;
 		QDockWidget* mTaskDocker;
 		TaskPanel* mTaskPanel;
+		ClipboardPanel* mClipboardPanel;
+		QDockWidget* mClipboardPanelDocker;
 	};
 }

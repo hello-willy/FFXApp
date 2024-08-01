@@ -18,5 +18,7 @@
         <file>res/image/paste-files.svg</file>
         <file>res/image/pin.svg</file>
         <file>res/image/refresh.svg</file>
+        <file>res/image/clipboard.svg</file>
+        <file>res/image/goto.svg</file>
     </qresource>
 </RCC>
