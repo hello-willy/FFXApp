@@ -20,9 +20,9 @@ namespace FFX {
 
 	private:
 		void AddImageWatermark(pdf_document* doc, const char* image, const char* pdfpath);
-		void AddTextWatermark(pdf_document* doc);
+		void AddTextWatermark(pdf_document* doc, const char* text, const char* pdfpath);
 		fz_matrix CalcImageMatrix(const fz_rect& box, const fz_rect& page_box) const;
-		fz_matrix CalcTextMatrix();
+		fz_matrix CalcTextMatrix(const fz_rect& page_box);
 	private:
 		bool mCancelled = false;
 	};

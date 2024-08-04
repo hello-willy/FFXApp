@@ -2,26 +2,10 @@
 #include "FFXUtils.h"
 #include <iostream>
 
+#include <QFontMetrics>
+
 namespace FFX {
-	fz_matrix CalCentralTextMatrix(const fz_rect& box, const fz_rect& page_box, float r) {
-		float th = box.y1 - box.y0;
-		float tw = box.x1 - box.x0;
-		float w = page_box.x1 - page_box.x0;
-		float h = page_box.y1 - page_box.y0;
-
-		float w1 = th * std::sin(DegToRad(r));
-		float nw = w1 + tw * std::cos(DegToRad(r));
-		float nh = th * std::cos(DegToRad(r)) + th * std::sin(DegToRad(r));
-
-		fz_matrix m = fz_make_matrix(1, 0, 0, 1, 0, 0);
-		m = fz_concat(m, fz_rotate(r));
-		m = fz_concat(m, fz_translate((w - nw) / 2 + w1, (h - nh) / 2));
-		return m;
-	}
-
-	fz_matrix CalCentralImageMatrix(const fz_rect& box, const fz_rect& page_box, float r) {
-		float th = box.y1 - box.y0;
-		float tw = box.x1 - box.x0;
+	fz_matrix CalCentralTextMatrix(float tw, float th, const fz_rect& page_box, float r) {
 		float w = page_box.x1 - page_box.x0;
 		float h = page_box.y1 - page_box.y0;
 
@@ -116,7 +100,7 @@ namespace FFX {
 				if (wt == 1)
 					AddImageWatermark(doc, content.toStdString().c_str(), newPdf.toStdString().c_str());
 				else
-					AddTextWatermark(doc);
+					AddTextWatermark(doc, content.toStdString().c_str(), newPdf.toStdString().c_str());
 
 				progress->OnFileComplete(file, file);
 				result << newPdf;
@@ -161,7 +145,9 @@ namespace FFX {
 		}
 	}
 
-	void AddWatermarkToPdfHandler::AddTextWatermark(pdf_document* doc) {
+	void AddWatermarkToPdfHandler::AddTextWatermark(pdf_document* doc, const char* text, const char* pdfpath) {
+		int fontsize = mArgMap["FontSize"].Value().toInt();
+
 		pdf_write_options opts = pdf_default_write_options;
 		int opacity = (int)(mArgMap["Opacity"].Value().toFloat() * 100);
 		if (opacity < 0) opacity = 0;
@@ -184,28 +170,14 @@ namespace FFX {
 				pdf_dict_put_real(mContext, opa, PDF_NAME(ca), 0.5);
 				pdf_dict_puts(mContext, extg, opstr, opa);
 
+				AddFont(doc, resources, "Helv", "Helvetica", "");
 				AddCjkFont(doc, resources, "Song", "zh-Hant", "", "");
 
-				float th = 24;
-				float tw = 12 * 13;
-				float w = bound.x1 - bound.x0;
-				float h = bound.y1 - bound.y0;
-
-				float r = 45;
-				float w1 = th * std::sin(DegToRad(r));
-				float nw = w1 + tw * std::cos(DegToRad(r));
-				float nh = th * std::cos(DegToRad(r)) + th * std::sin(DegToRad(r));
-
-				fz_matrix m = fz_make_matrix(1, 0, 0, 1, 0, 0);
-				m = fz_concat(m, fz_rotate(r));
-				m = fz_concat(m, fz_translate((w - nw) / 2 + w1, (h - nh) / 2));
-
 				fz_buffer* contents = fz_new_buffer(mContext, 2048);
-
-				fz_matrix m = CalcTextMatrix();
+				fz_matrix m = CalcTextMatrix(bound);
 
 				char buf[512];
-				sprintf(buf, "\nq/%s gs\n0 0 0 rg\n%f %f %f %f %f %f Tm\nBT /Song 24 Tf (Hello, World!) Tj ET\nQ", opstr, m.a, m.b, m.c, m.d, m.e, m.f);
+				sprintf(buf, "\nq/%s gs\n0 0 0 rg\n%f %f %f %f %f %f Tm\nBT /Song %d Tf <4e2d534e4eba6c115171548c56fd> Tj /Helv %d Tf (Hello) Tj ET\nQ", opstr, m.a, m.b, m.c, m.d, m.e, m.f, fontsize, fontsize);
 
 				fz_append_string(mContext, contents, buf);
 				JM_insert_contents(mContext, doc, page->obj, contents, 1);
@@ -213,7 +185,7 @@ namespace FFX {
 				fz_drop_buffer(mContext, contents);
 			}
 
-			pdf_save_document(mContext, doc, "d:\\m1m.pdf", &opts);
+			pdf_save_document(mContext, doc, pdfpath, &opts);
 		}
 		fz_catch(mContext) {
 			fz_report_error(mContext);
@@ -278,11 +250,51 @@ namespace FFX {
 		return m;
 	}
 
-	fz_matrix AddWatermarkToPdfHandler::CalcTextMatrix() {
+	fz_matrix AddWatermarkToPdfHandler::CalcTextMatrix(const fz_rect& pagebox) {
 		int fontsize = mArgMap["FontSize"].Value().toInt();
-		float th = 24;
-		float tw = 12 * 13;
+		QString content = "中华人民共和国Hello";
+		int position = mArgMap["Position"].Value().toInt();
+		float r = mArgMap["Rotate"].Value().toFloat();
 
-		return fz_matrix();
+		QFont font("Arial", fontsize);
+		QFontMetrics metrics(font);
+		float th = fontsize;
+		float tw = metrics.width(content);
+		float pw = pagebox.x1 - pagebox.x0;
+		float ph = pagebox.y1 - pagebox.y0;
+		int margin = 5;
+		fz_matrix m = fz_make_matrix(1, 0, 0, 1, 0, 0);
+		switch (position) {
+		case 0: // central
+			m = CalCentralTextMatrix(tw, th, pagebox, r);
+			break;
+		case 1: // lower left corner
+			m = fz_concat(m, fz_translate(margin, margin));
+			break;
+		case 2: // left center
+			m = fz_concat(m, fz_rotate(-90));
+			m = fz_concat(m, fz_translate(margin, (ph - th) / 2));
+			break;
+		case 3: // upper left corner
+			m = fz_concat(m, fz_translate(margin, ph - th - margin));
+			break;
+		case 4: // center top
+			m = fz_concat(m, fz_translate((pw - tw) / 2, ph - th - margin));
+			break;
+		case 5: // upper right corner
+			m = fz_concat(m, fz_translate(pw - tw - margin, ph - th - margin));
+			break;
+		case 6: // right center
+			m = fz_concat(m, fz_rotate(-90));
+			m = fz_concat(m, fz_translate(pw - th - margin, (ph - tw) / 2  + tw));
+			break;
+		case 7: // lower right corner
+			m = fz_concat(m, fz_translate(pw - tw - margin, margin));
+			break;
+		case 8: // center bottom
+			m = fz_concat(m, fz_translate((pw - tw) / 2, margin));
+			break;
+		}
+		return m;
 	}
 }

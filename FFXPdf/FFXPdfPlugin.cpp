@@ -52,8 +52,11 @@ namespace FFX {
 	void PdfPlugin::OnAddWatermarkAction() {
 		FileMainView* fmv = App()->FileMainViewPtr();
 		QStringList files = fmv->SelectedFiles();
-		App()->TaskPanelPtr()->Submit(FileInfoList(files), std::make_shared<AddWatermarkToPdfHandler>(QFileInfo("C:\\Users\\Coppe\\Pictures\\1.jpg"), 
-			QSize(150, 100), true, 0, 8));
+		//App()->TaskPanelPtr()->Submit(FileInfoList(files), std::make_shared<AddWatermarkToPdfHandler>(QFileInfo("C:\\Users\\Coppe\\Pictures\\1.jpg"), 
+		//	QSize(150, 100), true, 0, 8));
+
+		App()->TaskPanelPtr()->Submit(FileInfoList(files), std::make_shared<AddWatermarkToPdfHandler>("Watermark Test",
+			"", 24, 0, 7, 0.5));
 	}
 }
 

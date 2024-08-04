@@ -19,6 +19,7 @@ namespace FFX {
 	public:
 		fz_rect AddImage(pdf_document* doc, pdf_obj* resources, const char* name, const char* path);
 		void AddCjkFont(pdf_document* doc, pdf_obj* resources, const char* name, const char* lang, const char* wm, const char* style);
+		void AddFont(pdf_document* doc, pdf_obj* resources, const char* name, const char* path, const char* encname);
 
 	protected:
 		bool Init(ProgressPtr progress);

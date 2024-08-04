@@ -96,7 +96,7 @@ namespace FFX {
 
 		data = fz_lookup_cjk_font(mContext, ordering, &size, &index);
 		font = fz_new_font_from_memory(mContext, NULL, data, size, index, 0);
-
+		//font = fz_load_system_font(mContext, "黑体", 0, 0, 0);
 		subres = pdf_dict_get(mContext, resources, PDF_NAME(Font));
 		if (!subres) {
 			subres = pdf_new_dict(mContext, doc, 10);
@@ -104,6 +104,44 @@ namespace FFX {
 		}
 
 		ref = pdf_add_cjk_font(mContext, doc, font, ordering, wmode, serif);
+		pdf_dict_puts(mContext, subres, name, ref);
+		pdf_drop_obj(mContext, ref);
+
+		fz_drop_font(mContext, font);
+	}
+
+	void PdfHandler::AddFont(pdf_document* doc, pdf_obj* resources, const char* name, const char* path, const char* encname)
+	{
+		const unsigned char* data;
+		int size, enc;
+		fz_font* font;
+		pdf_obj* subres, * ref;
+
+		data = fz_lookup_base14_font(mContext, path, &size);
+		if (data)
+			font = fz_new_font_from_memory(mContext, path, data, size, 0, 0);
+		else
+			font = fz_new_font_from_file(mContext, NULL, path, 0, 0);
+
+		subres = pdf_dict_get(mContext, resources, PDF_NAME(Font));
+		if (!subres)
+		{
+			subres = pdf_new_dict(mContext, doc, 10);
+			pdf_dict_put_drop(mContext, resources, PDF_NAME(Font), subres);
+		}
+
+		enc = PDF_SIMPLE_ENCODING_LATIN;
+		if (encname)
+		{
+			if (!strcmp(encname, "Latin") || !strcmp(encname, "Latn"))
+				enc = PDF_SIMPLE_ENCODING_LATIN;
+			else if (!strcmp(encname, "Greek") || !strcmp(encname, "Grek"))
+				enc = PDF_SIMPLE_ENCODING_GREEK;
+			else if (!strcmp(encname, "Cyrillic") || !strcmp(encname, "Cyrl"))
+				enc = PDF_SIMPLE_ENCODING_CYRILLIC;
+		}
+
+		ref = pdf_add_simple_font(mContext, doc, font, enc);
 		pdf_dict_puts(mContext, subres, name, ref);
 		pdf_drop_obj(mContext, ref);
 
