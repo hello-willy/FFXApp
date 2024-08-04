@@ -547,7 +547,7 @@ namespace FFX {
 				progress->OnFileComplete(file, QFileInfo(), flag);
 			}
 		}
-		progress->OnComplete();
+		progress->OnComplete(true, QObject::tr("Finish."));
 		return QFileInfoList();
 	}
 
@@ -560,8 +560,9 @@ namespace FFX {
 		QFile::setPermissions(file.absoluteFilePath(), QFileDevice::ReadOther | QFileDevice::WriteOther);
 		double p = (mDeletedFile++ / (double)mTotalFile) * 100;
 		progress->OnProgress(p, QObject::tr("Deleting: %1").arg(file.absoluteFilePath()));
-		bool flag = QFile::remove(file.absoluteFilePath());
-		progress->OnFileComplete(file, QFileInfo(), flag);
+		QFile f(file.absoluteFilePath());
+		bool flag = f.remove();
+		progress->OnFileComplete(file, QFileInfo(), flag, flag ? "" : f.errorString());
 	}
 
 }

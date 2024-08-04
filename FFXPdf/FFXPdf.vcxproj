@@ -105,11 +105,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="FFXAddWatermarkToPdfHandler.h" />
+    <ClInclude Include="FFXImageToPdfHandler.h" />
+    <ClInclude Include="FFXMergePdfHandler.h" />
     <ClInclude Include="FFXPdf.h" />
     <ClInclude Include="FFXPdfHandler.h" />
     <QtMoc Include="FFXPdfPlugin.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="FFXAddWatermarkToPdfHandler.cpp" />
+    <ClCompile Include="FFXImageToPdfHandler.cpp" />
+    <ClCompile Include="FFXMergePdfHandler.cpp" />
     <ClCompile Include="FFXPdfHandler.cpp" />
     <ClCompile Include="FFXPdfPlugin.cpp" />
   </ItemGroup>

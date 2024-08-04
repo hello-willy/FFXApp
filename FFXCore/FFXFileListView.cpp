@@ -50,8 +50,10 @@ namespace FFX {
 	 *
 	/************************************************************************************************************************/
 	DefaultFileListViewModel::DefaultFileListViewModel(QObject* parent)
-		: QFileSystemModel(parent)
-	{}
+		: QFileSystemModel(parent) {
+		//! Do not watch the changed by QT, we watch it by hand.
+		setOptions(QFileSystemModel::DontWatchForChanges);
+	}
 
 	bool DefaultFileListViewModel::setData(const QModelIndex& idx, const QVariant& value, int role) {
 		if (!idx.isValid()
@@ -308,12 +310,11 @@ namespace FFX {
 		QMessageBox::StandardButton r = QMessageBox::warning(this, QObject::tr("Warning"), QStringLiteral("These files will be delete completely, Are you sure?"), QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
 		if (r == QMessageBox::No)
 			return;
-		FFX::FileHandlerPtr handler = std::make_shared<FFX::FileDeleteHandler>(true);
 		QStringList files = SelectedFiles();
 		if (files.isEmpty())
 			return;
 
-		handler->Handle(FileInfoList(files));
+		MainWindow::Instance()->TaskPanelPtr()->Submit(FileInfoList(files), std::make_shared<FFX::FileDeleteHandler>(true));
 	}
 
 	void DefaultFileListView::OnActionMoveToTrash() {
@@ -322,11 +323,7 @@ namespace FFX {
 		if (files.isEmpty())
 			return;
 
-		QFileInfoList fileInfoList;
-		for (const QString& file : files) {
-			fileInfoList << file;
-		}
-		handler->Handle(fileInfoList);
+		MainWindow::Instance()->TaskPanelPtr()->Submit(FileInfoList(files), std::make_shared<FFX::FileDeleteHandler>());
 	}
 
 	void DefaultFileListView::OnInvertSelect() {
@@ -585,6 +582,10 @@ namespace FFX {
 		connect(mRefreshAction, &QAction::triggered, mFileListView, &DefaultFileListView::Refresh);
 
 		connect(mFileListView->selectionModel(), &QItemSelectionModel::selectionChanged, this, [=]() { emit SelectionChanged(mFileListView->SelectedFiles()); });
+	}
+
+	void FileMainView::RefreshFileListView() {
+		mFileListView->Refresh();
 	}
 
 	QStringList FileMainView::SelectedFiles() {

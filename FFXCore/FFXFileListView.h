@@ -160,6 +160,8 @@ namespace FFX {
 		void Goto(const QString& path);
 		QStringList SelectedFiles();
 		QString RootPath();
+	public slots:
+		void RefreshFileListView();
 
 	public:
 		QAction* MakeDirAction();

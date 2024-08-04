@@ -1,8 +1,10 @@
 #include "FFXPdfPlugin.h"
 #include "FFXApplication.h"
-#include "FFXPdfHandler.h"
 #include "FFXFileListView.h"
 #include "FFXTaskPanel.h"
+#include "FFXImageToPdfHandler.h"
+#include "FFXMergePdfHandler.h"
+#include "FFXAddWatermarkToPdfHandler.h"
 
 #include <QMenu>
 #include <QAction>
@@ -14,10 +16,14 @@ namespace FFX {
 		mPdfMenu = new QMenu(QObject::tr("&PDF"));
 		mImageToPdfAction = new QAction(QObject::tr("Images to PDF"));
 		mMergePdfAction = new QAction(QObject::tr("Merge"));
+		mAddWatermarkAction = new QAction(QObject::tr("Add Watermark"));
 		connect(mImageToPdfAction, &QAction::triggered, this, &PdfPlugin::OnImageToPdfAction);
 		connect(mMergePdfAction, &QAction::triggered, this, &PdfPlugin::OnMergePdfAction);
+		connect(mAddWatermarkAction, &QAction::triggered, this, &PdfPlugin::OnAddWatermarkAction);
+
 		mPdfMenu->addAction(mImageToPdfAction);
 		mPdfMenu->addAction(mMergePdfAction);
+		mPdfMenu->addAction(mAddWatermarkAction);
 	}
 
 	PdfPlugin::~PdfPlugin()	{}
@@ -41,6 +47,13 @@ namespace FFX {
 		FileMainView* fmv = App()->FileMainViewPtr();
 		QStringList files = fmv->SelectedFiles();
 		App()->TaskPanelPtr()->Submit(FileInfoList(files), std::make_shared<MergePdfHandler>("D:/m3.pdf"));
+	}
+
+	void PdfPlugin::OnAddWatermarkAction() {
+		FileMainView* fmv = App()->FileMainViewPtr();
+		QStringList files = fmv->SelectedFiles();
+		App()->TaskPanelPtr()->Submit(FileInfoList(files), std::make_shared<AddWatermarkToPdfHandler>(QFileInfo("C:\\Users\\Coppe\\Pictures\\1.jpg"), 
+			QSize(150, 100), true, 0, 8));
 	}
 }
 

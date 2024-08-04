@@ -124,6 +124,7 @@ namespace FFX {
 			UpdateSelectFilesInfo(QStringList());
 			});
 		connect(mTaskPanel, &TaskPanel::TaskComplete, mFileSearchView, &FileSearchView::OnSearchComplete);
+		connect(mTaskPanel, &TaskPanel::TaskComplete, mFileMainView, &FileMainView::RefreshFileListView);
 		connect(mTaskPanel, &TaskPanel::TaskFileHandled, mFileSearchView, &FileSearchView::OnSearchFileMatched);
 		connect(mFileMainView, &FileMainView::SelectionChanged, this, [=](QStringList files) {
 			UpdateSelectFilesInfo(files);
@@ -131,6 +132,7 @@ namespace FFX {
 		QClipboard* clipboard = QApplication::clipboard();
 		connect(clipboard, &QClipboard::dataChanged, this, &MainWindow::OnClipboardDataChanged);
 
+		
 		mFileMainView->Goto(QString("D:\\"));
 	}
 

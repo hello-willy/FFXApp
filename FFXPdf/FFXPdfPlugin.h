@@ -21,11 +21,13 @@ namespace FFX {
 	private slots:
 		void OnImageToPdfAction();
 		void OnMergePdfAction();
+		void OnAddWatermarkAction();
 
 	private:
 		QMenu* mPdfMenu;
 		QAction* mImageToPdfAction;
 		QAction* mMergePdfAction;
+		QAction* mAddWatermarkAction;
 	};
 
 }

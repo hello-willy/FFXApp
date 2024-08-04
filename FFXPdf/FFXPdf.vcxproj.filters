@@ -29,12 +29,30 @@
     <ClInclude Include="FFXPdfHandler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="FFXImageToPdfHandler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FFXMergePdfHandler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FFXAddWatermarkToPdfHandler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="FFXPdfPlugin.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="FFXPdfHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FFXImageToPdfHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FFXMergePdfHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FFXAddWatermarkToPdfHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
