@@ -263,6 +263,7 @@ namespace FFX {
 		std::dynamic_pointer_cast<FFX::FileRenameHandler>(handler)->Append(std::make_shared<FFX::FileDuplicateHandler>());
 		QFileInfoList result = handler->Handle(FileInfoList(files));
 
+		Refresh();
 		//! Set new file selected
 		QModelIndex first = mFileModel->index(QDir(path).absoluteFilePath(newName));
 		for (const QFileInfo& fi : result) {

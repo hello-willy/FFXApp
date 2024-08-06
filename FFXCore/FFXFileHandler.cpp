@@ -389,7 +389,8 @@ namespace FFX {
 
 	QFileInfoList FileCopyHandler::Handle(const QFileInfoList& files, ProgressPtr progress) {
 		FileStatHandler scaner;
-		scaner.Handle(files, progress);
+		progress->OnProgress(-1, QObject::tr("Scanning..."));
+		scaner.Handle(files);
 		mTotalFile = scaner.FileCount();
 
 		QFileInfoList result;
@@ -456,7 +457,8 @@ namespace FFX {
 
 	QFileInfoList FileMoveHandler::Handle(const QFileInfoList& files, ProgressPtr progress) {
 		FileStatHandler scaner;
-		scaner.Handle(files, progress);
+		progress->OnProgress(-1, QObject::tr("Scanning..."));
+		scaner.Handle(files);
 		mTotalFile = scaner.FileCount();
 
 		QFileInfoList result;
