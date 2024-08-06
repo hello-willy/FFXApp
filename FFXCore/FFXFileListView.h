@@ -71,6 +71,10 @@ namespace FFX {
 		void keyPressEvent(QKeyEvent* event) override;
 		void closeEditor(QWidget* editor, QAbstractItemDelegate::EndEditHint hint) override;
 
+	private:
+		void CopyFiles(bool overwrite = false);
+		void MoveFiles(bool overwrite = false);
+
 	private slots:
 		void OnItemDoubleClicked(const QModelIndex& index);
 		void OnItemRenamed(const QString& path, const QString& oldName, const QString& newName);
@@ -80,8 +84,6 @@ namespace FFX {
 		void OnInvertSelect();
 		void OnCollectFiles();
 		void OnAppendCollectFiles();
-		void OnCopyFiles();
-		void OnMoveFiles();
 		virtual void Refresh();
 
 	Q_SIGNALS:
@@ -96,7 +98,9 @@ namespace FFX {
 		QShortcut* mMoveToTrashShortcut;
 		QShortcut* mInvertSelectShortcut;
 		QShortcut* mPasteFilesShortcut;
+		QShortcut* mOverwritePasteFilesShortcut;
 		QShortcut* mMoveFilesShortcut;
+		QShortcut* mOverwriteMoveFilesShortcut;
 		QShortcut* mCollectFilesShortcut;
 		QShortcut* mAppendCollectFilesShortcut;
 		//! Actions

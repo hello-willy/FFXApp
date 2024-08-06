@@ -274,6 +274,7 @@ namespace FFX {
 		bool mCancelled = false;
 		int mMovedFile = 0;
 		int mTotalFile = 0;
+		int mMovedOkCount = 0;
 	};
 
 	class FFXCORE_EXPORT FileDeleteHandler : public FileHandler {

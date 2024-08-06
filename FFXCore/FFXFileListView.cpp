@@ -150,25 +150,38 @@ namespace FFX {
 		mDeleteForceShortcut = new QShortcut(QKeySequence("Shift+Delete"), this);
 		mDeleteForceShortcut->setContext(Qt::WidgetShortcut);
 		connect(mDeleteForceShortcut, &QShortcut::activated, this, &DefaultFileListView::OnActionDelete);
+
 		mMoveToTrashShortcut = new QShortcut(Qt::Key_Delete, this);
 		mMoveToTrashShortcut->setContext(Qt::WidgetShortcut);
 		connect(mMoveToTrashShortcut, &QShortcut::activated, this, &DefaultFileListView::OnActionMoveToTrash);
+
 		mInvertSelectShortcut = new QShortcut(QKeySequence("Ctrl+Alt+A"), this);
 		mInvertSelectShortcut->setContext(Qt::WidgetShortcut);
 		connect(mInvertSelectShortcut, &QShortcut::activated, this, &DefaultFileListView::OnInvertSelect);
+
 		mCollectFilesShortcut = new QShortcut(QKeySequence("Ctrl+C"), this);
 		mCollectFilesShortcut->setContext(Qt::WidgetShortcut);
 		connect(mCollectFilesShortcut, &QShortcut::activated, this, &DefaultFileListView::OnCollectFiles);
+
 		mAppendCollectFilesShortcut = new QShortcut(QKeySequence("Ctrl+Shift+C"), this);
 		mAppendCollectFilesShortcut->setContext(Qt::WidgetShortcut);
 		connect(mAppendCollectFilesShortcut, &QShortcut::activated, this, &DefaultFileListView::OnAppendCollectFiles);
+
 		mPasteFilesShortcut = new QShortcut(QKeySequence("Ctrl+V"), this);
 		mPasteFilesShortcut->setContext(Qt::WidgetShortcut);
-		connect(mPasteFilesShortcut, &QShortcut::activated, this, &DefaultFileListView::OnCopyFiles);
+		connect(mPasteFilesShortcut, &QShortcut::activated, this, [=]() { CopyFiles(); });
+
+		mOverwritePasteFilesShortcut = new QShortcut(QKeySequence("Ctrl+Shift+V"), this);
+		mOverwritePasteFilesShortcut->setContext(Qt::WidgetShortcut);
+		connect(mOverwritePasteFilesShortcut, &QShortcut::activated, this, [=]() { CopyFiles(true); });
+
 		mMoveFilesShortcut = new QShortcut(QKeySequence("Ctrl+X"), this);
 		mMoveFilesShortcut->setContext(Qt::WidgetShortcut);
-		connect(mMoveFilesShortcut, &QShortcut::activated, this, &DefaultFileListView::OnMoveFiles);
+		connect(mMoveFilesShortcut, &QShortcut::activated, this, [=]() { MoveFiles(); });
 
+		mOverwriteMoveFilesShortcut = new QShortcut(QKeySequence("Ctrl+Shift+X"), this);
+		mOverwriteMoveFilesShortcut->setContext(Qt::WidgetShortcut);
+		connect(mOverwriteMoveFilesShortcut, &QShortcut::activated, this, [=]() { MoveFiles(true); });
 		setContextMenuPolicy(Qt::CustomContextMenu);
 		//! Set row spacing to 2.
 		setSpacing(2);
@@ -374,7 +387,7 @@ namespace FFX {
 		clipboard->setMimeData(newMimeData);
 	}
 
-	void DefaultFileListView::OnCopyFiles() {
+	void DefaultFileListView::CopyFiles(bool overwrite) {
 		QClipboard* clipboard = QApplication::clipboard();
 		const QMimeData* mimeData = clipboard->mimeData();
 		if (mimeData == nullptr || !mimeData->hasUrls())
@@ -382,10 +395,10 @@ namespace FFX {
 
 		QList<QUrl> urls = mimeData->urls();
 		QString targetDir = CurrentDir();
-		MainWindow::Instance()->TaskPanelPtr()->Submit(FileInfoList(urls), std::make_shared<FileCopyHandler>(targetDir));
+		MainWindow::Instance()->TaskPanelPtr()->Submit(FileInfoList(urls), std::make_shared<FileCopyHandler>(targetDir, overwrite));
 	}
 
-	void DefaultFileListView::OnMoveFiles() {
+	void DefaultFileListView::MoveFiles(bool overwrite) {
 		QClipboard* clipboard = QApplication::clipboard();
 		const QMimeData* mimeData = clipboard->mimeData();
 		if (mimeData == nullptr || !mimeData->hasUrls())
@@ -404,7 +417,7 @@ namespace FFX {
 		}
 		if (files.isEmpty())
 			return;
-		MainWindow::Instance()->TaskPanelPtr()->Submit(FileInfoList(urls), std::make_shared<FileMoveHandler>(targetDir));
+		MainWindow::Instance()->TaskPanelPtr()->Submit(FileInfoList(urls), std::make_shared<FileMoveHandler>(targetDir, overwrite));
 	}
 
 	void DefaultFileListView::MakeDirAndEdit() {
@@ -577,8 +590,8 @@ namespace FFX {
 		connect(mMakeDirAction, &QAction::triggered, mFileListView, &DefaultFileListView::MakeDirAndEdit);
 		connect(mMakeFileAction, &QAction::triggered, mFileListView, [=]() { mFileListView->MakeFileAndEdit(""); });
 
-		connect(mPasteFilesAction, &QAction::triggered, mFileListView, &DefaultFileListView::OnCopyFiles);
-		connect(mMoveFilesAction, &QAction::triggered, mFileListView, &DefaultFileListView::OnMoveFiles);
+		connect(mPasteFilesAction, &QAction::triggered, mFileListView, [=]() { mFileListView->CopyFiles(); });
+		connect(mMoveFilesAction, &QAction::triggered, mFileListView, [=]() { mFileListView->MoveFiles(); });
 
 		connect(mRefreshAction, &QAction::triggered, mFileListView, &DefaultFileListView::Refresh);
 

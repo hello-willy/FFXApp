@@ -460,7 +460,6 @@ namespace FFX {
 		progress->OnProgress(-1, QObject::tr("Scanning..."));
 		scaner.Handle(files);
 		mTotalFile = scaner.FileCount();
-
 		QFileInfoList result;
 		QString targetPath = mArgMap["DestPath"].Value().toString();
 		QDir targetDir(targetPath);
@@ -470,14 +469,13 @@ namespace FFX {
 				targetDir.mkdir(file.fileName());
 				MoveDir(file, targetFile, progress);
 				// Remove the dir
-				QDir(file.absoluteFilePath()).removeRecursively();
-			}
-			else {
+				//QDir(file.absoluteFilePath()).removeRecursively();
+			} else {
 				MoveFile(file, targetFile, progress);
 			}
 			result << targetFile;
 		}
-		progress->OnComplete(true, QObject::tr("Finish, Total %1 files moved.").arg(mTotalFile));
+		progress->OnComplete(true, QObject::tr("Finish, Total %1 files moved, %2 failed.").arg(mMovedOkCount).arg(mTotalFile - mMovedOkCount));
 		return result;
 	}
 
@@ -486,17 +484,22 @@ namespace FFX {
 	}
 
 	void FileMoveHandler::MoveFile(const QFileInfo& file, const QString& dest, ProgressPtr progress) {
-		if (QFile::exists(dest) && !mArgMap["Overwrite"].Value().toBool())
+		double p = (mMovedFile++ / (double)mTotalFile) * 100;
+		progress->OnProgress(p, QObject::tr("Moving: %1").arg(file.absoluteFilePath()));
+
+		if (QFile::exists(dest) && !mArgMap["Overwrite"].Value().toBool()) {
+			progress->OnFileComplete(file, dest, false);
 			return;
+		}
 
 		if (QFile::exists(dest)) {
 			QFile::setPermissions(dest, QFileDevice::ReadOther | QFileDevice::WriteOther);
 			QFile::remove(dest);
 		}
-		double p = (mMovedFile++ / (double)mTotalFile) * 100;
-		progress->OnProgress(p, QObject::tr("Moving: %1").arg(file.absoluteFilePath()));
+		
 		bool flag = QFile::rename(file.absoluteFilePath(), dest);
 		progress->OnFileComplete(file, dest, flag);
+		if (flag) mMovedOkCount++;
 	}
 
 	void FileMoveHandler::MoveDir(const QFileInfo& dir, const QString& dest, ProgressPtr progress) {
@@ -514,6 +517,11 @@ namespace FFX {
 			QString theFilePath = fi.absoluteFilePath();
 			MoveFile(theFilePath, targetDir.absoluteFilePath(fi.fileName()), progress);
 		}
+		QString dstr = dir.absoluteFilePath();
+		QDir d(dstr);
+		int count = d.entryList(QDir::Files | QDir::Dirs | QDir::System | QDir::Hidden | QDir::NoDotAndDotDot).size();
+		if(count == 0)
+			d.removeRecursively();
 	}
 
 	/************************************************************************************************************************
