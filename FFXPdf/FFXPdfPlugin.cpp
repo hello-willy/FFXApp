@@ -55,8 +55,8 @@ namespace FFX {
 		//App()->TaskPanelPtr()->Submit(FileInfoList(files), std::make_shared<AddWatermarkToPdfHandler>(QFileInfo("C:\\Users\\Coppe\\Pictures\\1.jpg"), 
 		//	QSize(150, 100), true, 0, 8));
 
-		App()->TaskPanelPtr()->Submit(FileInfoList(files), std::make_shared<AddWatermarkToPdfHandler>("Watermark Test",
-			"", 24, 0, 7, 0.5));
+		App()->TaskPanelPtr()->Submit(FileInfoList(files), std::make_shared<AddWatermarkToPdfHandler>("Watermark水印测试Test",
+			"", 24, 0, 8, 0.5));
 	}
 }
 

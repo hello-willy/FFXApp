@@ -100,7 +100,7 @@ namespace FFX {
 				if (wt == 1)
 					AddImageWatermark(doc, content.toStdString().c_str(), newPdf.toStdString().c_str());
 				else
-					AddTextWatermark(doc, content.toStdString().c_str(), newPdf.toStdString().c_str());
+					AddTextWatermark(doc, content, newPdf.toStdString().c_str());
 
 				progress->OnFileComplete(file, file);
 				result << newPdf;
@@ -145,7 +145,7 @@ namespace FFX {
 		}
 	}
 
-	void AddWatermarkToPdfHandler::AddTextWatermark(pdf_document* doc, const char* text, const char* pdfpath) {
+	void AddWatermarkToPdfHandler::AddTextWatermark(pdf_document* doc, const QString& text, const char* pdfpath) {
 		int fontsize = mArgMap["FontSize"].Value().toInt();
 
 		pdf_write_options opts = pdf_default_write_options;
@@ -154,6 +154,9 @@ namespace FFX {
 		if (opacity >= 100) opacity = 99;
 		char opstr[16];
 		sprintf(opstr, "fitzca%2d%2d", opacity, opacity);
+		const char* ansifont = "Helv";
+		const char* cjkfont = "Song";
+
 		fz_try(mContext) {
 			int pagecount = pdf_count_pages(mContext, doc);
 			for (int i = 0; i < pagecount; i++) {
@@ -170,14 +173,17 @@ namespace FFX {
 				pdf_dict_put_real(mContext, opa, PDF_NAME(ca), 0.5);
 				pdf_dict_puts(mContext, extg, opstr, opa);
 
-				AddFont(doc, resources, "Helv", "Helvetica", "");
-				AddCjkFont(doc, resources, "Song", "zh-Hant", "", "");
+				AddFont(doc, resources, ansifont, "Helvetica", "");
+				AddCjkFont(doc, resources, cjkfont, "zh-Hans", "", "");
+
+				QString tjstr;
+				fz_rect textbox = MakeTjStr(text, tjstr, ansifont, cjkfont, fontsize);
 
 				fz_buffer* contents = fz_new_buffer(mContext, 2048);
-				fz_matrix m = CalcTextMatrix(bound);
+				fz_matrix m = CalcTextMatrix(textbox, bound);
 
 				char buf[512];
-				sprintf(buf, "\nq/%s gs\n0 0 0 rg\n%f %f %f %f %f %f Tm\nBT /Song %d Tf <4e2d534e4eba6c115171548c56fd> Tj /Helv %d Tf (Hello) Tj ET\nQ", opstr, m.a, m.b, m.c, m.d, m.e, m.f, fontsize, fontsize);
+				sprintf(buf, "\nq/%s gs\n0 0 0 rg\n%f %f %f %f %f %f Tm\nBT %s ET\nQ", opstr, m.a, m.b, m.c, m.d, m.e, m.f, tjstr.toStdString().c_str());
 
 				fz_append_string(mContext, contents, buf);
 				JM_insert_contents(mContext, doc, page->obj, contents, 1);
@@ -250,16 +256,13 @@ namespace FFX {
 		return m;
 	}
 
-	fz_matrix AddWatermarkToPdfHandler::CalcTextMatrix(const fz_rect& pagebox) {
+	fz_matrix AddWatermarkToPdfHandler::CalcTextMatrix(const fz_rect& textbox, const fz_rect& pagebox) {
 		int fontsize = mArgMap["FontSize"].Value().toInt();
-		QString content = "中华人民共和国Hello";
 		int position = mArgMap["Position"].Value().toInt();
 		float r = mArgMap["Rotate"].Value().toFloat();
 
-		QFont font("Arial", fontsize);
-		QFontMetrics metrics(font);
-		float th = fontsize;
-		float tw = metrics.width(content);
+		float th = textbox.y1 - textbox.y0;
+		float tw = textbox.x1 - textbox.x0;
 		float pw = pagebox.x1 - pagebox.x0;
 		float ph = pagebox.y1 - pagebox.y0;
 		int margin = 5;

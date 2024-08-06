@@ -110,8 +110,7 @@ namespace FFX {
 		fz_drop_font(mContext, font);
 	}
 
-	void PdfHandler::AddFont(pdf_document* doc, pdf_obj* resources, const char* name, const char* path, const char* encname)
-	{
+	void PdfHandler::AddFont(pdf_document* doc, pdf_obj* resources, const char* name, const char* path, const char* encname) {
 		const unsigned char* data;
 		int size, enc;
 		fz_font* font;
@@ -124,15 +123,13 @@ namespace FFX {
 			font = fz_new_font_from_file(mContext, NULL, path, 0, 0);
 
 		subres = pdf_dict_get(mContext, resources, PDF_NAME(Font));
-		if (!subres)
-		{
+		if (!subres) {
 			subres = pdf_new_dict(mContext, doc, 10);
 			pdf_dict_put_drop(mContext, resources, PDF_NAME(Font), subres);
 		}
 
 		enc = PDF_SIMPLE_ENCODING_LATIN;
-		if (encname)
-		{
+		if (encname) {
 			if (!strcmp(encname, "Latin") || !strcmp(encname, "Latn"))
 				enc = PDF_SIMPLE_ENCODING_LATIN;
 			else if (!strcmp(encname, "Greek") || !strcmp(encname, "Grek"))
@@ -146,6 +143,48 @@ namespace FFX {
 		pdf_drop_obj(mContext, ref);
 
 		fz_drop_font(mContext, font);
+	}
+
+	fz_rect PdfHandler::MakeTjStr(const QString& content, QString& tjstr, const char* ansifont, const char* cjkfont, int fontsize) {
+		QString s;
+		bool isAsciiCode = true;
+		int asc = 0;
+
+		for (QChar b : content) {
+			ushort u = b.unicode();
+			if (u < 256) {
+				if (!isAsciiCode && !s.isEmpty()) {
+					s += QString("> Tj ");
+					tjstr += s;
+					s = "";
+				}
+				if (s.isEmpty()) {
+					s += QString("/%1 24 Tf (").arg(ansifont);
+				}
+				s += b;
+				isAsciiCode = true;
+				asc++;
+			}
+			else {
+				if (isAsciiCode && !s.isEmpty()) {
+					s += QString(") Tj ");
+					tjstr += s;
+					s = "";
+				}
+				if (s.isEmpty()) {
+					s += QString("/%1 24 Tf <").arg(cjkfont);
+				}
+				s += QString("%1").arg(b.unicode(), 4, 16, QChar('0'));
+				isAsciiCode = false;
+			}
+		}
+		if (!s.isEmpty()) {
+			s += isAsciiCode ? QString(") Tj") : QString("> Tj");
+			tjstr += s;
+		}
+		//! 1.9 Value obtained based on experience, the best results are obtained
+		fz_rect r = { 0., 0., asc * fontsize / (float)1.9 + (content.size() - asc) * (float)fontsize, (float)fontsize };
+		return r;
 	}
 }
 

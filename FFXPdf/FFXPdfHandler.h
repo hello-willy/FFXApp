@@ -18,6 +18,8 @@ namespace FFX {
 
 	public:
 		fz_rect AddImage(pdf_document* doc, pdf_obj* resources, const char* name, const char* path);
+		fz_rect MakeTjStr(const QString& content, QString& tjstr, const char* ansifont, const char* cjkfont, int fontsize);
+
 		void AddCjkFont(pdf_document* doc, pdf_obj* resources, const char* name, const char* lang, const char* wm, const char* style);
 		void AddFont(pdf_document* doc, pdf_obj* resources, const char* name, const char* path, const char* encname);
 
