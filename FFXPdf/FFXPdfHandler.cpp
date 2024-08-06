@@ -186,5 +186,6 @@ namespace FFX {
 		fz_rect r = { 0., 0., asc * fontsize / (float)1.9 + (content.size() - asc) * (float)fontsize, (float)fontsize };
 		return r;
 	}
+
 }
 

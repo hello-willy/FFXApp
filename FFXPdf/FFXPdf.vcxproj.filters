@@ -38,6 +38,9 @@
     <ClInclude Include="FFXAddWatermarkToPdfHandler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="FFXExtractImageHandler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="FFXPdfPlugin.cpp">
@@ -53,6 +56,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="FFXAddWatermarkToPdfHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FFXExtractImageHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

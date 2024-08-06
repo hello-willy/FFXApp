@@ -22,12 +22,14 @@ namespace FFX {
 		void OnImageToPdfAction();
 		void OnMergePdfAction();
 		void OnAddWatermarkAction();
+		void OnExtractImageAction();
 
 	private:
 		QMenu* mPdfMenu;
 		QAction* mImageToPdfAction;
 		QAction* mMergePdfAction;
 		QAction* mAddWatermarkAction;
+		QAction* mExtractImageAction;
 	};
 
 }
