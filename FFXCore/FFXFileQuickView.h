@@ -11,6 +11,8 @@ class QVBoxLayout;
 class QLabel;
 class QListWidget;
 class QListWidgetItem;
+class QShortcut;
+
 namespace FFX {
 
 	class FileQuickViewHeader : public QWidget {
@@ -43,6 +45,7 @@ namespace FFX {
 
 	private:
 		void SetupUi();
+		void InitShortcuts();
 
 	private slots:
 		void OnCurrentItemChanged(QListWidgetItem* current, QListWidgetItem* previous);
@@ -51,6 +54,7 @@ namespace FFX {
 		FileQuickViewHeader* mHeader;
 		QListWidget* mItemList;
 		QVBoxLayout* mMainLayout;
+		QList<QShortcut*> mQuickNaviShortcuts;
 
 	Q_SIGNALS:
 		void RootPathChanged(const QFileInfo& file);

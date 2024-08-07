@@ -9,6 +9,7 @@
 #include <QMouseEvent>
 #include <QPainter>
 #include <QSizePolicy>
+#include <QShortcut>
 
 namespace FFX {
 
@@ -40,6 +41,7 @@ namespace FFX {
         mHeader = new FileQuickViewHeader;
         mMainLayout = new QVBoxLayout;
         mItemList = new QListWidget;
+        InitShortcuts();
 
         //! Init list widget
         mItemList->setStyleSheet("QListView { border: transparent; }"); // set the list no border
@@ -98,6 +100,19 @@ namespace FFX {
             return;
         QString path = current->data(Qt::UserRole).toString();
         emit RootPathChanged(path);
+    }
+
+    void QuickNavigatePanel::InitShortcuts() {
+        for (int i = 0; i < 8; i++) {
+            QShortcut* shortcut = new QShortcut(QKeySequence(QString("Ctrl+%1").arg(i + 1)), this);
+            shortcut->setContext(Qt::ApplicationShortcut);
+            connect(shortcut, &QShortcut::activated, this, [=]() {
+                QListWidgetItem* item = mItemList->item(i);
+                if (item == nullptr)
+                    return;
+                mItemList->setCurrentRow(i);
+                });
+        }
     }
 
     FileTreeNavigatePanel::FileTreeNavigatePanel(QWidget* parent)
