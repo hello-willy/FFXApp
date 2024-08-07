@@ -562,7 +562,7 @@ namespace FFX {
 		mRefreshAction = new QAction(QIcon(":/ffx/res/image/refresh.svg"), QObject::tr("Refresh"));
 		mMoveFilesAction = new QAction(QIcon(":/ffx/res/image/move-files.svg"), QObject::tr("Move Files"));
 		mEnvelopeFilesAction = new QAction(QIcon(":/ffx/res/image/file-envelope.svg"), QObject::tr("Envelope Files"));
-		connect(mEnvelopeFilesAction, &QAction::triggered, this, &FileMainView::OnEnvelopeFiles);
+		mClearFolderAction = new QAction(QIcon(":/ffx/res/image/clear-folders.svg"), QObject::tr("Clear Folder"));
 
 		//mMoveFilesAction->setShortcut(QKeySequence("Ctrl+X"));
 		mFixedToQuickPanelAction = new QAction(QIcon(":/ffx/res/image/pin.svg"), QObject::tr("Fix to quick panel"));
@@ -599,6 +599,9 @@ namespace FFX {
 		connect(mRefreshAction, &QAction::triggered, mFileListView, &DefaultFileListView::Refresh);
 
 		connect(mFileListView->selectionModel(), &QItemSelectionModel::selectionChanged, this, [=]() { emit SelectionChanged(mFileListView->SelectedFiles()); });
+		
+		connect(mEnvelopeFilesAction, &QAction::triggered, this, &FileMainView::OnEnvelopeFiles);
+		connect(mClearFolderAction, &QAction::triggered, this, &FileMainView::OnClearFolder);
 	}
 
 	void FileMainView::RefreshFileListView() {
@@ -669,6 +672,11 @@ namespace FFX {
 	void FileMainView::OnEnvelopeFiles() {
 		QStringList selectedFiles = mFileListView->SelectedFiles();
 		MainWindow::Instance()->TaskPanelPtr()->Submit(FileInfoList(selectedFiles), std::make_shared<FileEnvelopeByDirHandler>());
+	}
+
+	void FileMainView::OnClearFolder() {
+		QStringList selectedFiles = mFileListView->SelectedFiles();
+		MainWindow::Instance()->TaskPanelPtr()->Submit(FileInfoList(selectedFiles), std::make_shared<ClearFolderHandler>());
 	}
 }
 

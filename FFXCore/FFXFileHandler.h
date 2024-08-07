@@ -288,10 +288,10 @@ namespace FFX {
 		virtual QString Description() { return QObject::tr("Delete files to the specified location."); }
 		virtual void Cancel() { mCancelled = true; }
 
-	private:
+	protected:
 		void DeleteFile(const QFileInfo& file, ProgressPtr progress = G_DebugProgress);
 
-	private:
+	protected:
 		bool mCancelled = false;
 		int mDeletedFile = 0;
 		int mTotalFile = 0;
@@ -307,6 +307,20 @@ namespace FFX {
 		virtual QString DisplayName() { return QObject::tr("FileEnvelopeByDirHandler"); }
 		virtual QString Description() { return QObject::tr("Move the file to a directory with the same name as it."); }
 
+	};
+
+	class FFXCORE_EXPORT ClearFolderHandler : public FileDeleteHandler {
+	public:
+		ClearFolderHandler();
+	public:
+		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress = G_DebugProgress) override;
+		virtual std::shared_ptr<FileHandler> Clone() override;
+		virtual QString Name() { return QStringLiteral("ClearFolderHandler"); }
+		virtual QString DisplayName() { return QObject::tr("ClearFolderHandler"); }
+		virtual QString Description() { return QObject::tr("Clear all files in the directory, but preserve the directory structure."); }
+
+	private:
+		void ClearDir(const QFileInfo& dir, ProgressPtr progress);
 	};
 }
 

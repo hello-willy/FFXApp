@@ -21,5 +21,6 @@
         <file>res/image/clipboard.svg</file>
         <file>res/image/goto.svg</file>
         <file>res/image/file-envelope.svg</file>
+        <file>res/image/clear-folders.svg</file>
     </qresource>
 </RCC>

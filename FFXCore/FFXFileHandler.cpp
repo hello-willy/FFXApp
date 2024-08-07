@@ -615,4 +615,46 @@ namespace FFX {
 	std::shared_ptr<FileHandler> FileEnvelopeByDirHandler::Clone() {
 		return FileHandlerPtr(new FileEnvelopeByDirHandler(*this));
 	}
+
+	ClearFolderHandler::ClearFolderHandler() {
+
+	}
+
+	QFileInfoList ClearFolderHandler::Handle(const QFileInfoList& files, ProgressPtr progress) {
+		FileStatHandler scaner;
+		progress->OnProgress(-1, QObject::tr("Scanning..."));
+		scaner.Handle(files);
+		int totalFiles = scaner.FileCount();
+
+		int size = files.size();
+		for (int i = 0; i < size; i++) {
+			const QFileInfo& file = files[i];
+			if (file.isDir()) {
+				ClearDir(file, progress);
+			} else {
+				DeleteFile(file, progress);
+			}
+			progress->OnFileComplete(file, QFileInfo());
+		}
+		progress->OnComplete(true, QObject::tr("Finish."));
+		return QFileInfoList();
+	}
+
+	std::shared_ptr<FileHandler> ClearFolderHandler::Clone() {
+		return FileHandlerPtr(new ClearFolderHandler(*this));
+	}
+
+	void ClearFolderHandler::ClearDir(const QFileInfo& dir, ProgressPtr progress) {
+		QDirIterator fit(dir.absoluteFilePath(), QDir::Files | QDir::Dirs | QDir::System | QDir::Hidden | QDir::NoDotAndDotDot);
+		while (fit.hasNext() && !mCancelled) {
+			fit.next();
+			QFileInfo fi = fit.fileInfo();
+			if (fi.isDir()) {
+				ClearDir(fi, progress);
+				continue;
+			}
+			QString theFilePath = fi.absoluteFilePath();
+			DeleteFile(theFilePath, progress);
+		}
+	}
 }
