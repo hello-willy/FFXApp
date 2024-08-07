@@ -70,6 +70,7 @@ namespace FFX {
 		mFileMenu->addSeparator();
 		mFileMenu->addAction(mFileMainView->PasteFilesAction());
 		mFileMenu->addAction(mFileMainView->MoveFilesAction());
+		mFileMenu->addAction(mFileMainView->EnvelopeFilesAction());
 
 		//! Init status bar
 		mShowTaskBoardButton = new QToolButton;

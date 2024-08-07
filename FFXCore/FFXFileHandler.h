@@ -296,6 +296,18 @@ namespace FFX {
 		int mDeletedFile = 0;
 		int mTotalFile = 0;
 	};
+
+	class FFXCORE_EXPORT FileEnvelopeByDirHandler : public FileHandler {
+	public:
+		FileEnvelopeByDirHandler();
+	public:
+		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress = G_DebugProgress) override;
+		virtual std::shared_ptr<FileHandler> Clone() override;
+		virtual QString Name() { return QStringLiteral("FileEnvelopeByDirHandler"); }
+		virtual QString DisplayName() { return QObject::tr("FileEnvelopeByDirHandler"); }
+		virtual QString Description() { return QObject::tr("Move the file to a directory with the same name as it."); }
+
+	};
 }
 
 

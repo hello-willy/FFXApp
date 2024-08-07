@@ -175,6 +175,7 @@ namespace FFX {
 		QAction* MoveFilesAction();
 		QAction* FixedToQuickPanelAction();
 		QAction* RefreshAction() { return mRefreshAction; }
+		QAction* EnvelopeFilesAction() { return mEnvelopeFilesAction; }
 
 	Q_SIGNALS:
 		void CurrentPathChanged(const QString& newPath);
@@ -184,6 +185,7 @@ namespace FFX {
 		void OnFileDoubleClicked(const QFileInfo& file);
 		void OnRootPathChanged(const QFileInfo& file);
 		void OnFixedToQuickPanel();
+		void OnEnvelopeFiles();
 
 	private:
 		void SetupUi();
@@ -202,6 +204,7 @@ namespace FFX {
 		QAction* mMoveFilesAction;
 		QAction* mFixedToQuickPanelAction;
 		QAction* mRefreshAction;
+		QAction* mEnvelopeFilesAction;
 	};
 }
 

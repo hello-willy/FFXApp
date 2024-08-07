@@ -561,6 +561,9 @@ namespace FFX {
 		mPasteFilesAction = new QAction(QIcon(":/ffx/res/image/paste-files.svg"), QObject::tr("Copy Files"));
 		mRefreshAction = new QAction(QIcon(":/ffx/res/image/refresh.svg"), QObject::tr("Refresh"));
 		mMoveFilesAction = new QAction(QIcon(":/ffx/res/image/move-files.svg"), QObject::tr("Move Files"));
+		mEnvelopeFilesAction = new QAction(QIcon(":/ffx/res/image/file-envelope.svg"), QObject::tr("Envelope Files"));
+		connect(mEnvelopeFilesAction, &QAction::triggered, this, &FileMainView::OnEnvelopeFiles);
+
 		//mMoveFilesAction->setShortcut(QKeySequence("Ctrl+X"));
 		mFixedToQuickPanelAction = new QAction(QIcon(":/ffx/res/image/pin.svg"), QObject::tr("Fix to quick panel"));
 		connect(mFixedToQuickPanelAction, &QAction::triggered, this, &FileMainView::OnFixedToQuickPanel);
@@ -661,6 +664,11 @@ namespace FFX {
 		if(!mFileQuickView->QuickNaviPanelPtr()->IsFull()) {
 			mFileQuickView->QuickNaviPanelPtr()->AddItem(root);
 		}
+	}
+
+	void FileMainView::OnEnvelopeFiles() {
+		QStringList selectedFiles = mFileListView->SelectedFiles();
+		MainWindow::Instance()->TaskPanelPtr()->Submit(FileInfoList(selectedFiles), std::make_shared<FileEnvelopeByDirHandler>());
 	}
 }
 

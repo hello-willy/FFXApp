@@ -575,4 +575,44 @@ namespace FFX {
 		progress->OnFileComplete(file, QFileInfo(), flag, flag ? "" : f.errorString());
 	}
 
+	FileEnvelopeByDirHandler::FileEnvelopeByDirHandler() {
+
+	}
+
+	QFileInfoList FileEnvelopeByDirHandler::Handle(const QFileInfoList& files, ProgressPtr progress) {
+		QFileInfoList result;
+
+		int size = files.size();
+		for (int i = 0; i < size; i++) {
+			const QFileInfo& file = files[i];
+			double p = ((i + 1) / (double)size) * 100;
+			progress->OnProgress(p, QObject::tr("Enveloping: %1").arg(file.absoluteFilePath()));
+
+			if (!file.isFile())
+				continue;
+
+			QDir root = file.absoluteDir();
+			File f(file);
+			QString baseName = f.BaseName();
+			QString targetDirPath = root.absoluteFilePath(baseName);
+			
+			//! if there is a file with the same name, system can not make the dir, so omit.
+			if (QFileInfo::exists(targetDirPath) && !QFileInfo(targetDirPath).isDir()) {
+				continue;
+			}
+
+			root.mkdir(baseName);
+			QDir targetDir(targetDirPath);
+			QString targetFile = targetDir.absoluteFilePath(file.fileName());
+			bool flag = QFile::rename(file.absoluteFilePath(), targetFile);
+			progress->OnFileComplete(file, QFileInfo(), flag);
+			if(flag) result << targetFile;
+		}
+		progress->OnComplete(true, QObject::tr("Finish, Total %1 files done.").arg(result.size()));
+		return result;
+	}
+
+	std::shared_ptr<FileHandler> FileEnvelopeByDirHandler::Clone() {
+		return FileHandlerPtr(new FileEnvelopeByDirHandler(*this));
+	}
 }

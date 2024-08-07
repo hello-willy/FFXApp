@@ -20,5 +20,6 @@
         <file>res/image/refresh.svg</file>
         <file>res/image/clipboard.svg</file>
         <file>res/image/goto.svg</file>
+        <file>res/image/file-envelope.svg</file>
     </qresource>
 </RCC>
