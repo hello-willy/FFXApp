@@ -92,7 +92,7 @@ namespace FFX {
     }
 
     bool QuickNavigatePanel::IsFull() const {
-        return 8 <= mItemList->count();
+        return mMaxItems <= mItemList->count();
     }
 
     void QuickNavigatePanel::OnCurrentItemChanged(QListWidgetItem* current, QListWidgetItem* previous) {
@@ -103,7 +103,7 @@ namespace FFX {
     }
 
     void QuickNavigatePanel::InitShortcuts() {
-        for (int i = 0; i < 8; i++) {
+        for (int i = 0; i < mMaxItems; i++) {
             QShortcut* shortcut = new QShortcut(QKeySequence(QString("Ctrl+%1").arg(i + 1)), this);
             shortcut->setContext(Qt::ApplicationShortcut);
             connect(shortcut, &QShortcut::activated, this, [=]() {

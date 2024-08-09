@@ -55,6 +55,7 @@ namespace FFX {
 		QListWidget* mItemList;
 		QVBoxLayout* mMainLayout;
 		QList<QShortcut*> mQuickNaviShortcuts;
+		int mMaxItems = 9;
 
 	Q_SIGNALS:
 		void RootPathChanged(const QFileInfo& file);

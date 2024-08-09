@@ -77,12 +77,14 @@ namespace FFX {
 		mShowTaskBoardButton = new QToolButton;
 		mCurrentDirInfoLabel = new QLabel;
 		mSelectFilesInfoLabel = new QLabel;
+		mClipboardInfoLabel = new QLabel;
 		mClipboardButton = new QToolButton;
-		mClipboardButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+		//mClipboardButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
 		
 		mStatusBar->addPermanentWidget(mCurrentDirInfoLabel);
 		mStatusBar->addPermanentWidget(mSelectFilesInfoLabel);
 		mStatusBar->addPermanentWidget(mClipboardButton);
+		mStatusBar->addPermanentWidget(mClipboardInfoLabel);
 		mStatusBar->addPermanentWidget(mShowTaskBoardButton);
 		setStatusBar(mStatusBar);
 
@@ -111,7 +113,7 @@ namespace FFX {
 		mClipboardPanelDocker->setHidden(true);
 		mViewMenu->addAction(mClipboardPanelDocker->toggleViewAction());
 		mClipboardPanelDocker->toggleViewAction()->setIcon(QIcon(":/ffx/res/image/clipboard.svg"));
-		mClipboardPanelDocker->toggleViewAction()->setText(QObject::tr(" %1 items").arg(0));
+		mClipboardInfoLabel->setText(QObject::tr(" %1 items").arg(0));
 		mClipboardButton->setDefaultAction(mClipboardPanelDocker->toggleViewAction());
 
 		//QSize statusBarSize = mStatusBar->sizeHint();
@@ -188,7 +190,7 @@ namespace FFX {
 
 	void MainWindow::UpdateSelectFilesInfo(QStringList files) {
 		if (files.isEmpty()) {
-			mSelectFilesInfoLabel->setText("");
+			mSelectFilesInfoLabel->setText("0 files selected");
 			return;
 		}
 		FileStatHandler handler(false);
@@ -205,7 +207,7 @@ namespace FFX {
 		if (!(mimeData == nullptr || !mimeData->hasUrls())) {
 			count = mimeData->urls().size();
 		}
-		mClipboardButton->setText(QObject::tr(" %1 items").arg(count));
+		mClipboardInfoLabel->setText(QObject::tr(" %1 items").arg(count));
 	}
 }
 

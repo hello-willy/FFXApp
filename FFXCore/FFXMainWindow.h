@@ -63,6 +63,7 @@ namespace FFX {
 		QLabel* mCurrentDirInfoLabel;
 		QLabel* mSelectFilesInfoLabel;
 		QToolButton* mClipboardButton;
+		QLabel* mClipboardInfoLabel;
 
 		PluginManager* mPluginManager = nullptr;
 		FileMainView* mFileMainView;
