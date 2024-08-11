@@ -6,6 +6,7 @@
 #include "FFXMergePdfHandler.h"
 #include "FFXAddWatermarkToPdfHandler.h"
 #include "FFXExtractImageHandler.h"
+#include "FFXPdfToImageHandler.h"
 
 #include <QMenu>
 #include <QAction>
@@ -19,15 +20,18 @@ namespace FFX {
 		mMergePdfAction = new QAction(QObject::tr("Merge"));
 		mAddWatermarkAction = new QAction(QObject::tr("Add Watermark"));
 		mExtractImageAction = new QAction(QObject::tr("Extract Images"));
+		mPdfToImageAction = new QAction(QObject::tr("Pdf to Images"));
 		connect(mImageToPdfAction, &QAction::triggered, this, &PdfPlugin::OnImageToPdfAction);
 		connect(mMergePdfAction, &QAction::triggered, this, &PdfPlugin::OnMergePdfAction);
 		connect(mAddWatermarkAction, &QAction::triggered, this, &PdfPlugin::OnAddWatermarkAction);
 		connect(mExtractImageAction, &QAction::triggered, this, &PdfPlugin::OnExtractImageAction);
+		connect(mPdfToImageAction, &QAction::triggered, this, &PdfPlugin::OnPdfToImageAction);
 
 		mPdfMenu->addAction(mImageToPdfAction);
 		mPdfMenu->addAction(mMergePdfAction);
 		mPdfMenu->addAction(mAddWatermarkAction);
 		mPdfMenu->addAction(mExtractImageAction);
+		mPdfMenu->addAction(mPdfToImageAction);
 	}
 
 	PdfPlugin::~PdfPlugin()	{}
@@ -67,6 +71,12 @@ namespace FFX {
 		FileMainView* fmv = App()->FileMainViewPtr();
 		QStringList files = fmv->SelectedFiles();
 		App()->TaskPanelPtr()->Submit(FileInfoList(files), std::make_shared<ExtractImageHandler>("E:/新文件夹"));
+	}
+
+	void PdfPlugin::OnPdfToImageAction() {
+		FileMainView* fmv = App()->FileMainViewPtr();
+		QStringList files = fmv->SelectedFiles();
+		App()->TaskPanelPtr()->Submit(FileInfoList(files), std::make_shared<PdfToImageHandler>("E:/新文件夹", QString()));
 	}
 }
 

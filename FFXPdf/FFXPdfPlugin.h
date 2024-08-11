@@ -23,6 +23,7 @@ namespace FFX {
 		void OnMergePdfAction();
 		void OnAddWatermarkAction();
 		void OnExtractImageAction();
+		void OnPdfToImageAction();
 
 	private:
 		QMenu* mPdfMenu;
@@ -30,6 +31,7 @@ namespace FFX {
 		QAction* mMergePdfAction;
 		QAction* mAddWatermarkAction;
 		QAction* mExtractImageAction;
+		QAction* mPdfToImageAction;
 	};
 
 }

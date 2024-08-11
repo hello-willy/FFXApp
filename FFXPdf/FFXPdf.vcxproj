@@ -111,6 +111,7 @@
     <ClInclude Include="FFXMergePdfHandler.h" />
     <ClInclude Include="FFXPdf.h" />
     <ClInclude Include="FFXPdfHandler.h" />
+    <ClInclude Include="FFXPdfToImageHandler.h" />
     <QtMoc Include="FFXPdfPlugin.h" />
   </ItemGroup>
   <ItemGroup>
@@ -120,6 +121,7 @@
     <ClCompile Include="FFXMergePdfHandler.cpp" />
     <ClCompile Include="FFXPdfHandler.cpp" />
     <ClCompile Include="FFXPdfPlugin.cpp" />
+    <ClCompile Include="FFXPdfToImageHandler.cpp" />
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="FFXPdf.qrc" />
