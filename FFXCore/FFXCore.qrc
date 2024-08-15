@@ -22,5 +22,13 @@
         <file>res/image/goto.svg</file>
         <file>res/image/file-envelope.svg</file>
         <file>res/image/clear-folders.svg</file>
+        <file>res/image/angle-bottom.svg</file>
+        <file>res/image/angle-down.svg</file>
+        <file>res/image/angle-top.svg</file>
+        <file>res/image/settings.svg</file>
+        <file>res/image/checkbox-checked.svg</file>
+        <file>res/image/checkbox-partially.svg</file>
+        <file>res/image/checkbox-unchecked.svg</file>
+        <file>res/image/ok.svg</file>
     </qresource>
 </RCC>

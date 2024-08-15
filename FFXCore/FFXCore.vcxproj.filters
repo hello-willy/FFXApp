@@ -94,6 +94,9 @@
     <ClCompile Include="FFXCommonFileListView.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="FFXRenameDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="FFXTask.h">
@@ -124,6 +127,9 @@
       <Filter>Header Files</Filter>
     </QtMoc>
     <QtMoc Include="FFXCommonFileListView.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="FFXRenameDialog.h">
       <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>

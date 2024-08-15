@@ -166,7 +166,7 @@ namespace FFX {
 
 	class FFXCORE_EXPORT FileDuplicateHandler : public FileHandler {
 	public:
-		explicit FileDuplicateHandler(const QString& pattern = QStringLiteral("(N)"), int filedWidth = 4, int base = 10, QChar fill = '0', bool after = true);
+		explicit FileDuplicateHandler(const QString& pattern = QStringLiteral("(N)"), bool firstFileIgnored = true, bool after = true, int filedWidth = 4, int base = 10, QChar fill = '0');
 	public:
 		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress = G_DebugProgress) override;
 		virtual std::shared_ptr<FileHandler> Clone() override;

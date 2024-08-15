@@ -70,6 +70,7 @@ namespace FFX {
 		mFileMenu->addSeparator();
 		mFileMenu->addAction(mFileMainView->PasteFilesAction());
 		mFileMenu->addAction(mFileMainView->MoveFilesAction());
+		mFileMenu->addAction(mFileMainView->RenameAction());
 		mFileMenu->addAction(mFileMainView->EnvelopeFilesAction());
 		mFileMenu->addAction(mFileMainView->ClearFolderAction());
 

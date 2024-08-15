@@ -3,6 +3,7 @@
 #include "FFXMainWindow.h"
 #include "FFXTaskPanel.h"
 #include "FFXFileQuickView.h"
+#include "FFXRenameDialog.h"
 
 #include <QLineEdit>
 #include <QDesktopServices>
@@ -563,6 +564,7 @@ namespace FFX {
 		mMoveFilesAction = new QAction(QIcon(":/ffx/res/image/move-files.svg"), QObject::tr("Move Files"));
 		mEnvelopeFilesAction = new QAction(QIcon(":/ffx/res/image/file-envelope.svg"), QObject::tr("Envelope Files"));
 		mClearFolderAction = new QAction(QIcon(":/ffx/res/image/clear-folders.svg"), QObject::tr("Clear Folder"));
+		mRenameAction = new QAction(QObject::tr("Rename"));
 
 		//mMoveFilesAction->setShortcut(QKeySequence("Ctrl+X"));
 		mFixedToQuickPanelAction = new QAction(QIcon(":/ffx/res/image/pin.svg"), QObject::tr("Fix to quick panel"));
@@ -602,6 +604,8 @@ namespace FFX {
 		
 		connect(mEnvelopeFilesAction, &QAction::triggered, this, &FileMainView::OnEnvelopeFiles);
 		connect(mClearFolderAction, &QAction::triggered, this, &FileMainView::OnClearFolder);
+
+		connect(mRenameAction, &QAction::triggered, this, &FileMainView::OnRename);
 	}
 
 	void FileMainView::RefreshFileListView() {
@@ -677,6 +681,12 @@ namespace FFX {
 	void FileMainView::OnClearFolder() {
 		QStringList selectedFiles = mFileListView->SelectedFiles();
 		MainWindow::Instance()->TaskPanelPtr()->Submit(FileInfoList(selectedFiles), std::make_shared<ClearFolderHandler>());
+	}
+
+	void FileMainView::OnRename() {
+		QStringList selectedFiles = mFileListView->SelectedFiles();
+		RenameDialog dialog(selectedFiles);
+		dialog.exec();
 	}
 }
 

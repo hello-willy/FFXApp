@@ -177,6 +177,7 @@ namespace FFX {
 		QAction* RefreshAction() { return mRefreshAction; }
 		QAction* EnvelopeFilesAction() { return mEnvelopeFilesAction; }
 		QAction* ClearFolderAction() { return mClearFolderAction; }
+		QAction* RenameAction() { return mRenameAction; }
 
 	Q_SIGNALS:
 		void CurrentPathChanged(const QString& newPath);
@@ -188,6 +189,7 @@ namespace FFX {
 		void OnFixedToQuickPanel();
 		void OnEnvelopeFiles();
 		void OnClearFolder();
+		void OnRename();
 
 	private:
 		void SetupUi();
@@ -208,6 +210,7 @@ namespace FFX {
 		QAction* mRefreshAction;
 		QAction* mEnvelopeFilesAction;
 		QAction* mClearFolderAction;
+		QAction* mRenameAction;
 	};
 }
 

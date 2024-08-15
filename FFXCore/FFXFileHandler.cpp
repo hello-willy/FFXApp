@@ -113,7 +113,9 @@ namespace FFX {
 		QRegExp exp(mArgMap["Pattern"].Value().toString(),
 			mArgMap["Case"].Value().toBool() ? Qt::CaseSensitive : Qt::CaseInsensitive,
 			(QRegExp::PatternSyntax)mArgMap["Syntax"].Value().toInt());
-
+		if (exp.isEmpty())
+			return files;
+		
 		bool suffixInc = mArgMap["SuffixInc"].Value().toBool();
 		QString after = mArgMap["After"].Value().toString();
 		double step = files.size() / 100.;
@@ -180,21 +182,23 @@ namespace FFX {
 	 * 
 	 * 
 	/************************************************************************************************************************/
-	FileDuplicateHandler::FileDuplicateHandler(const QString& pattern, int filedWidth, int base, QChar fill, bool after) {
-		mArgMap["Pattern"]	= Argument("Pattern", QObject::tr("Pattern"), QObject::tr("Used to add string templates when file duplication occurs, such as (N), N_N, N_, [N] Among them, N must exist."), pattern);
+	FileDuplicateHandler::FileDuplicateHandler(const QString& pattern, bool firstFileIgnored, bool after, int filedWidth, int base, QChar fill) {
+		mArgMap["Pattern"] = Argument("Pattern", QObject::tr("Pattern"), QObject::tr("Used to add string templates when file duplication occurs, such as (N), N_N, N_, [N] Among them, N must exist."), pattern);
 		mArgMap["Position"] = Argument("Position", QObject::tr("Position"), QObject::tr("Should it be placed before or after the file name, by default after."), after);
-		mArgMap["Width"]	= Argument("Width", QObject::tr("Width"), QObject::tr("Width of numbers4: 0001, 0002, ...; 2: 01, 02, 03, ..."), filedWidth);
-		mArgMap["Fill"]		= Argument("Fill", QObject::tr("Char filling"), QObject::tr("Used in conjunction with Width, defaults is '0'."), fill);
-		mArgMap["Base"]		= Argument("Base", QObject::tr("Base system"), QObject::tr("The base system for numerical output defaults to 10 (decimal)."), base);
+		mArgMap["Width"] = Argument("Width", QObject::tr("Width"), QObject::tr("Width of numbers4: 0001, 0002, ...; 2: 01, 02, 03, ..."), filedWidth);
+		mArgMap["Fill"] = Argument("Fill", QObject::tr("Char filling"), QObject::tr("Used in conjunction with Width, defaults is '0'."), fill);
+		mArgMap["Base"] = Argument("Base", QObject::tr("Base system"), QObject::tr("The base system for numerical output defaults to 10 (decimal)."), base);
+		mArgMap["FirstFileIgnored"] = Argument("FirstFileIgnored", QObject::tr("FirstFileIgnored"), QObject::tr("The first file does not participate in numbering."), firstFileIgnored);
 	}
 
 	QFileInfoList FileDuplicateHandler::Handle(const QFileInfoList& files, ProgressPtr progress) {
 		QFileInfoList result;
-		bool after		= mArgMap["Position"].Value().toBool();
-		QChar fill		= mArgMap["Fill"].Value().toChar();
-		int base		= mArgMap["Base"].Value().toInt();
-		int width		= mArgMap["Width"].Value().toInt();
+		bool after = mArgMap["Position"].Value().toBool();
+		QChar fill = mArgMap["Fill"].Value().toChar();
+		int base = mArgMap["Base"].Value().toInt();
+		int width = mArgMap["Width"].Value().toInt();
 		QString pattern = mArgMap["Pattern"].Value().toString();
+		bool firstFileIgnored = mArgMap["FirstFileIgnored"].Value().toBool();
 
 		if (!pattern.contains("N")) {
 			progress->OnComplete(false, QObject::tr("Handle failed: %s").arg(QObject::tr("Invalid pattern.")));
@@ -206,11 +210,16 @@ namespace FFX {
 		double step = files.size() / 100.;
 		for (const QFileInfo& fileInfo : files) {
 			QString newFile = fileInfo.filePath();
-			if (fileInfo.exists() && duplicateChecker[fileInfo.filePath()] == 0) {
+			//if(!firstFileIgnored) {
+			//	duplicateChecker[fileInfo.filePath()]++;
+			//}
+			if (fileInfo.exists() && duplicateChecker[fileInfo.filePath()] == 0 && firstFileIgnored) {
 				duplicateChecker[fileInfo.filePath()]++;
 			} else {
-				if (duplicateChecker[fileInfo.filePath()] > 0) {
+				if (duplicateChecker[fileInfo.filePath()] > 0 || !firstFileIgnored) {
 					while (true) {
+						if (duplicateChecker[fileInfo.filePath()] == 0)
+							duplicateChecker[fileInfo.filePath()]++;
 						QString newFileName;
 						QString suffix = fileInfo.suffix();
 						if (after) {
