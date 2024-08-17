@@ -7,10 +7,10 @@
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    //QFile file(":/FFXApp/res/style/default.qss");
-    //file.open(QFile::ReadOnly);
-    //a.setStyleSheet(file.readAll());
-    //file.close();
+    QFile file(":/FFXApp/res/style/default.qss");
+    file.open(QFile::ReadOnly);
+    a.setStyleSheet(file.readAll());
+    file.close();
     // 
     //QDir root("D:\\Temp");
     //bool flag = QFile::rename("D:\\Temp\\新文件夹\\1.txt", "E:\\Temp\\新文件夹\\2.txt");

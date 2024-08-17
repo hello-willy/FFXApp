@@ -48,18 +48,26 @@ QLabel
 QToolButton
 {
     background-color: transparent;
-    text-align: center;
 }
 QToolButton:checked
 {
     background-color: #E6E6E6;
     border: 1px solid #999999;
 }
+
 QToolButton:hover
 {
     background-color: #E0E0E0;
+}
+
+QToolButton::menu-button {
+    background-color: transparent;
+}
+
+QToolButton::menu-button:hover {
     border: 1px solid #999999;
 }
+
 /*
 QToolButton::menu-button {
     background-color: transparent;
@@ -211,7 +219,6 @@ QMenu::item:selected
 QProgressBar 
 {
     border: 1px solid #999999;
-    margin: 9px 4px 9px 4px;
     text-align: center;
 }
 

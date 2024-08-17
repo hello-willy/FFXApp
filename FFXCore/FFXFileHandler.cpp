@@ -202,7 +202,7 @@ namespace FFX {
 
 		if (!pattern.contains("N")) {
 			progress->OnComplete(false, QObject::tr("Handle failed: %s").arg(QObject::tr("Invalid pattern.")));
-			return result;
+			return files;
 		}
 		pattern.replace("N", "%1");
 
@@ -340,7 +340,7 @@ namespace FFX {
 				result << tempFiles[i];
 			progress->OnProgress(pencent += step);
 		}
-		progress->OnComplete();
+		progress->OnComplete(true, QObject::tr("Finish."));
 		return result;
 	}
 

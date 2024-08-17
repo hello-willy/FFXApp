@@ -11,6 +11,8 @@ class QComboBox;
 class QLineEdit;
 class QTableWidget;
 class QFrame;
+class QProgressBar;
+class QVBoxLayout;
 
 namespace FFX {
 	class Task;
@@ -19,6 +21,21 @@ namespace FFX {
 		virtual int Id();
 	private:
 		int mAutoincreamentId = 1;
+	};
+
+	class TaskProgressBar : public QWidget {
+		Q_OBJECT
+	public:
+		TaskProgressBar(int height = 20, QWidget* parent = nullptr);
+
+	public:
+		void setMinimum(int minimum);
+		void setMaximum(int maximum);
+		void setValue(int value);
+
+	private:
+		QVBoxLayout* mLayout;
+		QProgressBar* mProgressBar;
 	};
 
 	class FFXCORE_EXPORT TaskPanel : public QWidget {

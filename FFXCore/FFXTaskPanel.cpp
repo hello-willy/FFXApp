@@ -18,6 +18,31 @@ namespace FFX {
 		return mAutoincreamentId++;
 	}
 
+	TaskProgressBar::TaskProgressBar(int height, QWidget* parent)
+		: QWidget(parent) {
+		mProgressBar = new QProgressBar;
+		mProgressBar->setAlignment(Qt::AlignCenter);
+		mLayout = new QVBoxLayout;
+		mLayout->setMargin(0);
+		mLayout->setSpacing(0);
+		mLayout->addWidget(mProgressBar, 1);
+		//mLayout->setAlignment(mProgressBar, Qt::AlignCenter);
+		setLayout(mLayout);
+		mProgressBar->setFixedHeight(height);
+	}
+
+	void TaskProgressBar::setMinimum(int minimum) {
+		mProgressBar->setMinimum(minimum);
+	}
+
+	void TaskProgressBar::setMaximum(int maximum) {
+		mProgressBar->setMaximum(maximum);
+	}
+
+	void TaskProgressBar::setValue(int value) {
+		mProgressBar->setValue(value);
+	}
+
 	QMap<QString, int> HEADER = { {"ID", 0}, {"NAME", 1}, {"START", 2}, {"PROG", 5}, {"COST", 3}, {"STATE", 4}, {"MSG", 6} };
 	TaskPanel::TaskPanel(QWidget* parent)
 		: QWidget(parent) {
@@ -51,8 +76,8 @@ namespace FFX {
 
 		QTableWidgetItem* progressRow = new QTableWidgetItem("");
 		mTaskTable->setItem(row, HEADER["PROG"], progressRow);
-		mTaskTable->setCellWidget(row, HEADER["PROG"], new QProgressBar);
-
+		mTaskTable->setCellWidget(row, HEADER["PROG"], new TaskProgressBar(30));
+		
 		QTableWidgetItem* costTimeRow = new QTableWidgetItem("-");
 		mTaskTable->setItem(row, HEADER["COST"], costTimeRow);
 
@@ -77,6 +102,7 @@ namespace FFX {
 
 	void TaskPanel::SetupUi() {
 		resize(600, 400);
+
 		mMainGridLayout = new QGridLayout;
 		mMainGridLayout->setSpacing(6);
 		mMainGridLayout->setContentsMargins(6, 6, 6, 6);
@@ -121,6 +147,7 @@ namespace FFX {
 		mMainGridLayout->addWidget(mSeperator, 0, 3, 1, 1);
 
 		mTaskTable->verticalHeader()->setHidden(true);
+		mTaskTable->horizontalHeader()->setHighlightSections(false);
 		mTaskTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
 		mTaskTable->setSelectionMode(QAbstractItemView::ExtendedSelection);
 
@@ -308,7 +335,7 @@ namespace FFX {
 			return;
 		msgItem->setText(msg);
 
-		QProgressBar* pb = static_cast<QProgressBar*>(mTaskTable->cellWidget(row, HEADER["PROG"]));
+		TaskProgressBar* pb = static_cast<TaskProgressBar*>(mTaskTable->cellWidget(row, HEADER["PROG"]));
 		if (pb != nullptr) {
 			pb->setMinimum(0);
 			pb->setMaximum(100);
@@ -326,7 +353,7 @@ namespace FFX {
 		QTableWidgetItem* item = mTaskTable->item(row, HEADER["PROG"]);
 		if (item == nullptr)
 			return;
-		QProgressBar* pb = static_cast<QProgressBar*>(mTaskTable->cellWidget(row, HEADER["PROG"]));
+		TaskProgressBar* pb = static_cast<TaskProgressBar*>(mTaskTable->cellWidget(row, HEADER["PROG"]));
 		if (pb != nullptr) {
 			if (pos < 0) {
 				pb->setMinimum(0);

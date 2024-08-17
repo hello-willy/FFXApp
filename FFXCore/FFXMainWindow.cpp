@@ -130,6 +130,7 @@ namespace FFX {
 			});
 		connect(mTaskPanel, &TaskPanel::TaskComplete, mFileSearchView, &FileSearchView::OnSearchComplete);
 		connect(mTaskPanel, &TaskPanel::TaskComplete, mFileMainView, &FileMainView::RefreshFileListView);
+		connect(mTaskPanel, &TaskPanel::TaskFileHandled, mFileMainView, &FileMainView::RefreshFileListView);
 		connect(mTaskPanel, &TaskPanel::TaskFileHandled, mFileSearchView, &FileSearchView::OnSearchFileMatched);
 		connect(mFileMainView, &FileMainView::SelectionChanged, this, [=](QStringList files) {
 			UpdateSelectFilesInfo(files);

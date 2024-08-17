@@ -227,9 +227,11 @@ namespace FFX {
 		mSuffixIncludeCheckBox->setChecked(false);
 
 		mSyntaxCombo = new QComboBox;
-		mSyntaxCombo->addItem(QObject::tr("Wildcard"), QRegExp::Wildcard);
 		mSyntaxCombo->addItem(QObject::tr("RegExp"), QRegExp::RegExp);
+		mSyntaxCombo->addItem(QObject::tr("Wildcard"), QRegExp::Wildcard);
 		mSyntaxCombo->addItem(QObject::tr("FixedString"), QRegExp::FixedString);
+
+		mSyntaxCombo->setCurrentIndex((int)syntax);
 
 		mMainLayout = new QHBoxLayout;
 		mMainLayout->setContentsMargins(5, 10, 5, 10);
@@ -248,12 +250,12 @@ namespace FFX {
 		connect(mPatternEdit, &ExprLineEdit::textChanged, this, &ExprListItemWidget::OnItemChanged);
 		connect(mStringFillEdit, &ExprLineEdit::textChanged, this, &ExprListItemWidget::OnItemChanged);
 
-		connect(mRuleActivedCheckBox, &QCheckBox::clicked, this, &ExprListItemWidget::OnItemChanged);
+		//connect(mRuleActivedCheckBox, &QCheckBox::clicked, this, &ExprListItemWidget::OnItemChanged);
 		connect(mCaseSensitiveCheckBox, &QCheckBox::clicked, this, &ExprListItemWidget::OnItemChanged);
 		connect(mSuffixIncludeCheckBox, &QCheckBox::clicked, this, &ExprListItemWidget::OnItemChanged);
+		connect(mRuleActivedCheckBox, &QCheckBox::stateChanged, this, &ExprListItemWidget::OnItemChanged);
 		// NOTICE: currentIndexChanged signal has two implementations, so we must explicitly specify one.
 		connect(mSyntaxCombo, (void(QComboBox::*)(int)) & QComboBox::currentIndexChanged, this, &ExprListItemWidget::OnItemChanged);
-		//connect(mSyntaxCombo, &QComboBox::activated, this, &ExprListItemWidget::OnItemChanged);
 	}
 
 	ExprListItemWidget::~ExprListItemWidget() {
@@ -422,6 +424,8 @@ namespace FFX {
 			ExprListItemWidget* itemWidget = static_cast<ExprListItemWidget*>(this->itemWidget(listItem));
 			if (itemWidget == nullptr)
 				continue;
+			if (!itemWidget->IsChecked())
+				continue;
 			std::dynamic_pointer_cast<FFX::PipeFileHandler>(handler)->Append(itemWidget->MakeReplaceHandler());
 		}
 
@@ -444,6 +448,10 @@ namespace FFX {
 
 	void RenameDialog::SetupUi() {
 		//layout()->setContentsMargins(20, 10, 20, 10);
+		setWindowTitle(QObject::tr("File Rename Pro"));
+		resize(QSize(1024, 768));
+		setWindowFlags(Qt::WindowCloseButtonHint);
+
 		mRenameFileListTitleLabel = new QLabel(QObject::tr("File List"));
 		mRenameFileInfoLabel = new QLabel;
 		mRenameFileListView = new RenameFileListView;
@@ -476,10 +484,12 @@ namespace FFX {
 		mAddRuleButton->setMenu(mAddExprMenu);
 		mAddRuleButton->setDefaultAction(mAddExprAction);
 
-		mAddRemoveDigitalAction = new QAction(QObject::tr("Remove Digitals Expr"));
-		mAddRemoveSpectialCharAction = new QAction(QObject::tr("Remove Char '\"()_-+=&^%$#@[]{}~!"));
-		mAddExprMenu->addAction(mAddRemoveDigitalAction);
-		mAddExprMenu->addAction(mAddRemoveSpectialCharAction);
+		mAddRemoveDigitalExprAction = new QAction(QObject::tr("Remove Digitals Expr"));
+		mAddRemoveSpectialCharExprAction = new QAction(QObject::tr("Remove Spectial Char"));
+		mAddRemoveChineseCharExprAction = new QAction(QObject::tr("Remove Chinese Char"));
+		mAddExprMenu->addAction(mAddRemoveDigitalExprAction);
+		mAddExprMenu->addAction(mAddRemoveSpectialCharExprAction);
+		mAddExprMenu->addAction(mAddRemoveChineseCharExprAction);
 
 		mAddRuleButton->setIcon(QIcon(":/ffx/res/image/plus.svg"));
 		mRemoveRuleButton = new QToolButton;
@@ -493,19 +503,20 @@ namespace FFX {
 		mMiscLayout->setVerticalSpacing(12);
 
 		mFootLayout = new QHBoxLayout;
-		mCaseTransformLabel = new QLabel(QObject::tr("Case Transofrm:"));
-		mFileCaseCheckBox = new QCheckBox(QObject::tr("Unchanged"));
-		mFileCaseCheckBox->setChecked(true);
+		mCaseTransformCheckBox = new QCheckBox(QObject::tr("Case Transofrm:"));
+		mCaseTransformCheckBox->setChecked(false);
+
 		mFileLowerCheckBox = new QCheckBox(QObject::tr("Lower case"));
 		mFileUpperCheckBox = new QCheckBox(QObject::tr("Upper case"));
 		mCaseButtonGroup = new QButtonGroup;
 		mCaseButtonGroup->setExclusive(true);
-		mCaseButtonGroup->addButton(mFileCaseCheckBox);
 		mCaseButtonGroup->addButton(mFileLowerCheckBox);
 		mCaseButtonGroup->addButton(mFileUpperCheckBox);
 
-		mDuplicatesLabel = new QLabel(QObject::tr("File Duplicated:"));
+		mDuplicatesCheckBox = new QCheckBox(QObject::tr("File Duplicated:"));
+		mDuplicatesCheckBox->setChecked(true);
 		mDupFormatEdit = new QLineEdit;
+
 		mDupSuffixCheckBox = new QCheckBox(QObject::tr("After name"));
 		mDupSuffixCheckBox->setChecked(true);
 		mDupPrefixCheckBox = new QCheckBox(QObject::tr("Before name"));
@@ -524,11 +535,10 @@ namespace FFX {
 		mCancelButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
 		mCancelButton->setIcon(QIcon(":/ffx/res/image/cancel.svg"));
 
-		mMiscLayout->addWidget(mCaseTransformLabel, 0, 0, 1, 1);
-		mMiscLayout->addWidget(mFileCaseCheckBox, 0, 1, 1, 1);
-		mMiscLayout->addWidget(mFileLowerCheckBox, 0, 2, 1, 1);
-		mMiscLayout->addWidget(mFileUpperCheckBox, 0, 3, 1, 1);
-		mMiscLayout->addWidget(mDuplicatesLabel, 1, 0, 1, 1);
+		mMiscLayout->addWidget(mCaseTransformCheckBox, 0, 0, 1, 1);
+		mMiscLayout->addWidget(mFileLowerCheckBox, 0, 1, 1, 1);
+		mMiscLayout->addWidget(mFileUpperCheckBox, 0, 2, 1, 1);
+		mMiscLayout->addWidget(mDuplicatesCheckBox, 1, 0, 1, 1);
 		mMiscLayout->addWidget(mDupFormatEdit, 1, 1, 1, 1);
 		mMiscLayout->addWidget(mDupSuffixCheckBox, 1, 2, 1, 1);
 		mMiscLayout->addWidget(mDupPrefixCheckBox, 1, 3, 1, 1);
@@ -559,17 +569,25 @@ namespace FFX {
 		mMainLayout->addWidget(mTabWidget, 2, 0, 1, 2);
 		mMainLayout->addLayout(mFootLayout, 3, 0, 1, 2);
 
-		resize(QSize(1024, 768));
-
 		connect(mAddExprAction, &QAction::triggered, this, &RenameDialog::OnAddRuleButtonClicked);
+		connect(mAddRemoveDigitalExprAction, &QAction::triggered, this, &RenameDialog::OnRemoveDigital);
+		connect(mAddRemoveSpectialCharExprAction, &QAction::triggered, this, &RenameDialog::OnRemoveSpecitalChar);
+		connect(mAddRemoveChineseCharExprAction, &QAction::triggered, this, &RenameDialog::OnRemoveChineseChar);
+		connect(mRemoveRuleButton, &QToolButton::clicked, this, &RenameDialog::OnRemoveRuleButtonClicked);
 		connect(mExprListWidget, &ExprListWidget::itemChanged, this, &RenameDialog::OnRuleChanged);
 		connect(mExprListWidget, &ExprListWidget::ExprChanged, this, &RenameDialog::OnRuleChanged);
+		connect(mCaseTransformCheckBox, &QCheckBox::stateChanged, this, &RenameDialog::OnRuleChanged);
 		connect(mCaseButtonGroup, &QButtonGroup::idClicked, this, &RenameDialog::OnRuleChanged);
+		connect(mDuplicatesCheckBox, &QCheckBox::stateChanged, this, &RenameDialog::OnRuleChanged);
 		connect(mDupButtonGroup, &QButtonGroup::idClicked, this, &RenameDialog::OnRuleChanged);
 		connect(mDupFormatEdit, &QLineEdit::textChanged, this, &RenameDialog::OnRuleChanged);
 		connect(mFirstEffectCheckBox, &QCheckBox::stateChanged, this, &RenameDialog::OnRuleChanged);
 		connect(mOkButton, &QToolButton::clicked, this, &RenameDialog::OnOkClicked);
 		connect(mCancelButton, &QToolButton::clicked, this, &RenameDialog::OnCancelClicked);
+		connect(mRuleMoveTop, &QToolButton::clicked, this, &RenameDialog::OnRuleMoveTop);
+		connect(mRuleMoveUp, &QToolButton::clicked, this, &RenameDialog::OnRuleMoveUp);
+		connect(mRuleMoveDown, &QToolButton::clicked, this, &RenameDialog::OnRuleMoveDown);
+		connect(mRuleMoveBottom, &QToolButton::clicked, this, &RenameDialog::OnRuleMoveBottom);
 	}
 
 	void RenameDialog::OnOkClicked(){
@@ -577,10 +595,10 @@ namespace FFX {
 		FileHandlerPtr handler = std::make_shared<FFX::FileRenameHandler>(mExprListWidget->MakeRenameHandler());
 		QString dupTempl = mDupFormatEdit->text();
 
-		if (!mFileCaseCheckBox->isChecked()) {
+		if (mCaseTransformCheckBox->isChecked()) {
 			std::dynamic_pointer_cast<FFX::FileRenameHandler>(handler)->Append(std::make_shared<FFX::CaseTransformHandler>(mFileUpperCheckBox->isChecked()));
 		}
-		if (!dupTempl.isEmpty()) {
+		if (mDuplicatesCheckBox->isChecked()) {
 			std::dynamic_pointer_cast<FFX::FileRenameHandler>(handler)->Append(std::make_shared<FFX::FileDuplicateHandler>(dupTempl, mFirstEffectCheckBox->isChecked(), mDupSuffixCheckBox->isChecked()));
 		}
 
@@ -597,10 +615,10 @@ namespace FFX {
 		FileHandlerPtr handler = mExprListWidget->MakeRenameHandler();
 		QString dupTempl = mDupFormatEdit->text();
 
-		if (!mFileCaseCheckBox->isChecked()) {
+		if (mCaseTransformCheckBox->isChecked()) {
 			std::dynamic_pointer_cast<FFX::PipeFileHandler>(handler)->Append(std::make_shared<FFX::CaseTransformHandler>(mFileUpperCheckBox->isChecked()));
 		}
-		if (!dupTempl.isEmpty()) {
+		if (mDuplicatesCheckBox->isChecked()) {
 			std::dynamic_pointer_cast<FFX::PipeFileHandler>(handler)->Append(std::make_shared<FFX::FileDuplicateHandler>(dupTempl, mFirstEffectCheckBox->isChecked(), mDupSuffixCheckBox->isChecked()));
 		}
 		QFileInfoList result = handler->Handle(FileInfoList(mFiles));
@@ -609,6 +627,31 @@ namespace FFX {
 
 	void RenameDialog::OnAddRuleButtonClicked() {
 		mExprListWidget->AddRule("", "");
+		int row = mExprListWidget->count();
+		//if (row >= 6)
+		//	mAddRuleButton->setEnabled(false);
+		OnRuleChanged();
+	}
+
+	// [\一-\龥]: 匹配中文
+	void RenameDialog::OnRemoveDigital() {
+		mExprListWidget->AddRule("[\\d]", "", QRegExp::RegExp);
+		int row = mExprListWidget->count();
+		//if (row >= 6)
+		//	mAddRuleButton->setEnabled(false);
+		OnRuleChanged();
+	}
+
+	void RenameDialog::OnRemoveSpecitalChar() {
+		mExprListWidget->AddRule("[\\(\\)\\[\\]\\{\\}\\+\\-\\_\\=@#$%&\\^!,'\\.\\s]", "", QRegExp::RegExp);
+		int row = mExprListWidget->count();
+		//if (row >= 6)
+		//	mAddRuleButton->setEnabled(false);
+		OnRuleChanged();
+	}
+
+	void RenameDialog::OnRemoveChineseChar() {
+		mExprListWidget->AddRule("[\\一-\\龥]", "", QRegExp::RegExp);
 		int row = mExprListWidget->count();
 		//if (row >= 6)
 		//	mAddRuleButton->setEnabled(false);

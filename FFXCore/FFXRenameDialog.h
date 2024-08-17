@@ -184,6 +184,9 @@ namespace FFX {
 		void OnCancelClicked();
 		void OnRuleChanged();
 		void OnAddRuleButtonClicked();
+		void OnRemoveDigital();
+		void OnRemoveSpecitalChar();
+		void OnRemoveChineseChar();
 		void OnRemoveRuleButtonClicked();
 		void OnRuleMoveUp();
 		void OnRuleMoveDown();
@@ -211,21 +214,21 @@ namespace FFX {
 		QToolButton* mAddRuleButton;
 		QMenu* mAddExprMenu;
 		QAction* mAddExprAction;
-		QAction* mAddRemoveDigitalAction;
-		QAction* mAddRemoveSpectialCharAction;
+		QAction* mAddRemoveDigitalExprAction;
+		QAction* mAddRemoveSpectialCharExprAction;
+		QAction* mAddRemoveChineseCharExprAction;
 
 		QToolButton* mRemoveRuleButton;
 
 		ExprListWidget* mExprListWidget;
 		// Misc settings
 		QGridLayout* mMiscLayout;
-		QLabel* mCaseTransformLabel;
-		QCheckBox* mFileCaseCheckBox;
+		QCheckBox* mCaseTransformCheckBox;
 		QCheckBox* mFileLowerCheckBox;
 		QCheckBox* mFileUpperCheckBox;
 		QButtonGroup* mCaseButtonGroup;
 
-		QLabel* mDuplicatesLabel;
+		QCheckBox* mDuplicatesCheckBox;
 		QLineEdit* mDupFormatEdit;
 		QCheckBox* mDupSuffixCheckBox;
 		QCheckBox* mDupPrefixCheckBox;
