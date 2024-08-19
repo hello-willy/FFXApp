@@ -1,5 +1,4 @@
 #include "FFXTaskPanel.h"
-#include "FFXTask.h"
 #include "FFXString.h"
 
 #include <QGridLayout>
@@ -50,10 +49,10 @@ namespace FFX {
 	}
 
 	TaskPanel::~TaskPanel()	{
-		
+		// clear the task
 	}
 
-	int TaskPanel::Submit(const QFileInfoList& files, FileHandlerPtr handler) {
+	int TaskPanel::Submit(const QFileInfoList& files, FileHandlerPtr handler, bool showInPanel) {
 		int newTaskId = mTaskIdGenerator.Id();
 		Task* newTask = new Task(newTaskId, files, handler);
 		connect(newTask, &Task::TaskComplete, this, &TaskPanel::OnTaskComplete);
@@ -61,41 +60,43 @@ namespace FFX {
 		connect(newTask, &Task::TaskFileHandled, this, &TaskPanel::OnTaskFileHandled);
 		connect(newTask, &Task::TaskStateChanged, this, &TaskPanel::OnTaskStateChanged);
 
-		int row = 0;
-		mTaskTable->insertRow(row);
+		if (showInPanel) {
+			int row = 0;
+			mTaskTable->insertRow(row);
 
-		QTableWidgetItem* idRow = new QTableWidgetItem(QString::number(newTaskId));
-		idRow->setData(Qt::UserRole, newTaskId);
-		mTaskTable->setItem(row, HEADER["ID"], idRow);
+			QTableWidgetItem* idRow = new QTableWidgetItem(QString::number(newTaskId));
+			idRow->setData(Qt::UserRole, newTaskId);
+			mTaskTable->setItem(row, HEADER["ID"], idRow);
 
-		QTableWidgetItem* nameRow = new QTableWidgetItem(handler->DisplayName());
-		mTaskTable->setItem(row, HEADER["NAME"], nameRow);
+			QTableWidgetItem* nameRow = new QTableWidgetItem(handler->DisplayName());
+			mTaskTable->setItem(row, HEADER["NAME"], nameRow);
 
-		QTableWidgetItem* timeRow = new QTableWidgetItem(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss"));
-		mTaskTable->setItem(row, HEADER["START"], timeRow);
+			QTableWidgetItem* timeRow = new QTableWidgetItem(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss"));
+			mTaskTable->setItem(row, HEADER["START"], timeRow);
 
-		QTableWidgetItem* progressRow = new QTableWidgetItem("");
-		mTaskTable->setItem(row, HEADER["PROG"], progressRow);
-		mTaskTable->setCellWidget(row, HEADER["PROG"], new TaskProgressBar(30));
+			QTableWidgetItem* progressRow = new QTableWidgetItem("");
+			mTaskTable->setItem(row, HEADER["PROG"], progressRow);
+			mTaskTable->setCellWidget(row, HEADER["PROG"], new TaskProgressBar(30));
+
+			QTableWidgetItem* costTimeRow = new QTableWidgetItem("-");
+			mTaskTable->setItem(row, HEADER["COST"], costTimeRow);
+
+			QTableWidgetItem* stateRow = new QTableWidgetItem(Task::StateText(newTask->Status()));
+			mTaskTable->setItem(row, HEADER["STATE"], stateRow);
+
+			QTableWidgetItem* msgRow = new QTableWidgetItem("");
+			mTaskTable->setItem(row, HEADER["MSG"], msgRow);
+		}
 		
-		QTableWidgetItem* costTimeRow = new QTableWidgetItem("-");
-		mTaskTable->setItem(row, HEADER["COST"], costTimeRow);
-
-		QTableWidgetItem* stateRow = new QTableWidgetItem(Task::StateText(newTask->Status()));
-		mTaskTable->setItem(row, HEADER["STATE"], stateRow);
-
-		QTableWidgetItem* msgRow = new QTableWidgetItem("");
-		mTaskTable->setItem(row, HEADER["MSG"], msgRow);
-
 		QMutexLocker locker(&mTaskMapLocker);
-		mTaskMap.insert(newTaskId, newTask);
-		mWorkerGroup->start(newTask); // Task will be delete by QThreadPool!
+		mTaskMap.insert(newTaskId, TaskPtr(newTask));
+		mWorkerGroup->start(newTask);
 		return newTaskId;
 	}
 
 	void TaskPanel::Cancel(int taskId) {
 		QMutexLocker locker(&mTaskMapLocker);
-		Task* task = mTaskMap.value(taskId);
+		TaskPtr task = mTaskMap.value(taskId);
 		if (task != nullptr)
 			task->Cancel();
 	}

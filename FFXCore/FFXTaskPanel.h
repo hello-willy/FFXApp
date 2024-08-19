@@ -1,5 +1,7 @@
 #pragma once
 #include "FFXFileHandler.h"
+#include "FFXTask.h"
+
 #include <QWidget>
 #include <QThreadPool>
 #include <QMutex>
@@ -15,7 +17,6 @@ class QProgressBar;
 class QVBoxLayout;
 
 namespace FFX {
-	class Task;
 	class TaskIdGenerator {
 	public:
 		virtual int Id();
@@ -45,7 +46,7 @@ namespace FFX {
 		~TaskPanel();
 
 	public:
-		int Submit(const QFileInfoList& files, FileHandlerPtr handler);
+		int Submit(const QFileInfoList& files, FileHandlerPtr handler, bool showInPanel = true);
 		void Cancel(int taskId);
 
 	Q_SIGNALS:
@@ -71,7 +72,7 @@ namespace FFX {
 	private:
 		QThreadPool* mWorkerGroup = QThreadPool::globalInstance();
 		TaskIdGenerator mTaskIdGenerator;
-		QMap<int, Task*> mTaskMap;
+		QMap<int, TaskPtr> mTaskMap;
 		QMutex mTaskMapLocker;
 
 		QGridLayout* mMainGridLayout;

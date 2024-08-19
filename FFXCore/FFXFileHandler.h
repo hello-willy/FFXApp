@@ -7,6 +7,8 @@
 #include <QDir>
 #include <QSet>
 #include <QVariant>
+#include <QDateTime>
+
 #include <memory> // for shared_ptr
 
 namespace FFX {
@@ -190,18 +192,25 @@ namespace FFX {
 		int DirCount() { return mDirCount; }
 		int FileCount() { return mFileCount + mLinkFileCount; }
 		int HiddenFileCount() { return mHiddenFileCount; }
+		int HiddenDirCount() { return mHiddenDirCount; }
 		qint64 TotalSize() { return mTotalSize; }
+		QDateTime OldestTime() const { return mOldestTime; }
+		QDateTime NewestTime() const { return mNewestTime; }
 
 	private:
 		void AppendFile(const QFileInfo& file);
 		void AppendLink(const QFileInfo& file);
+		void AppendDir(const QFileInfo& file);
 
 	private:
 		int mDirCount = 0;
 		int mFileCount = 0;
 		int mLinkFileCount = 0;
+		int mHiddenDirCount = 0;
 		int mHiddenFileCount = 0;
 		qint64 mTotalSize = 0;
+		QDateTime mOldestTime = QDateTime::currentDateTime();
+		QDateTime mNewestTime = QDateTime::fromTime_t(0);
 	};
 
 	class FFXCORE_EXPORT FileRenameHandler : public PipeFileHandler {

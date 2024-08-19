@@ -24,7 +24,7 @@ namespace FFX {
 		, mTaskId(taskId)
 		, mSourceFiles(files)
 		, mHandler(handler) {
-		setAutoDelete(true);
+		setAutoDelete(false);
 	}
 
 	Task::~Task() {

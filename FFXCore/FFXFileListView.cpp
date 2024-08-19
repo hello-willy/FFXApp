@@ -4,6 +4,7 @@
 #include "FFXTaskPanel.h"
 #include "FFXFileQuickView.h"
 #include "FFXRenameDialog.h"
+#include "FFXFilePropertyDialog.h"
 
 #include <QLineEdit>
 #include <QDesktopServices>
@@ -52,6 +53,7 @@ namespace FFX {
 	/************************************************************************************************************************/
 	DefaultFileListViewModel::DefaultFileListViewModel(QObject* parent)
 		: QFileSystemModel(parent) {
+		//setFilter(QDir::AllEntries | QDir::Hidden);
 		//! Do not watch the changed by QT, we watch it by hand.
 		setOptions(QFileSystemModel::DontWatchForChanges);
 	}
@@ -316,6 +318,9 @@ namespace FFX {
 			if (QFileInfo(selectFiles[0]).isDir()) {
 				menu->addAction(MainWindow::Instance()->FileMainViewPtr()->FixedToQuickPanelAction());
 			}
+			menu->addAction(MainWindow::Instance()->FileMainViewPtr()->PropertyAction());
+		} else {
+			menu->addAction(MainWindow::Instance()->FileMainViewPtr()->PropertyAction());
 		}
 		menu->exec(QCursor::pos());
 		delete menu;
@@ -565,7 +570,7 @@ namespace FFX {
 		mEnvelopeFilesAction = new QAction(QIcon(":/ffx/res/image/file-envelope.svg"), QObject::tr("Envelope Files"));
 		mClearFolderAction = new QAction(QIcon(":/ffx/res/image/clear-folders.svg"), QObject::tr("Clear Folder"));
 		mRenameAction = new QAction(QObject::tr("Rename"));
-
+		mPropertyAction = new QAction(QObject::tr("Property"));
 		//mMoveFilesAction->setShortcut(QKeySequence("Ctrl+X"));
 		mFixedToQuickPanelAction = new QAction(QIcon(":/ffx/res/image/pin.svg"), QObject::tr("Fix to quick panel"));
 		connect(mFixedToQuickPanelAction, &QAction::triggered, this, &FileMainView::OnFixedToQuickPanel);
@@ -606,6 +611,7 @@ namespace FFX {
 		connect(mClearFolderAction, &QAction::triggered, this, &FileMainView::OnClearFolder);
 
 		connect(mRenameAction, &QAction::triggered, this, &FileMainView::OnRename);
+		connect(mPropertyAction, &QAction::triggered, this, &FileMainView::OnFileProperty);
 	}
 
 	void FileMainView::RefreshFileListView() {
@@ -686,6 +692,14 @@ namespace FFX {
 	void FileMainView::OnRename() {
 		QStringList selectedFiles = mFileListView->SelectedFiles();
 		RenameDialog dialog(selectedFiles);
+		dialog.exec();
+	}
+
+	void FileMainView::OnFileProperty() {
+		QFileInfoList files = FileInfoList(mFileListView->SelectedFiles());
+		if (files.isEmpty())
+			files = FileInfoList(mFileListView->CurrentDir());
+		FilePropertyDialog dialog(files);
 		dialog.exec();
 	}
 }

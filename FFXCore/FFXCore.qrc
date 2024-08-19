@@ -30,5 +30,6 @@
         <file>res/image/checkbox-partially.svg</file>
         <file>res/image/checkbox-unchecked.svg</file>
         <file>res/image/ok.svg</file>
+        <file>res/image/stat-file.svg</file>
     </qresource>
 </RCC>

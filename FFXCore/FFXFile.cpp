@@ -18,11 +18,25 @@ namespace FFX {
 		return fileInfoList;
 	}
 
+	QFileInfoList FileInfoList(const QFileInfo& file) {
+		QFileInfoList fileInfoList;
+		fileInfoList << file;
+		return fileInfoList;
+	}
+
 	QFileInfoList FileInfoList(const QList<QUrl> urls) {
 		QFileInfoList fileInfoList;
 		for (const QUrl& url : urls)
 			fileInfoList << url.toLocalFile();
 		return fileInfoList;
+	}
+
+	qint64 SymbolLinkSize(const QFileInfo& file) {
+		QFile link(file.absoluteFilePath());
+		link.open(QIODevice::ReadOnly);
+		qint64 size = link.size();
+		link.close();
+		return size;
 	}
 
 	int PathDepth(const QString& path) {

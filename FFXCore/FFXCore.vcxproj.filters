@@ -97,6 +97,9 @@
     <ClCompile Include="FFXRenameDialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="FFXFilePropertyDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="FFXTask.h">
@@ -130,6 +133,9 @@
       <Filter>Header Files</Filter>
     </QtMoc>
     <QtMoc Include="FFXRenameDialog.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="FFXFilePropertyDialog.h">
       <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>

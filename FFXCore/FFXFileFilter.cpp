@@ -2,6 +2,10 @@
 
 
 namespace FFX {
+	bool EmptyFilter::Accept(const QFileInfo& file) const {
+		return true;
+	}
+
 	bool AndFileFilter::Accept(const QFileInfo& file) const {
 		return mLeftFilter->Accept(file) && mRightFilter->Accept(file);
 	}

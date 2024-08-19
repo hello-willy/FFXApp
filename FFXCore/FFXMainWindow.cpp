@@ -181,7 +181,7 @@ namespace FFX {
 	void MainWindow::UpdateCurrentDirInfo() {
 		QString root = mFileMainView->RootPath();
 		QDir f(root);
-		QFileInfoList files = f.entryInfoList(QDir::AllEntries | QDir::NoDotAndDotDot);
+		QFileInfoList files = f.entryInfoList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot);
 		FileStatHandler handler(false);
 		handler.Handle(files);
 		QString info = QObject::tr("%1 files%2 %3, %4 directories").arg(handler.FileCount()).arg(handler.HiddenFileCount() > 0 ? QObject::tr("(%1 Hidden files/directories)").arg(handler.HiddenFileCount()) : "")

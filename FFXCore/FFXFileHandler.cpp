@@ -1,6 +1,7 @@
 #include "FFXFileHandler.h"
 #include <QDebug>
 #include <QDirIterator>
+#include <QThread>
 
 namespace FFX {
 	static DebugProgress dp;
@@ -268,8 +269,8 @@ namespace FFX {
 			} else if (file.isSymLink()) {
 				AppendLink(file);
 			} else if(file.isDir()) {
-				mDirCount++;
-				QDirIterator fit(file.absoluteFilePath(), QDir::Files | QDir::Dirs | QDir::System | QDir::Hidden | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
+				AppendDir(file);
+				QDirIterator fit(file.absoluteFilePath(), QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
 				while (fit.hasNext() && r)
 				{
 					fit.next();
@@ -280,7 +281,7 @@ namespace FFX {
 						AppendFile(fi);
 						continue;
 					} else if (fi.isDir()) {
-						mDirCount++;
+						AppendDir(fi);
 					}
 				}
 			}
@@ -298,17 +299,36 @@ namespace FFX {
 		mFileCount++;
 		if (file.isHidden())
 			mHiddenFileCount++;
+		QDateTime dt = file.lastModified();
+		if (dt < mOldestTime)
+			mOldestTime = dt;
+		if (dt > mNewestTime)
+			mNewestTime = dt;
 	}
 
 	void FileStatHandler::AppendLink(const QFileInfo& file) {
-		QFile link(file.absoluteFilePath());
-		link.open(QIODevice::ReadOnly);
-		qint64 size = link.size();
-		link.close();
-		mTotalSize += size;
+		mTotalSize += SymbolLinkSize(file);
 		mLinkFileCount++;
 		if (file.isHidden())
 			mHiddenFileCount++;
+
+		QDateTime dt = file.lastModified();
+		if (dt < mOldestTime)
+			mOldestTime = dt;
+		if (dt > mNewestTime)
+			mNewestTime = dt;
+	}
+
+	void FileStatHandler::AppendDir(const QFileInfo& file) {
+		mDirCount++;
+		if (file.isHidden())
+			mHiddenDirCount++;
+
+		QDateTime dt = file.lastModified();
+		if (dt < mOldestTime)
+			mOldestTime = dt;
+		if (dt > mNewestTime)
+			mNewestTime = dt;
 	}
 
 	/************************************************************************************************************************
@@ -361,12 +381,14 @@ namespace FFX {
 		for (QFileInfo file : files) {
 			if (file.isFile()) {
 				progress->OnProgress(-1, QObject::tr("Matching: %1").arg(file.absoluteFilePath()));
-				if (mFileFilter->Accept(file))
+				if (mFileFilter->Accept(file)) {
 					result << file;
+					progress->OnFileComplete(file, file, true);
+				}
 				continue;
 			}
 			if (file.isDir()) {
-				QDirIterator fit(file.absoluteFilePath(), QDir::Files | QDir::Dirs | QDir::NoSymLinks | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
+				QDirIterator fit(file.absoluteFilePath(), QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
 				while (fit.hasNext() && !mCancelled) {
 					fit.next();
 					QFileInfo fi = fit.fileInfo();
@@ -374,6 +396,7 @@ namespace FFX {
 					if (mFileFilter->Accept(fi)) {
 						result << fi;
 						progress->OnFileComplete(file, fi, true);
+						QThread::usleep(1);
 					}
 				}
 			}
