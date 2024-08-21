@@ -379,13 +379,10 @@ namespace FFX {
 	QFileInfoList FileSearchHandler::Handle(const QFileInfoList& files, ProgressPtr progress) {
 		QFileInfoList result;
 		for (QFileInfo file : files) {
-			if (file.isFile()) {
-				progress->OnProgress(-1, QObject::tr("Matching: %1").arg(file.absoluteFilePath()));
-				if (mFileFilter->Accept(file)) {
-					result << file;
-					progress->OnFileComplete(file, file, true);
-				}
-				continue;
+			progress->OnProgress(-1, QObject::tr("Matching: %1").arg(file.absoluteFilePath()));
+			if (mFileFilter->Accept(file)) {
+				result << file;
+				progress->OnFileComplete(file, file, true);
 			}
 			if (file.isDir()) {
 				QDirIterator fit(file.absoluteFilePath(), QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
@@ -410,13 +407,72 @@ namespace FFX {
 	}
 
 	/************************************************************************************************************************
+	 * Class： FileModifyAttributeHandler
+	 *
+	 *
+	/************************************************************************************************************************/
+	FileModifyAttributeHandler::FileModifyAttributeHandler(bool readonly, bool hidden, bool recursion) {
+		mArgMap["Recursion"] = Argument("Recursion", QObject::tr("Recursion"), QObject::tr("Recursive of all directories to set the attributes, default is false"), recursion);
+		mArgMap["Readonly"] = Argument("Readonly", QObject::tr("Readonly"), QObject::tr("Set the files to readonly or not."), readonly);
+		mArgMap["Hidden"] = Argument("Hidden", QObject::tr("Hidden"), QObject::tr("Set the files to hidden or not."), hidden);
+	}
+
+	QFileInfoList FileModifyAttributeHandler::Handle(const QFileInfoList& files, ProgressPtr progress) {
+		bool recursion = mArgMap["Recursion"].Value().toBool();
+		QFileInfoList result;
+		for (QFileInfo file : files) {
+			progress->OnProgress(-1, QObject::tr("Handling: %1").arg(file.absoluteFilePath()));
+			SetFileReadonly(file);
+			if (file.isDir() && recursion) {
+				QDirIterator fit(file.absoluteFilePath(), QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
+				while (fit.hasNext() && !mCancelled) {
+					fit.next();
+					QFileInfo fi = fit.fileInfo();
+					progress->OnProgress(-1, QObject::tr("Matching: %1").arg(fi.absoluteFilePath()));
+					SetFileReadonly(fi);
+				}
+			}
+		}
+		progress->OnComplete(true, QObject::tr("Finish.").arg(result.size()));
+		return result;
+	}
+
+	void FileModifyAttributeHandler::SetFileHidden(const QFileInfo& file) {
+		if (!file.exists())
+			return;
+
+		bool hidden = mArgMap["Hidden"].Value().toBool();
+		QFile f(file.absoluteFilePath());
+		if (hidden) {
+		}
+	}
+
+	void FileModifyAttributeHandler::SetFileReadonly(const QFileInfo& file) {
+		if (!file.exists())
+			return;
+
+		bool readonly = mArgMap["Readonly"].Value().toBool();
+		QFile theFile(file.absoluteFilePath());
+		if(readonly) {
+			theFile.setPermissions(QFile::ReadOther);
+		} else {
+			theFile.setPermissions(QFile::ReadOther | QFile::WriteOther);
+		}
+		
+	}
+
+	std::shared_ptr<FileHandler> FileModifyAttributeHandler::Clone() {
+		return FileHandlerPtr(new FileModifyAttributeHandler(*this));
+	}
+
+	/************************************************************************************************************************
 	 * Class： FileCopyHandler
 	 *
 	 *
 	/************************************************************************************************************************/
-	FileCopyHandler::FileCopyHandler(const QString& destPath, bool overwrite) {
+	FileCopyHandler::FileCopyHandler(const QString& destPath, int dupMode) {
 		mArgMap["DestPath"] = Argument("DestPath", QObject::tr("DestPath"), QObject::tr("Target directory for files copying."), destPath);
-		mArgMap["Overwrite"] = Argument("Overwrite", QObject::tr("Overwrite"), QObject::tr("Is it overwrite the existing file, default is false."), overwrite);
+		mArgMap["DupMode"] = Argument("DupMode", QObject::tr("DupMode"), QObject::tr("How to handle duplicate files, 0: rename, 1: overwrite, 2: ignored."), dupMode);
 	}
 
 	QFileInfoList FileCopyHandler::Handle(const QFileInfoList& files, ProgressPtr progress) {
@@ -447,17 +503,26 @@ namespace FFX {
 	}
 
 	void FileCopyHandler::CopyFile(const QFileInfo& file, const QString& dest, ProgressPtr progress) {
-		if (QFile::exists(dest) && !mArgMap["Overwrite"].Value().toBool())
+		int dupMode = mArgMap["Overwrite"].IntValue();
+
+		QString theTargetFile(dest);
+		if (QFile::exists(dest) && dupMode == 2)
 			return;
 
-		if(QFile::exists(dest)) {
+		if(QFile::exists(dest) && dupMode == 1) {
 			QFile::setPermissions(dest, QFileDevice::ReadOther | QFileDevice::WriteOther);
 			QFile::remove(dest);
 		}
+
+		if (QFile::exists(dest) && dupMode == 0) {
+			FileDuplicateHandler duph("_N", false);
+			QFileInfoList r = duph.Handle(FileInfoList(dest));
+			theTargetFile = r[0].absoluteFilePath();
+		}
 		double p = (mCopiedFile++ / (double)mTotalFile) * 100;
 		progress->OnProgress(p, QObject::tr("Copying: %1").arg(file.absoluteFilePath()));
-		bool flag = QFile::copy(file.absoluteFilePath(), dest);
-		progress->OnFileComplete(file, dest, flag);
+		bool flag = QFile::copy(file.absoluteFilePath(), theTargetFile);
+		progress->OnFileComplete(file, theTargetFile, flag);
 	}
 
 	void FileCopyHandler::CopyDir(const QFileInfo& dir, const QString& dest, ProgressPtr progress) {
@@ -569,7 +634,7 @@ namespace FFX {
 		bool forced = mArgMap["Forced"].Value().toBool();
 		if (forced) {
 			FileStatHandler scaner;
-			scaner.Handle(files, progress);
+			scaner.Handle(files);
 			mTotalFile = scaner.FileCount();
 			for (const QFileInfo& file : files) {
 				if (file.isFile())
@@ -604,6 +669,7 @@ namespace FFX {
 		progress->OnProgress(p, QObject::tr("Deleting: %1").arg(file.absoluteFilePath()));
 		QFile f(file.absoluteFilePath());
 		bool flag = f.remove();
+		QString fs = file.absoluteFilePath();
 		progress->OnFileComplete(file, QFileInfo(), flag, flag ? "" : f.errorString());
 	}
 

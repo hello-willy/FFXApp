@@ -8,11 +8,21 @@
 #include <QSet>
 #include <QVariant>
 #include <QDateTime>
+#include <QSize>
+#include <QRect>
 
 #include <memory> // for shared_ptr
 
 namespace FFX {
 	class Argument {
+	public:
+		enum Type {
+			Normal,
+			Options,
+			Scope,
+			Files,
+			Dirs
+		};
 	public:
 		Argument() = default;
 		Argument(const QString& name)
@@ -35,6 +45,12 @@ namespace FFX {
 		QString DisplayName() const { return mDisplayName; }
 		QString Description() const { return mDescription; }
 		QVariant Value() const { return mValue; }
+		QString StringValue() const { return mValue.toString(); }
+		int IntValue() const { return mValue.toInt(); }
+		double DoubleValue() const { return mValue.toDouble(); }
+		bool BoolValue() const { return mValue.toBool(); }
+		QSize SizeValue() const { return mValue.toSize(); }
+		QRect RectValue() const { return mValue.toRect(); }
 		Argument& SetName(const QString& name) {
 			mName = name;
 			return *this;
@@ -51,6 +67,9 @@ namespace FFX {
 			mValue = value;
 			return *this;
 		}
+		void AddLimit(QVariant limit) {
+			mLimit << limit;
+		}
 	public:
 		bool operator == (const Argument& other) {
 			return mName == other.mName;
@@ -60,6 +79,13 @@ namespace FFX {
 		QString mDisplayName;
 		QString mDescription;
 		QVariant mValue;
+		Type mType = Normal;
+		/// <summary>
+		/// Options: contains all options
+		/// Scope: contains one or more scope, for example: 1, 5, 8, 19, means value must be in [1, 5] or [8, 9]. only for numeric value.
+		/// Files: contains file filter expression, for example: *.tif|*.tiff|*.jpg|*.jpeg.
+		/// </summary>
+		QVariantList mLimit;
 	};
 	typedef QHash<QString, Argument> ArgumentMap;
 
@@ -243,9 +269,28 @@ namespace FFX {
 		bool mCancelled = false;
 	};
 
+	class FFXCORE_EXPORT FileModifyAttributeHandler : public FileHandler {
+	public:
+		FileModifyAttributeHandler(bool readonly = true, bool hidden = false, bool recursion = false);
+
+	public:
+		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress = G_DebugProgress) override;
+		virtual std::shared_ptr<FileHandler> Clone() override;
+		virtual QString Name() { return QStringLiteral("FileModifyAttributeHandler"); }
+		virtual QString DisplayName() { return QObject::tr("FileModifyAttributeHandler"); }
+		virtual QString Description() { return QObject::tr("Set files to readonly, hidden, etc."); }
+		virtual void Cancel() { mCancelled = true; }
+
+	private:
+		void SetFileReadonly(const QFileInfo& file);
+		void SetFileHidden(const QFileInfo& file);
+	private:
+		bool mCancelled = false;
+	};
+
 	class FFXCORE_EXPORT FileCopyHandler : public FileHandler {
 	public:
-		FileCopyHandler(const QString& destPath, bool overwrite = false);
+		FileCopyHandler(const QString& destPath, int dupMode = 0);
 	public:
 		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress = G_DebugProgress) override;
 		virtual std::shared_ptr<FileHandler> Clone() override;

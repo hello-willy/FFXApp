@@ -83,7 +83,8 @@ namespace FFX {
 	}
 
 	FilePropertyDialog::FilePropertyDialog(QFileInfoList files, QWidget *parent)
-		: QDialog(parent) {
+		: QDialog(parent) 
+		, mFiles(files) {
 		SetupUi();
 		if (files.size() == 1 && files[0].isSymLink()) {
 			mFileBasicPropertyWidget->SetLinkInfoVisible(true);
@@ -132,16 +133,22 @@ namespace FFX {
 		if (taskId != mTaskId)
 			return;
 
-		if (fileOutput.isDir())
+		if (fileOutput.isDir()) {
 			mDirCount++;
+			if (fileOutput.isHidden())
+				mHiddenDirCount++;
+		}
 		else if (fileOutput.isFile()) {
 			mFileCount++;
 			mTotalSize += fileOutput.size();
+			if (fileOutput.isHidden())
+				mHiddenFileCount++;
 		}
 		else if (fileOutput.isSymLink()) {
 			mFileCount++;
 			mTotalSize = SymbolLinkSize(fileOutput);
 		}
+
 		//mHiddenDirCount += handler.HiddenDirCount();
 		//mHiddenFileCount += handler.HiddenFileCount();
 		QDateTime dt = fileOutput.lastModified();
@@ -155,6 +162,22 @@ namespace FFX {
 		} else {
 			dateStr = QString("%1 ~ %2").arg(mOldestTime.toString("yyyy-MM-dd hh:mm:ss")).arg(mNewestTime.toString("yyyy-MM-dd hh:mm:ss"));
 		}
+		if (fileOutput.isFile() && !(fileOutput.permissions() & QFile::WriteOther)) {
+			mReadonlyFileCount++;
+		}
+		if(mDirCount > 0)
+			mFileBasicPropertyWidget->mReadOnlyCheckBox->setCheckState(Qt::PartiallyChecked);
+		else
+		if (mReadonlyFileCount > 0) {
+			if (mReadonlyFileCount == mFileCount) {
+				mFileBasicPropertyWidget->mReadOnlyCheckBox->setCheckState(Qt::Checked);
+			} else {
+				mFileBasicPropertyWidget->mReadOnlyCheckBox->setCheckState(Qt::PartiallyChecked);
+			}
+		}
+
+		if (mHiddenDirCount + mHiddenDirCount > 0)
+			mFileBasicPropertyWidget->mHiddenCheckBox->setCheckState(Qt::PartiallyChecked);
 		mFileBasicPropertyWidget->mDateInfoLabel->setText(dateStr);
 		mFileBasicPropertyWidget->mCountInfoLabel->setText(QObject::tr("%1 files %2 directories").arg(mFileCount).arg(mDirCount));
 		mFileBasicPropertyWidget->mTotalSizeInfoLabel->setText(QString("%1 (%2 Bytes)").arg(String::BytesHint(mTotalSize)).arg(mTotalSize));
@@ -167,6 +190,13 @@ namespace FFX {
 
 	void FilePropertyDialog::OnOk() {
 		MainWindow::Instance()->TaskPanelPtr()->Cancel(mTaskId);
+
+		Qt::CheckState readonly = mFileBasicPropertyWidget->mReadOnlyCheckBox->checkState();
+		Qt::CheckState hidden = mFileBasicPropertyWidget->mHiddenCheckBox->checkState();
+		if (readonly != Qt::PartiallyChecked || hidden != Qt::PartiallyChecked) {
+			MainWindow::Instance()->TaskPanelPtr()->Submit(mFiles, std::make_shared<FileModifyAttributeHandler>(readonly == Qt::Checked, hidden == Qt::Checked));
+		}
+		
 		QDialog::accept();
 	}
 }

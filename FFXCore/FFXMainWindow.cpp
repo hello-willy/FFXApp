@@ -80,13 +80,15 @@ namespace FFX {
 		mSelectFilesInfoLabel = new QLabel;
 		mClipboardInfoLabel = new QLabel;
 		mClipboardButton = new QToolButton;
+		mTaskInfoLabel = new QLabel(QObject::tr("Ready"));
 		//mClipboardButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
 		
-		mStatusBar->addPermanentWidget(mCurrentDirInfoLabel);
-		mStatusBar->addPermanentWidget(mSelectFilesInfoLabel);
+		mStatusBar->addWidget(mCurrentDirInfoLabel);
+		mStatusBar->addWidget(mSelectFilesInfoLabel);
 		mStatusBar->addPermanentWidget(mClipboardButton);
 		mStatusBar->addPermanentWidget(mClipboardInfoLabel);
 		mStatusBar->addPermanentWidget(mShowTaskBoardButton);
+		mStatusBar->addPermanentWidget(mTaskInfoLabel);
 		setStatusBar(mStatusBar);
 
 		//! Init central widget
@@ -117,9 +119,6 @@ namespace FFX {
 		mClipboardInfoLabel->setText(QObject::tr(" %1 items").arg(0));
 		mClipboardButton->setDefaultAction(mClipboardPanelDocker->toggleViewAction());
 
-		//QSize statusBarSize = mStatusBar->sizeHint();
-		//mShowTaskBoardButton->setFixedSize(QSize(statusBarSize.height() - 8, statusBarSize.height() - 8));
-		//mShowTaskBoardButton->setIconSize(QSize(20, 20));
 		mShowTaskBoardButton->setDefaultAction(mTaskDocker->toggleViewAction());
 
 		//! Setup signals/slots
@@ -130,6 +129,8 @@ namespace FFX {
 			});
 		connect(mTaskPanel, &TaskPanel::TaskComplete, mFileSearchView, &FileSearchView::OnSearchComplete);
 		connect(mTaskPanel, &TaskPanel::TaskComplete, mFileMainView, &FileMainView::RefreshFileListView);
+		connect(mTaskPanel, &TaskPanel::TaskComplete, this, &MainWindow::OnTaskInfoUpdate);
+		connect(mTaskPanel, &TaskPanel::TaskSubmit, this, &MainWindow::OnTaskInfoUpdate);
 		connect(mTaskPanel, &TaskPanel::TaskFileHandled, mFileMainView, &FileMainView::RefreshFileListView);
 		connect(mTaskPanel, &TaskPanel::TaskFileHandled, mFileSearchView, &FileSearchView::OnSearchFileMatched);
 		connect(mFileMainView, &FileMainView::SelectionChanged, this, [=](QStringList files) {
@@ -210,6 +211,15 @@ namespace FFX {
 			count = mimeData->urls().size();
 		}
 		mClipboardInfoLabel->setText(QObject::tr(" %1 items").arg(count));
+	}
+
+	void MainWindow::OnTaskInfoUpdate() {
+		int running = mTaskPanel->RunningTaskCount();
+		if (running == 0) {
+			mTaskInfoLabel->setText(QObject::tr("Ready"));
+		} else {
+			mTaskInfoLabel->setText(QObject::tr("%1 task running").arg(running));
+		}
 	}
 }
 

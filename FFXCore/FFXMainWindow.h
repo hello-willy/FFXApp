@@ -50,6 +50,7 @@ namespace FFX {
 
 	private slots:
 		void OnClipboardDataChanged();
+		void OnTaskInfoUpdate();
 
 	private:
 		QMenuBar* mMenuBar;
@@ -60,6 +61,7 @@ namespace FFX {
 		
 		QStatusBar* mStatusBar;
 		QToolButton* mShowTaskBoardButton;
+		QLabel* mTaskInfoLabel;
 		QLabel* mCurrentDirInfoLabel;
 		QLabel* mSelectFilesInfoLabel;
 		QToolButton* mClipboardButton;

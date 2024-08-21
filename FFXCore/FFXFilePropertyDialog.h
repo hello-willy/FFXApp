@@ -80,12 +80,14 @@ namespace FFX {
 		QToolButton* mOkButton;
 		QToolButton* mCancelButton;
 		QGridLayout* mMainLayout;
+		QFileInfoList mFiles;
 		int mTaskId = -1;
 		// Basic Info
 		int mDirCount = 0;
 		int mFileCount = 0;
 		int mHiddenDirCount = 0;
 		int mHiddenFileCount = 0;
+		int mReadonlyFileCount = 0;
 		qint64 mTotalSize = 0;
 		QDateTime mOldestTime = QDateTime::currentDateTime();
 		QDateTime mNewestTime = QDateTime::fromTime_t(0);

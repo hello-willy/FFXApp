@@ -1,5 +1,6 @@
 #include "FFXTask.h"
 #include <QDateTime>
+#include <QDebug>
 
 namespace FFX {
 	QString Task::StateText(State state) {
@@ -28,6 +29,7 @@ namespace FFX {
 	}
 
 	Task::~Task() {
+		qDebug() << "TASK:" << mTaskId << "Release!!!";
 	}
 
 	Task::State Task::Status() {
@@ -49,9 +51,6 @@ namespace FFX {
 		SetStatus(State::Running);
 		mTimeStart = QDateTime::currentMSecsSinceEpoch();
 		QFileInfoList r = mHandler->Handle(mSourceFiles, ProgressPtr(this));
-		if (true) {
-			int a = 0;
-		}
 	}
 
 	void Task::Cancel() {

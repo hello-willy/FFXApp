@@ -48,8 +48,10 @@ namespace FFX {
 	public:
 		int Submit(const QFileInfoList& files, FileHandlerPtr handler, bool showInPanel = true);
 		void Cancel(int taskId);
+		int RunningTaskCount() const;
 
 	Q_SIGNALS:
+		void TaskSubmit(int taskId);
 		void TaskComplete(int taskId, bool success);
 		void TaskFileHandled(int taskId, const QFileInfo& fileInput, const QFileInfo& fileOutput, bool success, const QString& message);
 
@@ -57,6 +59,7 @@ namespace FFX {
 		void SetupUi();
 		int RowOf(int taskId);
 		void UpdateTaskTable();
+		void RemoveTaskFromCache(int taskId);
 
 	private slots:
 		void OnTaskTableItemSelectionChanged();
