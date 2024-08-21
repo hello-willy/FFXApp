@@ -5,6 +5,7 @@
 #include "FFXTaskPanel.h"
 #include "FFXString.h"
 #include "FFXClipboardPanel.h"
+#include "FFXAppConfig.h"
 
 #include <QtWidgets/QMessageBox>
 #include <QSplitter>
@@ -30,9 +31,10 @@ namespace FFX {
 			abort();
 		}
 		sInstance = this;
-
+		
 		SetupUi();
 		mPluginManager = new PluginManager;
+		mAppConfig = new AppConfig;
 	}
 
 	MainWindow::~MainWindow()
@@ -143,6 +145,18 @@ namespace FFX {
 		mFileMainView->Goto(QString("D:\\"));
 	}
 
+	void MainWindow::closeEvent(QCloseEvent* event) {
+		int isFull = this->isMaximized();
+		if (!isFull)
+		{
+			QRect r = rect();
+			QPoint p = pos();
+			mAppConfig->SaveMainWindowPos(QRect(p.x(), p.y(), r.width(), r.height()));
+			return;
+		}
+		mAppConfig->SaveMainWindowPos(QRect(-1, -1, 0, 0));
+	}
+
 	MainWindow* MainWindow::Instance() {
 		return sInstance;
 	}
@@ -157,6 +171,10 @@ namespace FFX {
 
 	TaskPanel* MainWindow::TaskPanelPtr() {
 		return mTaskPanel;
+	}
+
+	AppConfig* MainWindow::AppConfigPtr() {
+		return mAppConfig;
 	}
 
 	void MainWindow::AddMenu(QMenu* menu) {

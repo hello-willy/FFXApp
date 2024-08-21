@@ -96,6 +96,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="FFXActionManager.cpp" />
+    <ClCompile Include="FFXAppConfig.cpp" />
     <ClCompile Include="FFXClipboardPanel.cpp" />
     <ClCompile Include="FFXCommonFileListView.cpp" />
     <ClCompile Include="FFXFile.cpp" />
@@ -114,6 +115,7 @@
     <ClCompile Include="FFXTaskPanel.cpp" />
     <QtMoc Include="FFXRenameDialog.h" />
     <QtMoc Include="FFXFilePropertyDialog.h" />
+    <QtMoc Include="FFXAppConfig.h" />
     <ClInclude Include="FFXUtils.h" />
     <QtMoc Include="FFXTaskPanel.h" />
     <QtMoc Include="FFXActionManager.h" />

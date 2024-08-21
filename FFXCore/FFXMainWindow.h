@@ -18,6 +18,7 @@ namespace FFX {
 	class TaskPanel;
 	class FileQuickView;
 	class ClipboardPanel;
+	class AppConfig;
 
 	class FFXCORE_EXPORT MainWindow : public QMainWindow, public Application
 	{
@@ -33,6 +34,7 @@ namespace FFX {
 
 	public:
 		PluginManager* PluginManagerPtr();
+		AppConfig* AppConfigPtr();
 
 	public:
 		virtual void AddMenu(QMenu* menu);
@@ -42,6 +44,9 @@ namespace FFX {
 		virtual void ShowMessage(const QString& message, int timeout = 5);
 		virtual TaskPanel* TaskPanelPtr();
 		virtual FileMainView* FileMainViewPtr();
+
+	protected:
+		void closeEvent(QCloseEvent* event) override;
 
 	private:
 		void SetupUi();
@@ -74,5 +79,6 @@ namespace FFX {
 		TaskPanel* mTaskPanel;
 		ClipboardPanel* mClipboardPanel;
 		QDockWidget* mClipboardPanelDocker;
+		AppConfig* mAppConfig;
 	};
 }

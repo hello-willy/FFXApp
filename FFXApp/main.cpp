@@ -2,7 +2,7 @@
 #include <QDebug>
 #include "FFXFileHandler.h"
 #include "FFXMainWindow.h"
-
+#include "FFXAppConfig.h"
 
 int main(int argc, char *argv[])
 {
@@ -34,7 +34,15 @@ int main(int argc, char *argv[])
     //FFX::FileHandlerPtr del = std::make_shared<FFX::FileDeleteHandler>();
     //del->Handle(toMatch);
     FFX::MainWindow w;
-    
+
+    QRect rect = w.AppConfigPtr()->RestoreMainWindowPos();
+    if (!rect.isValid()) {
+        w.showMaximized();
+        w.setWindowFlags(Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint | Qt::WindowMinimizeButtonHint);
+    } else {
+        w.resize(rect.width(), rect.height());
+        w.move(rect.x(), rect.y());
+    }
     w.show();
     return a.exec();
 }
