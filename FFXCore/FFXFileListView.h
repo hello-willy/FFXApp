@@ -164,6 +164,8 @@ namespace FFX {
 		void Goto(const QString& path);
 		QStringList SelectedFiles();
 		QString RootPath();
+		FileQuickView* FileQuickViewPtr() { return mFileQuickView; }
+
 	public slots:
 		void RefreshFileListView();
 
@@ -179,6 +181,7 @@ namespace FFX {
 		QAction* ClearFolderAction() { return mClearFolderAction; }
 		QAction* RenameAction() { return mRenameAction; }
 		QAction* PropertyAction() { return mPropertyAction; }
+		QAction* CopyFilePathAction() { return mCopyFilePathAction; }
 
 	Q_SIGNALS:
 		void CurrentPathChanged(const QString& newPath);
@@ -192,6 +195,7 @@ namespace FFX {
 		void OnClearFolder();
 		void OnRename();
 		void OnFileProperty();
+		void OnCopyFilePath();
 
 	private:
 		void SetupUi();
@@ -214,6 +218,7 @@ namespace FFX {
 		QAction* mClearFolderAction;
 		QAction* mRenameAction;
 		QAction* mPropertyAction;
+		QAction* mCopyFilePathAction;
 	};
 }
 

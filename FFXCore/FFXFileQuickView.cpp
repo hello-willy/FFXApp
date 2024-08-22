@@ -67,6 +67,12 @@ namespace FFX {
         mItemList->addItem(item);
     }
 
+    void QuickNavigatePanel::AddItem(const QList<QString>& dirs) {
+        for (const QString& dir : dirs) {
+            AddItem(dir);
+        }
+    }
+
     bool QuickNavigatePanel::IsDirFixed(const QString& dir) {
         int count = mItemList->count();
         for (int i = 0; i < count; i++) {
@@ -93,6 +99,17 @@ namespace FFX {
 
     bool QuickNavigatePanel::IsFull() const {
         return mMaxItems <= mItemList->count();
+    }
+
+    int QuickNavigatePanel::Count() const {
+        return mItemList->count();
+    }
+
+    QString QuickNavigatePanel::ItemDir(int index) const {
+        QListWidgetItem* item = mItemList->item(index);
+        if (item == nullptr)
+            return "";
+        return item->data(Qt::UserRole).toString();
     }
 
     void QuickNavigatePanel::OnCurrentItemChanged(QListWidgetItem* current, QListWidgetItem* previous) {
@@ -180,9 +197,9 @@ namespace FFX {
         setLayout(mMainLayout);
 
         //! Init item list, fill the drivers.
-        QFileInfoList drivers = QDir::drives();
-        for (const QFileInfo& driver : drivers) {
-            mQuickNaviPanel->AddItem(driver.absoluteFilePath());
-        }
+        //QFileInfoList drivers = QDir::drives();
+        //for (const QFileInfo& driver : drivers) {
+        //    mQuickNaviPanel->AddItem(driver.absoluteFilePath());
+        //}
     }
 }

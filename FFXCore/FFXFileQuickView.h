@@ -39,9 +39,12 @@ namespace FFX {
 
 	public:
 		void AddItem(const QString& dir);
+		void AddItem(const QList<QString>& dirs);
 		bool IsDirFixed(const QString& dir);
 		void RemoveItem(const QString& dir);
 		bool IsFull() const;
+		int Count() const;
+		QString ItemDir(int index) const;
 
 	private:
 		void SetupUi();

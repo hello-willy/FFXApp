@@ -15,6 +15,12 @@ namespace FFX {
 		void SaveMainWindowPos(const QRect& pos);
 		QRect RestoreMainWindowPos();
 
+		void SaveQuickItem(const QList<QString>& quickItems);
+		QList<QString> RestoreQuickItem();
+
+		void SaveCurrentRoot(const QString& root);
+		QString RestoreCurrentRoot();
+
 	private:
 		void WriteItem(const QString& group, const QString& key, const QVariant& value);
 		void WriteItemArray(const QString& group, const QVariantList& values);

@@ -6,6 +6,7 @@
 #include "FFXString.h"
 #include "FFXClipboardPanel.h"
 #include "FFXAppConfig.h"
+#include "FFXFileQuickView.h"
 
 #include <QtWidgets/QMessageBox>
 #include <QSplitter>
@@ -31,10 +32,9 @@ namespace FFX {
 			abort();
 		}
 		sInstance = this;
-		
+		mAppConfig = new AppConfig;
 		SetupUi();
 		mPluginManager = new PluginManager;
-		mAppConfig = new AppConfig;
 	}
 
 	MainWindow::~MainWindow()
@@ -142,19 +142,40 @@ namespace FFX {
 		connect(clipboard, &QClipboard::dataChanged, this, &MainWindow::OnClipboardDataChanged);
 
 		
-		mFileMainView->Goto(QString("D:\\"));
+
+		mFileMainView->FileQuickViewPtr()->QuickNaviPanelPtr()->AddItem(mAppConfig->RestoreQuickItem());
+		QString rootPath = mAppConfig->RestoreCurrentRoot();
+		if (rootPath.isEmpty()) {
+			rootPath = QDir::currentPath();
+		}
+		mFileMainView->Goto(rootPath);
 	}
 
 	void MainWindow::closeEvent(QCloseEvent* event) {
+		// save window pos
 		int isFull = this->isMaximized();
 		if (!isFull)
 		{
 			QRect r = rect();
 			QPoint p = pos();
 			mAppConfig->SaveMainWindowPos(QRect(p.x(), p.y(), r.width(), r.height()));
-			return;
+		} else {
+			mAppConfig->SaveMainWindowPos(QRect(-1, -1, 0, 0));
 		}
-		mAppConfig->SaveMainWindowPos(QRect(-1, -1, 0, 0));
+		// save quick view item
+		FileQuickView* fileQuickView = mFileMainView->FileQuickViewPtr();
+		QuickNavigatePanel* quickPanel = fileQuickView->QuickNaviPanelPtr();
+		int count = quickPanel->Count();
+		QList<QString> items;
+		for (int i = 0; i < count; i++) {
+			QString dir = quickPanel->ItemDir(i);
+			if (dir.isEmpty())
+				continue;
+			items << dir;
+		}
+		mAppConfig->SaveQuickItem(items);
+		// save current root
+		mAppConfig->SaveCurrentRoot(mFileMainView->RootPath());
 	}
 
 	MainWindow* MainWindow::Instance() {

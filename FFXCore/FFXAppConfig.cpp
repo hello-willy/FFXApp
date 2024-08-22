@@ -4,6 +4,8 @@
 #include <QSettings>
 
 QString MainWindowPos = "MainWindowPos";
+QString QuickItem = "QuickItem";
+QString CurrentRoot = "CurrentRoot";
 
 namespace FFX {
 	AppConfig::AppConfig(QObject *parent)
@@ -33,6 +35,44 @@ namespace FFX {
 		QVariant height = settings.value("height");
 		settings.endGroup();
 		return QRect(x.toInt(), y.toInt(), width.toInt(), height.toInt());
+	}
+
+	void AppConfig::SaveQuickItem(const QList<QString>& quickItems) {
+		QSettings settings(mConfigFile, QSettings::IniFormat);
+		settings.beginWriteArray(QuickItem);
+		for (int i = 0; i < quickItems.size(); i++) {
+			settings.setArrayIndex(i);
+			settings.setValue("value", quickItems[i]);
+		}
+		settings.endArray();
+	}
+
+	QList<QString> AppConfig::RestoreQuickItem() {
+		QSettings settings(mConfigFile, QSettings::IniFormat);
+		QList<QString> result;
+		int size = settings.beginReadArray(QuickItem);
+		for (int i = 0; i < size; i++) {
+			settings.setArrayIndex(i);
+			result.append(settings.value("value").toString());
+		}
+		settings.endArray();
+		return result;
+	}
+
+	void AppConfig::SaveCurrentRoot(const QString& root) {
+		QSettings settings(mConfigFile, QSettings::IniFormat);
+
+		settings.beginGroup(CurrentRoot);
+		settings.setValue("RootPath", root);
+		settings.endGroup();
+	}
+
+	QString AppConfig::RestoreCurrentRoot() {
+		QSettings settings(mConfigFile, QSettings::IniFormat);
+		settings.beginGroup(CurrentRoot);
+		QVariant rootPath = settings.value("RootPath");
+		settings.endGroup();
+		return rootPath.toString();
 	}
 
 	void AppConfig::WriteItem(const QString& group, const QString& key, const QVariant& value) {

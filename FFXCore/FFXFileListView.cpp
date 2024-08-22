@@ -318,6 +318,7 @@ namespace FFX {
 			if (QFileInfo(selectFiles[0]).isDir()) {
 				menu->addAction(MainWindow::Instance()->FileMainViewPtr()->FixedToQuickPanelAction());
 			}
+			menu->addAction(MainWindow::Instance()->FileMainViewPtr()->CopyFilePathAction());
 			menu->addAction(MainWindow::Instance()->FileMainViewPtr()->PropertyAction());
 		} else {
 			menu->addAction(MainWindow::Instance()->FileMainViewPtr()->PropertyAction());
@@ -564,20 +565,18 @@ namespace FFX {
 		mMainLayout = new QVBoxLayout;
 		mMakeDirAction = new QAction(QIcon(":/ffx/res/image/mk-folder.svg"), QObject::tr("Make Directory"));
 		mMakeFileAction = new QAction(QIcon(":/ffx/res/image/mk-file.svg"), QObject::tr("New File"));
+		mMakeFileActions.append(mMakeFileAction);
+		mMakeFileActions.append(new QAction("New Zip File"));
 		mPasteFilesAction = new QAction(QIcon(":/ffx/res/image/paste-files.svg"), QObject::tr("Copy Files"));
 		mRefreshAction = new QAction(QIcon(":/ffx/res/image/refresh.svg"), QObject::tr("Refresh"));
 		mMoveFilesAction = new QAction(QIcon(":/ffx/res/image/move-files.svg"), QObject::tr("Move Files"));
 		mEnvelopeFilesAction = new QAction(QIcon(":/ffx/res/image/file-envelope.svg"), QObject::tr("Envelope Files"));
 		mClearFolderAction = new QAction(QIcon(":/ffx/res/image/clear-folders.svg"), QObject::tr("Clear Folder"));
+		mFixedToQuickPanelAction = new QAction(QIcon(":/ffx/res/image/pin.svg"), QObject::tr("Fix to quick panel"));
 		mRenameAction = new QAction(QObject::tr("Rename"));
 		mPropertyAction = new QAction(QObject::tr("Property"));
-		//mMoveFilesAction->setShortcut(QKeySequence("Ctrl+X"));
-		mFixedToQuickPanelAction = new QAction(QIcon(":/ffx/res/image/pin.svg"), QObject::tr("Fix to quick panel"));
-		connect(mFixedToQuickPanelAction, &QAction::triggered, this, &FileMainView::OnFixedToQuickPanel);
-
-		mMakeFileActions.append(mMakeFileAction);
-		mMakeFileActions.append(new QAction("New Zip File"));
-
+		mCopyFilePathAction = new QAction(QObject::tr("Copy file path"));
+		
 		mMainLayout->addWidget(mFileViewNavigator);
 		QSplitter* splitter = new QSplitter(Qt::Horizontal);
 		splitter->addWidget(mFileQuickView);
@@ -589,6 +588,7 @@ namespace FFX {
 		mMainLayout->setContentsMargins(5, 0, 0, 0);
 		setLayout(mMainLayout);
 
+		connect(mFixedToQuickPanelAction, &QAction::triggered, this, &FileMainView::OnFixedToQuickPanel);
 		connect(mFileViewNavigator, &DefaultFileListViewNavigator::RootPathChanged, this, [=](const QString& path) {
 			mFileListView->SetRootPath(path);
 			emit CurrentPathChanged(path); // Transfer the signals for 
@@ -612,6 +612,7 @@ namespace FFX {
 
 		connect(mRenameAction, &QAction::triggered, this, &FileMainView::OnRename);
 		connect(mPropertyAction, &QAction::triggered, this, &FileMainView::OnFileProperty);
+		connect(mCopyFilePathAction, &QAction::triggered, this, &FileMainView::OnCopyFilePath);
 	}
 
 	void FileMainView::RefreshFileListView() {
@@ -701,6 +702,15 @@ namespace FFX {
 			files = FileInfoList(mFileListView->CurrentDir());
 		FilePropertyDialog dialog(files);
 		dialog.exec();
+	}
+
+	void FileMainView::OnCopyFilePath() {
+		QFileInfoList files = FileInfoList(mFileListView->SelectedFiles());
+		if (files.size() != 1)
+			return;
+
+		QClipboard* clipboard = QApplication::clipboard();
+		clipboard->setText(files[0].absoluteFilePath());
 	}
 }
 
