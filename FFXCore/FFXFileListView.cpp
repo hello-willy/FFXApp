@@ -22,8 +22,12 @@
 #include <QApplication>
 #include <QSplitter>
 #include <QMenu>
+#include <QProcess>
 
-
+#ifdef Q_OS_WIN
+#include <cstdlib>
+#include <Windows.h>
+#endif
 namespace FFX {
 	/************************************************************************************************************************
 	 * Class： ChangeRootPathCommand
@@ -302,6 +306,7 @@ namespace FFX {
 		if (selectFiles.isEmpty()) {
 			menu->addAction(MainWindow::Instance()->FileMainViewPtr()->RefreshAction());
 			menu->addAction(MainWindow::Instance()->FileMainViewPtr()->FixedToQuickPanelAction());
+			menu->addAction(MainWindow::Instance()->FileMainViewPtr()->OpenCommandPromptAction());
 			menu->addSeparator();
 			menu->addAction(MainWindow::Instance()->FileMainViewPtr()->MakeDirAction());
 			QMenu* makefileMenu = new QMenu(QObject::tr("Make File..."));
@@ -576,7 +581,8 @@ namespace FFX {
 		mRenameAction = new QAction(QObject::tr("Rename"));
 		mPropertyAction = new QAction(QObject::tr("Property"));
 		mCopyFilePathAction = new QAction(QObject::tr("Copy file path"));
-		
+		mOpenCommandPromptAction = new QAction(QIcon(":/ffx/res/image/terminal.svg"), QObject::tr("Open in command prompt"));
+
 		mMainLayout->addWidget(mFileViewNavigator);
 		QSplitter* splitter = new QSplitter(Qt::Horizontal);
 		splitter->addWidget(mFileQuickView);
@@ -609,10 +615,10 @@ namespace FFX {
 		
 		connect(mEnvelopeFilesAction, &QAction::triggered, this, &FileMainView::OnEnvelopeFiles);
 		connect(mClearFolderAction, &QAction::triggered, this, &FileMainView::OnClearFolder);
-
 		connect(mRenameAction, &QAction::triggered, this, &FileMainView::OnRename);
 		connect(mPropertyAction, &QAction::triggered, this, &FileMainView::OnFileProperty);
 		connect(mCopyFilePathAction, &QAction::triggered, this, &FileMainView::OnCopyFilePath);
+		connect(mOpenCommandPromptAction, &QAction::triggered, this, &FileMainView::OnOpenCommandPrompt);
 	}
 
 	void FileMainView::RefreshFileListView() {
@@ -711,6 +717,27 @@ namespace FFX {
 
 		QClipboard* clipboard = QApplication::clipboard();
 		clipboard->setText(files[0].absoluteFilePath());
+	}
+
+	void FileMainView::OnOpenCommandPrompt() {
+		QString root = mFileListView->CurrentDir();
+		/*
+		QProcess process;
+		QString program = "cmd.exe";
+		QStringList arguments = QStringList() << "/K" << "python.exe";
+		process.setCreateProcessArgumentsModifier(
+			[](QProcess::CreateProcessArguments* args) {
+				args->flags |= CREATE_NEW_CONSOLE;
+				args->startupInfo->dwFlags &= ~STARTF_USESTDHANDLES;
+			});
+		process.start(program, arguments);
+		*/
+		//process.detach();
+
+		QString cmd = QString("/k cd /d \"%1\"").arg(root);
+		ShellExecute(NULL, NULL, L"cmd", cmd.toStdWString().c_str(), NULL, SW_SHOWNORMAL);
+		//std::system(cmd.toStdString().c_str());
+		//QDesktopServices::openUrl(QUrl::fromLocalFile();
 	}
 }
 

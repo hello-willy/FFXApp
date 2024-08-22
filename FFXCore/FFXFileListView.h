@@ -182,6 +182,7 @@ namespace FFX {
 		QAction* RenameAction() { return mRenameAction; }
 		QAction* PropertyAction() { return mPropertyAction; }
 		QAction* CopyFilePathAction() { return mCopyFilePathAction; }
+		QAction* OpenCommandPromptAction() { return mOpenCommandPromptAction; }
 
 	Q_SIGNALS:
 		void CurrentPathChanged(const QString& newPath);
@@ -196,6 +197,7 @@ namespace FFX {
 		void OnRename();
 		void OnFileProperty();
 		void OnCopyFilePath();
+		void OnOpenCommandPrompt();
 
 	private:
 		void SetupUi();
@@ -219,6 +221,7 @@ namespace FFX {
 		QAction* mRenameAction;
 		QAction* mPropertyAction;
 		QAction* mCopyFilePathAction;
+		QAction* mOpenCommandPromptAction;
 	};
 }
 
