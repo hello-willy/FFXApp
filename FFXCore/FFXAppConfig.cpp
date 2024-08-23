@@ -37,26 +37,12 @@ namespace FFX {
 		return QRect(x.toInt(), y.toInt(), width.toInt(), height.toInt());
 	}
 
-	void AppConfig::SaveQuickItem(const QList<QString>& quickItems) {
-		QSettings settings(mConfigFile, QSettings::IniFormat);
-		settings.beginWriteArray(QuickItem);
-		for (int i = 0; i < quickItems.size(); i++) {
-			settings.setArrayIndex(i);
-			settings.setValue("value", quickItems[i]);
-		}
-		settings.endArray();
+	void AppConfig::SaveQuickItem(const QList<QPair<QString, QVariant>>& items) {
+		WritePairItemArray(QuickItem, items);
 	}
 
-	QList<QString> AppConfig::RestoreQuickItem() {
-		QSettings settings(mConfigFile, QSettings::IniFormat);
-		QList<QString> result;
-		int size = settings.beginReadArray(QuickItem);
-		for (int i = 0; i < size; i++) {
-			settings.setArrayIndex(i);
-			result.append(settings.value("value").toString());
-		}
-		settings.endArray();
-		return result;
+	QList<QPair<QString, QVariant>> AppConfig::RestoreQuickItem() {
+		return ReadPairItemArray(QuickItem);
 	}
 
 	void AppConfig::SaveCurrentRoot(const QString& root) {

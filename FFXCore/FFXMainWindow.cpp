@@ -165,15 +165,7 @@ namespace FFX {
 		// save quick view item
 		FileQuickView* fileQuickView = mFileMainView->FileQuickViewPtr();
 		QuickNavigatePanel* quickPanel = fileQuickView->QuickNaviPanelPtr();
-		int count = quickPanel->Count();
-		QList<QString> items;
-		for (int i = 0; i < count; i++) {
-			QString dir = quickPanel->ItemDir(i);
-			if (dir.isEmpty())
-				continue;
-			items << dir;
-		}
-		mAppConfig->SaveQuickItem(items);
+		mAppConfig->SaveQuickItem(quickPanel->Items());
 		// save current root
 		mAppConfig->SaveCurrentRoot(mFileMainView->RootPath());
 	}

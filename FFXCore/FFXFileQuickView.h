@@ -5,6 +5,7 @@
 #include <QToolButton>
 #include <QTreeView>
 #include <QFileSystemModel>
+#include <QPair>
 
 class QHBoxLayout;
 class QVBoxLayout;
@@ -14,6 +15,8 @@ class QListWidgetItem;
 class QShortcut;
 
 namespace FFX {
+	typedef QPair<QString, QVariant> QuickItem;
+	typedef QList<QuickItem> QuickItemList;
 
 	class FileQuickViewHeader : public QWidget {
 		Q_OBJECT
@@ -38,13 +41,12 @@ namespace FFX {
 		QuickNavigatePanel(QWidget* parent = 0);
 
 	public:
-		void AddItem(const QString& dir);
-		void AddItem(const QList<QString>& dirs);
+		void AddItem(const QString& dir, QString name = QString());
+		void AddItem(const QuickItemList& items);
 		bool IsDirFixed(const QString& dir);
 		void RemoveItem(const QString& dir);
 		bool IsFull() const;
-		int Count() const;
-		QString ItemDir(int index) const;
+		QuickItemList Items() const;
 
 	private:
 		void SetupUi();
@@ -52,12 +54,15 @@ namespace FFX {
 
 	private slots:
 		void OnCurrentItemChanged(QListWidgetItem* current, QListWidgetItem* previous);
+		void OnCustomContextMenuRequested(const QPoint& pos);
+		void OnRemoveItem();
 
 	private:
 		FileQuickViewHeader* mHeader;
 		QListWidget* mItemList;
 		QVBoxLayout* mMainLayout;
 		QList<QShortcut*> mQuickNaviShortcuts;
+		QAction* mRemoveItemAction;
 		int mMaxItems = 9;
 
 	Q_SIGNALS:

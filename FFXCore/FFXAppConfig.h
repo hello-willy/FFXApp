@@ -1,6 +1,6 @@
 #pragma once
 #include "FFXCore.h"
-
+#include <QPair>
 #include <QObject>
 
 namespace FFX {
@@ -15,8 +15,8 @@ namespace FFX {
 		void SaveMainWindowPos(const QRect& pos);
 		QRect RestoreMainWindowPos();
 
-		void SaveQuickItem(const QList<QString>& quickItems);
-		QList<QString> RestoreQuickItem();
+		void SaveQuickItem(const QList<QPair<QString, QVariant>>& items);
+		QList<QPair<QString, QVariant>> RestoreQuickItem();
 
 		void SaveCurrentRoot(const QString& root);
 		QString RestoreCurrentRoot();
