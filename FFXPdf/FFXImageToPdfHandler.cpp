@@ -12,7 +12,7 @@ namespace FFX {
 	}
 
 	std::string ImageToPdfHandler::FilterExpression() {
-		return "*.png | *.jpg | *.jpeg | *.gif | *.bmp";
+		return "*.png | *.jpg | *.jpeg | *.gif | *.bmp | *.webp";
 	}
 
 	std::shared_ptr<FileHandler> ImageToPdfHandler::Clone() {

@@ -48,7 +48,7 @@ namespace FFX {
 		FileMainView* fmv = App()->FileMainViewPtr();
 		QStringList files = fmv->SelectedFiles();
 		App()->TaskPanelPtr()->Submit(FileInfoList(files), std::make_shared<ImageToPdfHandler>("D:/out.pdf", QSize(595, 842), 
-			QRect(50, 50, 495, 742), true, false, true));
+			QRect(), true, true, true));
 	}
 
 	void PdfPlugin::OnMergePdfAction() {

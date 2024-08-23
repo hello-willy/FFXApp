@@ -50,6 +50,21 @@ namespace FFX {
 		mFileListViewNavigator->ChangePath(mNewPath.absoluteFilePath());
 	}
 
+	bool DefaultSortProxyModel::lessThan(const QModelIndex& source_left, const QModelIndex& source_right) const {
+		QSortFilterProxyModel::lessThan(source_left, source_right); // 保持默认的排序规则
+		
+		const QFileSystemModel* model = static_cast<const QFileSystemModel*>(source_left.model());
+		QFileInfo leftInfo = model->fileInfo(source_left);
+		QFileInfo rightInfo = model->fileInfo(source_right);
+
+		// 如果都是文件，则按照大小排序
+		if (leftInfo.isFile() && rightInfo.isFile()) {
+			return leftInfo.lastModified() < rightInfo.lastModified();
+		}
+
+		return QSortFilterProxyModel::lessThan(source_left, source_right);
+	}
+
 	/************************************************************************************************************************
 	 * Class： DefaultFileListViewModel
 	 *
@@ -142,6 +157,10 @@ namespace FFX {
 		setEditTriggers(QAbstractItemView::SelectedClicked | QAbstractItemView::EditKeyPressed); // Set edit mode.
 		setSelectionMode(QAbstractItemView::ExtendedSelection); // Multi selection.
 		setSelectionRectVisible(true); // Set select rubber bound visible.
+		
+		mSortProxyModel = new DefaultSortProxyModel;
+		mSortProxyModel->setSourceModel(mFileModel);
+
 		setModel(mFileModel);
 
 		DefaultFileListViewEditDelegate* itemEditDelegate = new DefaultFileListViewEditDelegate(mFileModel);

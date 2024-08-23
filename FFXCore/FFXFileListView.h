@@ -6,6 +6,7 @@
 #include <QFileInfo>
 #include <QFileSystemModel>
 #include <QStyledItemDelegate>
+#include <QSortFilterProxyModel>
 
 class QShortcut;
 class QToolButton;
@@ -15,6 +16,14 @@ class QVBoxLayout;
 
 namespace FFX {
 	class FileQuickView;
+
+	class DefaultSortProxyModel : public QSortFilterProxyModel {
+		Q_OBJECT
+	public:
+		DefaultSortProxyModel(QObject* parent = nullptr) : QSortFilterProxyModel(parent) { sort(0); }
+	protected:
+		virtual bool lessThan(const QModelIndex& source_left, const QModelIndex& source_right) const override;
+	};
 
 	class DefaultFileListViewModel : public QFileSystemModel
 	{
@@ -91,7 +100,7 @@ namespace FFX {
 
 	private:
 		DefaultFileListViewModel* mFileModel;
-		
+		DefaultSortProxyModel* mSortProxyModel;
 		bool mEditing = false;
 		//! Shortcut
 		QShortcut* mDeleteForceShortcut;
