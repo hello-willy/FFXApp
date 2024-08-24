@@ -15,7 +15,9 @@
 #include <QButtonGroup>
 #include <QAction>
 #include <QMenu>
-
+#include <QApplication>
+#include <QClipboard>
+#include <QMimeData>
 
 namespace FFX {
 	RenameFileListViewModel::RenameFileListViewModel(QObject* parent)
@@ -186,6 +188,10 @@ namespace FFX {
 
 	void RenameFileListView::Apply(QFileInfoList newFiles) {
 		mDataModel->UpdateData(newFiles);
+	}
+
+	void RenameFileListView::Clear() {
+		mDataModel->Clear();
 	}
 
 	ExprLineEdit::ExprLineEdit(QWidget* parent) 
@@ -453,6 +459,9 @@ namespace FFX {
 		setWindowFlags(Qt::WindowCloseButtonHint);
 
 		mRenameFileListTitleLabel = new QLabel(QObject::tr("File List"));
+		mLoadFromClipboardButton = new QToolButton;
+		mLoadFromClipboardButton->setIcon(QIcon(":/ffx/res/image/clipboard.svg"));
+
 		mRenameFileInfoLabel = new QLabel;
 		mRenameFileListView = new RenameFileListView;
 		mMainLayout = new QGridLayout;
@@ -564,7 +573,8 @@ namespace FFX {
 		
 		setLayout(mMainLayout);
 		mMainLayout->addWidget(mRenameFileListTitleLabel, 0, 0, 1, 1);
-		mMainLayout->addWidget(mRenameFileInfoLabel, 0, 1, 1, 1);
+		mMainLayout->addWidget(mLoadFromClipboardButton, 0, 1, 1, 1);
+		//mMainLayout->addWidget(mRenameFileInfoLabel, 0, 1, 1, 1);
 		mMainLayout->addWidget(mRenameFileListView, 1, 0, 1, 2);
 		mMainLayout->addWidget(mTabWidget, 2, 0, 1, 2);
 		mMainLayout->addLayout(mFootLayout, 3, 0, 1, 2);
@@ -588,6 +598,7 @@ namespace FFX {
 		connect(mRuleMoveUp, &QToolButton::clicked, this, &RenameDialog::OnRuleMoveUp);
 		connect(mRuleMoveDown, &QToolButton::clicked, this, &RenameDialog::OnRuleMoveDown);
 		connect(mRuleMoveBottom, &QToolButton::clicked, this, &RenameDialog::OnRuleMoveBottom);
+		connect(mLoadFromClipboardButton, &QToolButton::clicked, this, &RenameDialog::OnLoadFileFromClipboard);
 	}
 
 	void RenameDialog::OnOkClicked(){
@@ -683,5 +694,17 @@ namespace FFX {
 
 	void RenameDialog::OnRuleMoveBottom() {
 		mExprListWidget->MoveRowBottom();
+	}
+
+	void RenameDialog::OnLoadFileFromClipboard() {
+		mRenameFileListView->Clear();
+		QClipboard* clipboard = QApplication::clipboard();
+		const QMimeData* mimeData = clipboard->mimeData();
+		QList<QUrl> curUrls = mimeData->urls();
+		int size = curUrls.size();
+		for (int i = 0; i < size; i++) {
+			QString file = curUrls[i].toLocalFile();
+			mRenameFileListView->AddFile(file);
+		}
 	}
 }

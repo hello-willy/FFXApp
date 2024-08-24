@@ -71,6 +71,7 @@ namespace FFX {
 	public:
 		void AddFile(const QString& file, const QString& newFileName = QString());
 		void Apply(QFileInfoList newFiles);
+		void Clear();
 
 	private:
 		RenameFileListViewItemDelegate* mItemDelegate;
@@ -192,12 +193,14 @@ namespace FFX {
 		void OnRuleMoveDown();
 		void OnRuleMoveTop();
 		void OnRuleMoveBottom();
+		void OnLoadFileFromClipboard();
 
 	private:
 		QStringList mFiles;
 
 		QGridLayout* mMainLayout;
 		QLabel* mRenameFileListTitleLabel;
+		QToolButton* mLoadFromClipboardButton;
 		QLabel* mRenameFileInfoLabel;
 		RenameFileListView* mRenameFileListView;
 		QTabWidget* mTabWidget;
