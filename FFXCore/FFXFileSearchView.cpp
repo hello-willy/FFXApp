@@ -11,6 +11,7 @@
 #include <QGridLayout>
 #include <QLineEdit>
 #include <QToolButton>
+#include <QShortcut>
 
 namespace FFX {
 	/************************************************************************************************************************
@@ -59,6 +60,11 @@ namespace FFX {
 		mMainLayout->setRowStretch(0, 1);
 		mMainLayout->setColumnStretch(1, 1);
 		mMainLayout->setContentsMargins(0, 9, 5, 0); // Set the right margin to 5 pixels.
+
+		mActiveSearchShortcut = new QShortcut(QKeySequence("Ctrl+F"), this);
+		mActiveSearchShortcut->setContext(Qt::WindowShortcut);
+		connect(mActiveSearchShortcut, &QShortcut::activated, this, &FileSearchView::OnActiveSearch);
+
 		setLayout(mMainLayout);
 	}
 
@@ -127,5 +133,9 @@ namespace FFX {
 		QFileInfo fileInfo(files[0]);
 		QDir d = fileInfo.absoluteDir();
 		MainWindow::Instance()->FileMainViewPtr()->Goto(d.absolutePath());
+	}
+
+	void FileSearchView::OnActiveSearch() {
+		mSearchEdit->setFocus();
 	}
 }

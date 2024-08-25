@@ -7,10 +7,10 @@
 #include <QFileSystemModel>
 #include <QStyledItemDelegate>
 #include <QSortFilterProxyModel>
+#include <QLineEdit>
 
 class QShortcut;
 class QToolButton;
-class QLineEdit;
 class QHBoxLayout;
 class QVBoxLayout;
 
@@ -40,7 +40,7 @@ namespace FFX {
 	{
 		Q_OBJECT
 	public:
-		explicit DefaultFileListViewEditDelegate(QFileSystemModel* fileModel, QObject* parent = nullptr);
+		explicit DefaultFileListViewEditDelegate(QSortFilterProxyModel* fileModel, QObject* parent = nullptr);
 	public:
 		virtual QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
 		virtual void setEditorData(QWidget* editor, const QModelIndex& index) const override;
@@ -49,7 +49,7 @@ namespace FFX {
 
 	private:
 		// for get the file info about QModelIndex.
-		QFileSystemModel* mFileModel;
+		QSortFilterProxyModel* mViewModel;
 
 	Q_SIGNALS:
 		void startEditing() const;
@@ -116,6 +116,15 @@ namespace FFX {
 		
 	};
 
+	class PathEditWidget : public QLineEdit {
+		Q_OBJECT
+	public:
+		PathEditWidget(QWidget* parent = nullptr);
+
+	protected:
+		void focusInEvent(QFocusEvent* event) override;
+	};
+
 	class DefaultFileListViewNavigator : public QWidget {
 		Q_OBJECT
 	public:
@@ -132,6 +141,7 @@ namespace FFX {
 		void OnBackward();
 		void OnForward();
 		void OnUpward();
+		void OnGoto();
 
 	private:
 		void ChangePath(const QString& path);
@@ -142,10 +152,11 @@ namespace FFX {
 		QToolButton* mBackwardButton;
 		QToolButton* mForwardButton;
 		QToolButton* mUpwardButton;
-		QLineEdit* mRootPathEdit;
+		PathEditWidget* mRootPathEdit;
 		QHBoxLayout* mMainLayout;
 		QString mCurrentPath;
 		QShortcut* mBackwardShortcut;
+		QShortcut* mGotoShortcut;
 	};
 
 	class ChangeRootPathCommand : public QUndoCommand

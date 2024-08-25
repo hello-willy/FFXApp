@@ -23,6 +23,7 @@
 #include <QSplitter>
 #include <QMenu>
 #include <QProcess>
+#include <QTimer>
 
 #ifdef Q_OS_WIN
 #include <cstdlib>
@@ -103,9 +104,9 @@ namespace FFX {
 	 *
 	 *
 	/************************************************************************************************************************/
-	DefaultFileListViewEditDelegate::DefaultFileListViewEditDelegate(QFileSystemModel* fileModel, QObject* parent) 
+	DefaultFileListViewEditDelegate::DefaultFileListViewEditDelegate(QSortFilterProxyModel* fileModel, QObject* parent)
 		: QStyledItemDelegate(parent)
-		, mFileModel(fileModel) {
+		, mViewModel(fileModel) {
 	}
 
 	QWidget* DefaultFileListViewEditDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const {
@@ -128,7 +129,8 @@ namespace FFX {
 		// the lambda function is executed using a queued connection
 		connect(&src, &QObject::destroyed, le, [le, this, idx]() {
 			//set default selection in the line edit
-			QFileInfo file = mFileModel->filePath(idx);
+			QModelIndex index = mViewModel->mapToSource(idx);
+			QFileInfo file = ((QFileSystemModel*)mViewModel->sourceModel())->filePath(index);
 			int selectLen = 0;
 			if (file.isDir())
 				selectLen = file.fileName().size();
@@ -161,9 +163,9 @@ namespace FFX {
 		mSortProxyModel = new DefaultSortProxyModel;
 		mSortProxyModel->setSourceModel(mFileModel);
 
-		setModel(mFileModel);
+		setModel(mSortProxyModel);
 
-		DefaultFileListViewEditDelegate* itemEditDelegate = new DefaultFileListViewEditDelegate(mFileModel);
+		DefaultFileListViewEditDelegate* itemEditDelegate = new DefaultFileListViewEditDelegate(mSortProxyModel);
 		connect(itemEditDelegate, &DefaultFileListViewEditDelegate::startEditing, [=]() {
 			mEditing = true;
 			});
@@ -218,12 +220,14 @@ namespace FFX {
 
 	QStringList DefaultFileListView::SelectedFiles() {
 		QList<QString> files;
+		
 		QItemSelectionModel* m = selectionModel();
 		QModelIndexList selection = m->selectedIndexes();
 		for (const QModelIndex& index : selection) {
 			if (index.column() != 0)
 				continue;
-			QString file = mFileModel->filePath(index);
+			QModelIndex i = mSortProxyModel->mapToSource(index);
+			QString file = mFileModel->filePath(i);
 			files << file;
 		}
 		return files;
@@ -234,7 +238,8 @@ namespace FFX {
 	}
 
 	QModelIndex DefaultFileListView::IndexOf(const QString& file) {
-		return mFileModel->index(file);
+		//return mFileModel->index(file);
+		return mSortProxyModel->mapFromSource(mFileModel->index(file));
 	}
 
 	void DefaultFileListView::Refresh() {
@@ -249,12 +254,14 @@ namespace FFX {
 
 		if (root.isDir()) {
 			QModelIndex index = mFileModel->setRootPath(root.absoluteFilePath());
-			setRootIndex(index); // IMPORTANT! refresh the ui
+			//setRootIndex(index); // IMPORTANT! refresh the ui
+			setRootIndex(mSortProxyModel->mapFromSource(index));
 		}
 	}
 
 	void DefaultFileListView::OnItemDoubleClicked(const QModelIndex& index) {
-		QFileInfo currentFileInfo = mFileModel->fileInfo(index);
+		QModelIndex idx = mSortProxyModel->mapToSource(index);
+		QFileInfo currentFileInfo = mFileModel->fileInfo(idx);
 		emit FileDoubleClicked(currentFileInfo);
 
 	}
@@ -262,6 +269,7 @@ namespace FFX {
 	void DefaultFileListView::keyPressEvent(QKeyEvent* event) {
 		if (!mEditing && (event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter)) {
 			QModelIndex idx = selectionModel()->currentIndex();
+			//mSortProxyModel->mapSelectionFromSource(idx);
 			if (idx.isValid()) {
 				OnItemDoubleClicked(idx);
 				return;
@@ -305,6 +313,7 @@ namespace FFX {
 		Refresh();
 		//! Set new file selected
 		QModelIndex first = mFileModel->index(QDir(path).absoluteFilePath(newName));
+		first = mSortProxyModel->mapFromSource(first);
 		for (const QFileInfo& fi : result) {
 			QModelIndex idx = mFileModel->index(fi.absoluteFilePath());
 			if (idx.isValid() && !first.isValid()) {
@@ -486,6 +495,17 @@ namespace FFX {
 		edit(idx);
 	}
 
+	PathEditWidget::PathEditWidget(QWidget* parent)
+		: QLineEdit(parent) {
+
+	}
+	void PathEditWidget::focusInEvent(QFocusEvent* event) {
+		QLineEdit::focusInEvent(event);
+		QTimer::singleShot(0, this, &QLineEdit::selectAll);
+		QClipboard* clipboard = QApplication::clipboard();
+		clipboard->setText(text());
+	}
+
 	/************************************************************************************************************************
 	 * Class： DefaultFileListViewNavigator
 	 *
@@ -509,7 +529,7 @@ namespace FFX {
 		mUpwardButton->setIcon(QIcon(":/ffx/res/image/angle-up.svg"));
 		mUpwardButton->setFixedSize(QSize(32, 32));
 		connect(mUpwardButton, &QToolButton::clicked, this, &DefaultFileListViewNavigator::OnUpward);
-		mRootPathEdit = new QLineEdit;
+		mRootPathEdit = new PathEditWidget;
 		mRootPathEdit->setFixedHeight(32);
 		mMainLayout = new QHBoxLayout;
 		mMainLayout->addWidget(mBackwardButton);
@@ -525,6 +545,10 @@ namespace FFX {
 		mBackwardShortcut = new QShortcut(Qt::Key_Backspace, this);
 		mBackwardShortcut->setContext(Qt::WindowShortcut);
 		connect(mBackwardShortcut, &QShortcut::activated, this, &DefaultFileListViewNavigator::OnBackward);
+
+		mGotoShortcut = new QShortcut(QKeySequence("Ctrl+G"), this);
+		mGotoShortcut->setContext(Qt::WindowShortcut);
+		connect(mGotoShortcut, &QShortcut::activated, this, &DefaultFileListViewNavigator::OnGoto);
 	}
 
 	void DefaultFileListViewNavigator::Goto(const QString& path) {
@@ -563,6 +587,10 @@ namespace FFX {
 		if (dir.cdUp()) {
 			Goto(dir.absolutePath());
 		}
+	}
+
+	void DefaultFileListViewNavigator::OnGoto() {
+		mRootPathEdit->setFocus();
 	}
 
 	/************************************************************************************************************************
