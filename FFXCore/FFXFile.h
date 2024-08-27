@@ -99,6 +99,7 @@ namespace FFX {
 	FFXCORE_EXPORT QFileInfoList FileInfoList(const QFileInfo& file);
 	FFXCORE_EXPORT QFileInfoList FileInfoList(const QList<QUrl> urls);
 	FFXCORE_EXPORT qint64 SymbolLinkSize(const QFileInfo& file);
+	FFXCORE_EXPORT qint64 FileSize(const QFileInfo& file);
 
 	FFXCORE_EXPORT int PathDepth(const QString& path);
 	FFXCORE_EXPORT void SortByDepth(QFileInfoList& files, bool asc = true);

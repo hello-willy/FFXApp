@@ -13,16 +13,27 @@ class QShortcut;
 class QToolButton;
 class QHBoxLayout;
 class QVBoxLayout;
+class QActionGroup;
 
 namespace FFX {
 	class FileQuickView;
 
+	enum OrderBy {
+		OBName = 0,
+		OBDate,
+		OBSize,
+		OBType,
+	};
+
 	class DefaultSortProxyModel : public QSortFilterProxyModel {
 		Q_OBJECT
 	public:
-		DefaultSortProxyModel(QObject* parent = nullptr) : QSortFilterProxyModel(parent) { sort(0); }
+		DefaultSortProxyModel(QObject* parent = nullptr) : QSortFilterProxyModel(parent) {}
+		void sort(int column, Qt::SortOrder order = Qt::AscendingOrder) override;
 	protected:
 		virtual bool lessThan(const QModelIndex& source_left, const QModelIndex& source_right) const override;
+	private:
+		OrderBy mOrderBy = OBName;
 	};
 
 	class DefaultFileListViewModel : public QFileSystemModel
@@ -44,12 +55,16 @@ namespace FFX {
 	public:
 		virtual QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
 		virtual void setEditorData(QWidget* editor, const QModelIndex& index) const override;
+	protected:
 		//! for remove the dash line when focus.
 		void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
+		QSize sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const override;
 
 	private:
 		// for get the file info about QModelIndex.
 		QSortFilterProxyModel* mViewModel;
+		int mMargin = 5;
+		int mItemHeight = 80;
 
 	Q_SIGNALS:
 		void startEditing() const;
@@ -71,6 +86,7 @@ namespace FFX {
 		
 	public:
 		void SetRootPath(const QFileInfo& root);
+		void SetSortBy(OrderBy ob, Qt::SortOrder = Qt::AscendingOrder);
 
 	public slots:
 		void MakeDirAndEdit();
@@ -133,6 +149,8 @@ namespace FFX {
 
 	public:
 		void Goto(const QString& path);
+		void SetRefreshAction(QAction* action);
+		void AddWidget(QWidget* widget);
 
 	Q_SIGNALS:
 		void RootPathChanged(const QString& newPath);
@@ -218,6 +236,7 @@ namespace FFX {
 		void OnFileProperty();
 		void OnCopyFilePath();
 		void OnOpenCommandPrompt();
+		void OnSetOrderBy();
 
 	private:
 		void SetupUi();
@@ -227,6 +246,13 @@ namespace FFX {
 		DefaultFileListView* mFileListView;
 		FileQuickView* mFileQuickView;
 		QVBoxLayout* mMainLayout;
+		//! Widgets
+		QToolButton* mRefreshFileListButton;
+		QToolButton* mSetFileListOrderButton;
+		//QList<QAction*> mOrderByActions;
+		QActionGroup* mOrderByActionGroup;
+		QActionGroup* mSortActionGroup;
+
 		//! Actions
 		QAction* mMakeDirAction;
 		QList<QAction*> mMakeFileActions;
@@ -236,6 +262,7 @@ namespace FFX {
 		QAction* mMoveFilesAction;
 		QAction* mFixedToQuickPanelAction;
 		QAction* mRefreshAction;
+		
 		QAction* mEnvelopeFilesAction;
 		QAction* mClearFolderAction;
 		QAction* mRenameAction;

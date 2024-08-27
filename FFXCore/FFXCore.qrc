@@ -33,5 +33,6 @@
         <file>res/image/stat-file.svg</file>
         <file>res/image/terminal.svg</file>
         <file>res/image/unpin.svg</file>
+        <file>res/image/sort.svg</file>
     </qresource>
 </RCC>

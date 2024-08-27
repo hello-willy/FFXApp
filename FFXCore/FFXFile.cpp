@@ -39,6 +39,12 @@ namespace FFX {
 		return size;
 	}
 
+	qint64 FileSize(const QFileInfo& file) {
+		if (file.isSymLink())
+			return SymbolLinkSize(file);
+		return file.size();
+	}
+
 	int PathDepth(const QString& path) {
 		QString thePath(path);
 		thePath = QDir::toNativeSeparators(QDir::cleanPath(thePath));

@@ -5,6 +5,8 @@
 #include "FFXFileQuickView.h"
 #include "FFXRenameDialog.h"
 #include "FFXFilePropertyDialog.h"
+#include "FFXFile.h"
+#include "FFXString.h"
 
 #include <QLineEdit>
 #include <QDesktopServices>
@@ -24,11 +26,16 @@
 #include <QMenu>
 #include <QProcess>
 #include <QTimer>
+#include <QCollator>
+#include <QActionGroup>
+#include <QPainter>
+#include <QFileIconProvider>
 
 #ifdef Q_OS_WIN
 #include <cstdlib>
 #include <Windows.h>
 #endif
+
 namespace FFX {
 	/************************************************************************************************************************
 	 * Class： ChangeRootPathCommand
@@ -51,19 +58,40 @@ namespace FFX {
 		mFileListViewNavigator->ChangePath(mNewPath.absoluteFilePath());
 	}
 
+	void DefaultSortProxyModel::sort(int column, Qt::SortOrder order) {
+		mOrderBy = (OrderBy)column;
+		QSortFilterProxyModel::sort(column, order);
+	}
+
 	bool DefaultSortProxyModel::lessThan(const QModelIndex& source_left, const QModelIndex& source_right) const {
-		QSortFilterProxyModel::lessThan(source_left, source_right); // 保持默认的排序规则
-		
-		const QFileSystemModel* model = static_cast<const QFileSystemModel*>(source_left.model());
+		QFileSystemModel* model = (QFileSystemModel*)sourceModel();
+
 		QFileInfo leftInfo = model->fileInfo(source_left);
 		QFileInfo rightInfo = model->fileInfo(source_right);
+		bool left = leftInfo.isDir();
+		bool right = rightInfo.isDir();
+		if (left ^ right)
+			return left;
 
-		// 如果都是文件，则按照大小排序
-		if (leftInfo.isFile() && rightInfo.isFile()) {
+		if (mOrderBy == OBName) {
+			QCollator collator;
+			return collator.compare(leftInfo.fileName(), rightInfo.fileName()) < 0;
+		}
+		if (mOrderBy == OBDate) {
 			return leftInfo.lastModified() < rightInfo.lastModified();
 		}
+		if (mOrderBy == OBSize) {
+			return leftInfo.size() < rightInfo.size();
+		}
+		if (mOrderBy == OBType) {
+			QCollator collator;
+			int compare = collator.compare(model->type(source_left), model->type(source_right));
+			if (compare == 0)
+				return collator.compare(leftInfo.fileName(), rightInfo.fileName()) < 0;
+			return compare < 0;
+		}
 
-		return QSortFilterProxyModel::lessThan(source_left, source_right);
+		return false;
 	}
 
 	/************************************************************************************************************************
@@ -111,6 +139,12 @@ namespace FFX {
 
 	QWidget* DefaultFileListViewEditDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const {
 		QLineEdit* editor = new QLineEdit(parent);
+		QRect rect = option.rect;
+
+		//QRect editRect(rect.left() + 32 + mMargin * 8, rect.top() + mMargin, rect.right() - mMargin, 40);
+		editor->setFixedSize(QSize(rect.width() - 32 - mMargin * 2, 40));
+		//editor->setGeometry(editRect);
+		
 		// ignored illegal char
 		QRegExpValidator* validator = new QRegExpValidator(QRegExp(G_FILE_VALIDATOR));
 		editor->setValidator(validator);
@@ -144,7 +178,48 @@ namespace FFX {
 		QStyleOptionViewItem opt = option;
 		if (opt.state & QStyle::State_HasFocus && !(opt.state & QStyle::State_Selected))
 			opt.state &= ~QStyle::State_HasFocus;
-		QStyledItemDelegate::paint(painter, opt, index);
+
+		QRect rect = option.rect;
+
+		if (option.state.testFlag(QStyle::State_MouseOver)) {
+			painter->fillRect(rect, QColor("#E5F3FF"));
+		}
+		if (option.state.testFlag(QStyle::State_Selected)) {
+			painter->fillRect(rect, QColor("#CCE8FF"));
+		}
+
+		QSortFilterProxyModel* model = (QSortFilterProxyModel*)index.model();
+		QModelIndex idx = model->mapToSource(index);
+		QAbstractItemModel* fm = model->sourceModel();
+		QFileSystemModel* fileModel = (QFileSystemModel*)model->sourceModel();
+
+		QFileInfo fi = fileModel->fileInfo(idx);
+
+		QFileIconProvider fip;
+		QIcon icon = fip.icon(fi);
+		QPixmap pixmap = icon.pixmap(icon.actualSize(QSize(32, 32)));
+		QRect iconRect(rect.left() + mMargin, rect.top() + mMargin, 32, 32);
+		painter->drawPixmap(iconRect, pixmap);
+
+		painter->setFont(QFont("Microsoft YaHei", 9));
+		QRect fileNameRect(iconRect.right() + mMargin, rect.top() + mMargin, rect.width() - iconRect.width() - mMargin * 3, 30);
+		painter->drawText(fileNameRect, Qt::AlignVCenter | Qt::AlignLeft, fi.fileName());
+
+		painter->setFont(QFont("Microsoft YaHei", 6));
+		QRect pathNameRect(iconRect.right() + mMargin, fileNameRect.bottom() + mMargin, rect.width() - 2 * mMargin, 30);
+
+		QString subtitle = fi.lastModified().toString("yyyy-MM-dd hh:mm:ss");
+		if (!fi.isDir()) {
+			subtitle = QString("%1 \t %2").arg(subtitle).arg(String::BytesHint(FileSize(fi)));
+		}
+		painter->drawText(pathNameRect, Qt::AlignVCenter | Qt::AlignLeft, subtitle);
+
+		// QStyledItemDelegate::paint(painter, opt, index);
+	}
+
+	QSize DefaultFileListViewEditDelegate::sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const {
+		Q_UNUSED(index)
+		return QSize(option.rect.width(), mItemHeight); // Set the item height fixed.
 	}
 
 	/************************************************************************************************************************
@@ -158,6 +233,7 @@ namespace FFX {
 		mFileModel->setReadOnly(false); // Set list view editable
 		setEditTriggers(QAbstractItemView::SelectedClicked | QAbstractItemView::EditKeyPressed); // Set edit mode.
 		setSelectionMode(QAbstractItemView::ExtendedSelection); // Multi selection.
+		setSelectionBehavior(QAbstractItemView::SelectItems);
 		setSelectionRectVisible(true); // Set select rubber bound visible.
 		
 		mSortProxyModel = new DefaultSortProxyModel;
@@ -495,6 +571,10 @@ namespace FFX {
 		edit(idx);
 	}
 
+	void DefaultFileListView::SetSortBy(OrderBy ob, Qt::SortOrder sort) {
+		mSortProxyModel->sort(ob, sort);
+	}
+
 	PathEditWidget::PathEditWidget(QWidget* parent)
 		: QLineEdit(parent) {
 
@@ -531,6 +611,7 @@ namespace FFX {
 		connect(mUpwardButton, &QToolButton::clicked, this, &DefaultFileListViewNavigator::OnUpward);
 		mRootPathEdit = new PathEditWidget;
 		mRootPathEdit->setFixedHeight(32);
+
 		mMainLayout = new QHBoxLayout;
 		mMainLayout->addWidget(mBackwardButton);
 		mMainLayout->addWidget(mForwardButton);
@@ -559,6 +640,10 @@ namespace FFX {
 			return;
 		}
 		mRootPathChangeStack->push(new ChangeRootPathCommand(this, path, mCurrentPath));
+	}
+
+	void DefaultFileListViewNavigator::AddWidget(QWidget* widget) {
+		mMainLayout->addWidget(widget);
 	}
 
 	void DefaultFileListViewNavigator::ChangePath(const QString& path) {
@@ -638,6 +723,42 @@ namespace FFX {
 		splitter->setStretchFactor(1, 4);
 		mMainLayout->addWidget(splitter, 1);
 
+		mRefreshFileListButton = new QToolButton;
+		//mRefreshFileListButton->setIcon(QIcon(":/ffx/res/image/refresh.svg"));
+		mRefreshFileListButton->setFixedSize(QSize(32, 32));
+		mRefreshFileListButton->setIconSize(QSize(16, 16));
+		mFileViewNavigator->AddWidget(mRefreshFileListButton);
+		mRefreshFileListButton->setDefaultAction(mRefreshAction);
+
+		mSetFileListOrderButton = new QToolButton;
+		mSetFileListOrderButton->setIcon(QIcon(":/ffx/res/image/sort.svg"));
+		mSetFileListOrderButton->setText(QObject::tr("Order by"));
+		mSetFileListOrderButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+		mSetFileListOrderButton->setFixedHeight(32);
+		mSetFileListOrderButton->setIconSize(QSize(16, 16));
+		mSetFileListOrderButton->setPopupMode(QToolButton::InstantPopup);
+		QMenu* menu = new QMenu;
+		mOrderByActionGroup = new QActionGroup(this);
+		mOrderByActionGroup->addAction(new QAction(QObject::tr("Order by Name")))->setCheckable(true);
+		mOrderByActionGroup->addAction(new QAction(QObject::tr("Order by Date")))->setCheckable(true);
+		mOrderByActionGroup->addAction(new QAction(QObject::tr("Order by Size")))->setCheckable(true);
+		mOrderByActionGroup->addAction(new QAction(QObject::tr("Order by Type")))->setCheckable(true);
+		mOrderByActionGroup->actions()[0]->setChecked(true);
+
+		mSortActionGroup = new QActionGroup(this);
+		mSortActionGroup->addAction(new QAction(QObject::tr("Asc")))->setCheckable(true);
+		mSortActionGroup->addAction(new QAction(QObject::tr("Desc")))->setCheckable(true);
+		mSortActionGroup->actions()[0]->setChecked(true);
+		for (QAction* action : mOrderByActionGroup->actions())
+			menu->addAction(action);
+		menu->addSeparator();
+		for (QAction* action : mSortActionGroup->actions())
+			menu->addAction(action);
+
+		mSetFileListOrderButton->setMenu(menu);
+
+		mFileViewNavigator->AddWidget(mSetFileListOrderButton);
+
 		mMainLayout->setContentsMargins(5, 0, 0, 0);
 		setLayout(mMainLayout);
 
@@ -666,6 +787,9 @@ namespace FFX {
 		connect(mPropertyAction, &QAction::triggered, this, &FileMainView::OnFileProperty);
 		connect(mCopyFilePathAction, &QAction::triggered, this, &FileMainView::OnCopyFilePath);
 		connect(mOpenCommandPromptAction, &QAction::triggered, this, &FileMainView::OnOpenCommandPrompt);
+
+		connect(mOrderByActionGroup, &QActionGroup::triggered, this, &FileMainView::OnSetOrderBy);
+		connect(mSortActionGroup, &QActionGroup::triggered, this, &FileMainView::OnSetOrderBy);
 	}
 
 	void FileMainView::RefreshFileListView() {
@@ -768,23 +892,18 @@ namespace FFX {
 
 	void FileMainView::OnOpenCommandPrompt() {
 		QString root = mFileListView->CurrentDir();
-		/*
-		QProcess process;
-		QString program = "cmd.exe";
-		QStringList arguments = QStringList() << "/K" << "python.exe";
-		process.setCreateProcessArgumentsModifier(
-			[](QProcess::CreateProcessArguments* args) {
-				args->flags |= CREATE_NEW_CONSOLE;
-				args->startupInfo->dwFlags &= ~STARTF_USESTDHANDLES;
-			});
-		process.start(program, arguments);
-		*/
-		//process.detach();
-
+#ifdef Q_OS_WIN
 		QString cmd = QString("/k cd /d \"%1\"").arg(root);
 		ShellExecute(NULL, NULL, L"cmd", cmd.toStdWString().c_str(), NULL, SW_SHOWNORMAL);
-		//std::system(cmd.toStdString().c_str());
-		//QDesktopServices::openUrl(QUrl::fromLocalFile();
+#endif
+	}
+
+	void FileMainView::OnSetOrderBy() {
+		QAction* order = mOrderByActionGroup->checkedAction();
+		int column = mOrderByActionGroup->actions().indexOf(order);
+		QAction* sort = mSortActionGroup->checkedAction();
+		bool asc = mSortActionGroup->actions().indexOf(sort) == 0;
+		mFileListView->SetSortBy((OrderBy)column, asc ? Qt::AscendingOrder : Qt::DescendingOrder);
 	}
 }
 
