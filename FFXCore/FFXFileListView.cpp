@@ -7,6 +7,7 @@
 #include "FFXFilePropertyDialog.h"
 #include "FFXFile.h"
 #include "FFXString.h"
+#include "FFXFileFilterExpr.h"
 
 #include <QLineEdit>
 #include <QDesktopServices>
@@ -58,6 +59,14 @@ namespace FFX {
 		mFileListViewNavigator->ChangePath(mNewPath.absoluteFilePath());
 	}
 
+	DefaultSortProxyModel::DefaultSortProxyModel(QObject* parent) : QSortFilterProxyModel(parent) {
+		setFilterKeyColumn(0);
+	}
+
+	void DefaultSortProxyModel::invalidateFilter() {
+		QSortFilterProxyModel::invalidateFilter();
+	}
+
 	void DefaultSortProxyModel::sort(int column, Qt::SortOrder order) {
 		mOrderBy = (OrderBy)column;
 		QSortFilterProxyModel::sort(column, order);
@@ -93,6 +102,22 @@ namespace FFX {
 
 		return false;
 	}
+	
+	bool DefaultSortProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const {
+		if (mFileFilter == nullptr)
+			return true;
+
+		QModelIndex idx = sourceModel()->index(sourceRow, 0, sourceParent);
+		QFileSystemModel* model = (QFileSystemModel*)sourceModel();
+		QString root = model->rootPath();
+		QString filePath = model->filePath(idx);
+		return filePath == root || mFileFilter->Accept(filePath);
+	}
+	
+	void DefaultSortProxyModel::SetFilterExpr(const QString& filter) {
+		FileFilterExpr fe(filter.toStdString(), true);
+		mFileFilter = fe.Filter();
+	}
 
 	/************************************************************************************************************************
 	 * Class： DefaultFileListViewModel
@@ -101,7 +126,6 @@ namespace FFX {
 	/************************************************************************************************************************/
 	DefaultFileListViewModel::DefaultFileListViewModel(QObject* parent)
 		: QFileSystemModel(parent) {
-		//setFilter(QDir::AllEntries | QDir::Hidden);
 		//! Do not watch the changed by QT, we watch it by hand.
 		setOptions(QFileSystemModel::DontWatchForChanges);
 	}
@@ -240,6 +264,7 @@ namespace FFX {
 		mSortProxyModel->setSourceModel(mFileModel);
 
 		setModel(mSortProxyModel);
+		//mSortProxyModel->setFilterRegExp()
 
 		DefaultFileListViewEditDelegate* itemEditDelegate = new DefaultFileListViewEditDelegate(mSortProxyModel);
 		connect(itemEditDelegate, &DefaultFileListViewEditDelegate::startEditing, [=]() {
@@ -575,10 +600,16 @@ namespace FFX {
 		mSortProxyModel->sort(ob, sort);
 	}
 
+	void DefaultFileListView::SetFilter(const QString& filter) {
+		mSortProxyModel->SetFilterExpr(filter);
+		mSortProxyModel->invalidate();
+	}
+
 	PathEditWidget::PathEditWidget(QWidget* parent)
 		: QLineEdit(parent) {
 
 	}
+
 	void PathEditWidget::focusInEvent(QFocusEvent* event) {
 		QLineEdit::focusInEvent(event);
 		QTimer::singleShot(0, this, &QLineEdit::selectAll);
@@ -723,6 +754,15 @@ namespace FFX {
 		splitter->setStretchFactor(1, 4);
 		mMainLayout->addWidget(splitter, 1);
 
+		mSetFileFilterShortcut = new QShortcut(QKeySequence("Ctrl+Shift+F"), this);
+		mSetFileFilterShortcut->setContext(Qt::WindowShortcut);
+
+		mFilterEdit = new QLineEdit;
+		mFilterEdit->setPlaceholderText(QObject::tr("Set Filter"));
+		mClearFilterAction = new QAction(QIcon(":/ffx/res/image/backspace.svg"), QObject::tr("Clear"));
+		mFilterEdit->addAction(mClearFilterAction, QLineEdit::TrailingPosition);
+		mClearFilterAction->setVisible(false);
+		mFileViewNavigator->AddWidget(mFilterEdit);
 		mRefreshFileListButton = new QToolButton;
 		//mRefreshFileListButton->setIcon(QIcon(":/ffx/res/image/refresh.svg"));
 		mRefreshFileListButton->setFixedSize(QSize(32, 32));
@@ -757,8 +797,9 @@ namespace FFX {
 
 		mSetFileListOrderButton->setMenu(menu);
 
+		
 		mFileViewNavigator->AddWidget(mSetFileListOrderButton);
-
+		
 		mMainLayout->setContentsMargins(5, 0, 0, 0);
 		setLayout(mMainLayout);
 
@@ -790,6 +831,12 @@ namespace FFX {
 
 		connect(mOrderByActionGroup, &QActionGroup::triggered, this, &FileMainView::OnSetOrderBy);
 		connect(mSortActionGroup, &QActionGroup::triggered, this, &FileMainView::OnSetOrderBy);
+
+		connect(mFilterEdit, &QLineEdit::returnPressed, this, &FileMainView::OnFileFilterChanged);
+
+		connect(mSetFileFilterShortcut, &QShortcut::activated, this, &FileMainView::OnFocusFileFilterSet);
+		connect(mFilterEdit, &QLineEdit::textChanged, this, &FileMainView::OnFileFilterEditTextChanged);
+		connect(mClearFilterAction, &QAction::triggered, this, &FileMainView::OnClearFileFilter);
 	}
 
 	void FileMainView::RefreshFileListView() {
@@ -904,6 +951,34 @@ namespace FFX {
 		QAction* sort = mSortActionGroup->checkedAction();
 		bool asc = mSortActionGroup->actions().indexOf(sort) == 0;
 		mFileListView->SetSortBy((OrderBy)column, asc ? Qt::AscendingOrder : Qt::DescendingOrder);
+	}
+
+	void FileMainView::OnFileFilterChanged() {
+		QString filter = mFilterEdit->text();
+		if (filter.isEmpty())
+			return;
+
+		mFileListView->SetFilter(filter);
+	}
+
+	void FileMainView::OnFocusFileFilterSet() {
+		mFilterEdit->setFocus();
+	}
+
+	void FileMainView::OnFileFilterEditTextChanged() {
+		QString text = mFilterEdit->text();
+		if (!text.isEmpty()) {
+			mClearFilterAction->setVisible(true);
+		} else {
+			mClearFilterAction->setVisible(false);
+			mFileListView->SetFilter("*");
+		}
+	}
+
+	void FileMainView::OnClearFileFilter() {
+		mFilterEdit->clear();
+		mClearFilterAction->setVisible(false);
+		mFileListView->SetFilter("*");
 	}
 }
 

@@ -1,5 +1,6 @@
 #pragma once
 #include "FFXCore.h"
+#include "FFXFileFilter.h"
 
 #include <QListView>
 #include <QUndoCommand>
@@ -28,12 +29,21 @@ namespace FFX {
 	class DefaultSortProxyModel : public QSortFilterProxyModel {
 		Q_OBJECT
 	public:
-		DefaultSortProxyModel(QObject* parent = nullptr) : QSortFilterProxyModel(parent) {}
-		void sort(int column, Qt::SortOrder order = Qt::AscendingOrder) override;
+		DefaultSortProxyModel(QObject* parent = nullptr);
+		
+	public:
+		void SetFilterExpr(const QString& filter);
+		virtual void sort(int column, Qt::SortOrder order = Qt::AscendingOrder) override;
+	public:
+		void invalidateFilter();
+
 	protected:
 		virtual bool lessThan(const QModelIndex& source_left, const QModelIndex& source_right) const override;
+		virtual bool filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const override;
+
 	private:
 		OrderBy mOrderBy = OBName;
+		FileFilterPtr mFileFilter;
 	};
 
 	class DefaultFileListViewModel : public QFileSystemModel
@@ -64,7 +74,7 @@ namespace FFX {
 		// for get the file info about QModelIndex.
 		QSortFilterProxyModel* mViewModel;
 		int mMargin = 5;
-		int mItemHeight = 80;
+		int mItemHeight = 70;
 
 	Q_SIGNALS:
 		void startEditing() const;
@@ -87,6 +97,7 @@ namespace FFX {
 	public:
 		void SetRootPath(const QFileInfo& root);
 		void SetSortBy(OrderBy ob, Qt::SortOrder = Qt::AscendingOrder);
+		void SetFilter(const QString& filter);
 
 	public slots:
 		void MakeDirAndEdit();
@@ -237,6 +248,10 @@ namespace FFX {
 		void OnCopyFilePath();
 		void OnOpenCommandPrompt();
 		void OnSetOrderBy();
+		void OnFileFilterChanged();
+		void OnFocusFileFilterSet();
+		void OnFileFilterEditTextChanged();
+		void OnClearFileFilter();
 
 	private:
 		void SetupUi();
@@ -247,6 +262,8 @@ namespace FFX {
 		FileQuickView* mFileQuickView;
 		QVBoxLayout* mMainLayout;
 		//! Widgets
+		QLineEdit* mFilterEdit;
+		QAction* mClearFilterAction;
 		QToolButton* mRefreshFileListButton;
 		QToolButton* mSetFileListOrderButton;
 		//QList<QAction*> mOrderByActions;
@@ -269,6 +286,8 @@ namespace FFX {
 		QAction* mPropertyAction;
 		QAction* mCopyFilePathAction;
 		QAction* mOpenCommandPromptAction;
+
+		QShortcut* mSetFileFilterShortcut;
 	};
 }
 
