@@ -741,7 +741,7 @@ namespace FFX {
 		mEnvelopeFilesAction = new QAction(QIcon(":/ffx/res/image/file-envelope.svg"), QObject::tr("Envelope Files"));
 		mClearFolderAction = new QAction(QIcon(":/ffx/res/image/clear-folders.svg"), QObject::tr("Clear Folder"));
 		mFixedToQuickPanelAction = new QAction(QIcon(":/ffx/res/image/pin.svg"), QObject::tr("Fix to quick panel"));
-		mRenameAction = new QAction(QObject::tr("Rename"));
+		mRenameAction = new QAction(QIcon(":/ffx/res/image/edit.svg"), QObject::tr("Rename"));
 		mPropertyAction = new QAction(QObject::tr("Property"));
 		mCopyFilePathAction = new QAction(QObject::tr("Copy file path"));
 		mOpenCommandPromptAction = new QAction(QIcon(":/ffx/res/image/terminal.svg"), QObject::tr("Open in command prompt"));
@@ -764,6 +764,7 @@ namespace FFX {
 		mClearFilterAction->setVisible(false);
 		mFileViewNavigator->AddWidget(mFilterEdit);
 		mRefreshFileListButton = new QToolButton;
+		mRefreshFileListButton->setDefaultAction(mRefreshAction);
 		//mRefreshFileListButton->setIcon(QIcon(":/ffx/res/image/refresh.svg"));
 		mRefreshFileListButton->setFixedSize(QSize(32, 32));
 		mRefreshFileListButton->setIconSize(QSize(16, 16));
@@ -837,6 +838,7 @@ namespace FFX {
 		connect(mSetFileFilterShortcut, &QShortcut::activated, this, &FileMainView::OnFocusFileFilterSet);
 		connect(mFilterEdit, &QLineEdit::textChanged, this, &FileMainView::OnFileFilterEditTextChanged);
 		connect(mClearFilterAction, &QAction::triggered, this, &FileMainView::OnClearFileFilter);
+		//connect(mRefreshFileListButton, &QToolButton::clicked, this, &DefaultFileListView::Refresh);
 	}
 
 	void FileMainView::RefreshFileListView() {

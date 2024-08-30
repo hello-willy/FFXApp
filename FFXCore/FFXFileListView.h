@@ -160,7 +160,6 @@ namespace FFX {
 
 	public:
 		void Goto(const QString& path);
-		void SetRefreshAction(QAction* action);
 		void AddWidget(QWidget* widget);
 
 	Q_SIGNALS:

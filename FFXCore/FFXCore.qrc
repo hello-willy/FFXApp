@@ -35,5 +35,6 @@
         <file>res/image/unpin.svg</file>
         <file>res/image/sort.svg</file>
         <file>res/image/backspace.svg</file>
+        <file>res/image/edit.svg</file>
     </qresource>
 </RCC>
