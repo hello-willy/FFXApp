@@ -241,7 +241,7 @@ namespace FFX {
 
 	class FFXCORE_EXPORT FileRenameHandler : public PipeFileHandler {
 	public:
-		FileRenameHandler() = default;
+		FileRenameHandler(const QString& after, bool caseSensitive = true, bool suffixInc = false);
 		FileRenameHandler(FileHandlerPtr handler)
 			: PipeFileHandler(handler) {}
 		
@@ -375,6 +375,19 @@ namespace FFX {
 
 	private:
 		void ClearDir(const QFileInfo& dir, ProgressPtr progress);
+	};
+
+	class FFXCORE_EXPORT HandlerFactory {
+	public:
+		HandlerFactory();
+
+	public:
+		void Append(FileHandlerPtr handler);
+		void Remove(const QString& name);
+		FileHandlerPtr Handler(const QString& name) const;
+
+	private:
+		QMap<QString, FileHandlerPtr> mFileHandlerMap;
 	};
 }
 

@@ -79,9 +79,12 @@ namespace FFX {
 		QFileInfo rightInfo = model->fileInfo(source_right);
 		bool left = leftInfo.isDir();
 		bool right = rightInfo.isDir();
-		if (left ^ right)
-			return left;
+		//if (left ^ right)
+		//	return left;
 
+		if (!(left && right)) {
+			return false;
+		}
 		if (mOrderBy == OBName) {
 			QCollator collator;
 			return collator.compare(leftInfo.fileName(), rightInfo.fileName()) < 0;
@@ -407,8 +410,8 @@ namespace FFX {
 		} else if (!newsuffix.isEmpty()) {
 			after = File(newName).BaseName();
 		}
-		FFX::FileHandlerPtr handler = std::make_shared<FFX::FileRenameHandler>(std::make_shared<FFX::FileNameReplaceByExpHandler>("*", after, QRegExp::Wildcard, true, suffixInc));
-		std::dynamic_pointer_cast<FFX::FileRenameHandler>(handler)->Append(std::make_shared<FFX::FileDuplicateHandler>());
+		FFX::FileHandlerPtr handler = std::make_shared<FFX::FileRenameHandler>(after, true, suffixInc);
+		// std::dynamic_pointer_cast<FFX::FileRenameHandler>(handler)->Append(std::make_shared<FFX::FileDuplicateHandler>());
 		QFileInfoList result = handler->Handle(FileInfoList(files));
 
 		Refresh();
@@ -661,6 +664,8 @@ namespace FFX {
 		mGotoShortcut = new QShortcut(QKeySequence("Ctrl+G"), this);
 		mGotoShortcut->setContext(Qt::WindowShortcut);
 		connect(mGotoShortcut, &QShortcut::activated, this, &DefaultFileListViewNavigator::OnGoto);
+
+		mRootPathChangeStack->setUndoLimit(15);
 	}
 
 	void DefaultFileListViewNavigator::Goto(const QString& path) {
@@ -742,8 +747,8 @@ namespace FFX {
 		mClearFolderAction = new QAction(QIcon(":/ffx/res/image/clear-folders.svg"), QObject::tr("Clear Folder"));
 		mFixedToQuickPanelAction = new QAction(QIcon(":/ffx/res/image/pin.svg"), QObject::tr("Fix to quick panel"));
 		mRenameAction = new QAction(QIcon(":/ffx/res/image/edit.svg"), QObject::tr("Rename"));
-		mPropertyAction = new QAction(QObject::tr("Property"));
-		mCopyFilePathAction = new QAction(QObject::tr("Copy file path"));
+		mPropertyAction = new QAction(QIcon(":/ffx/res/image/file-prop.svg"), QObject::tr("Property"));
+		mCopyFilePathAction = new QAction(QIcon(":/ffx/res/image/text-input.svg"), QObject::tr("Copy file path"));
 		mOpenCommandPromptAction = new QAction(QIcon(":/ffx/res/image/terminal.svg"), QObject::tr("Open in command prompt"));
 
 		mMainLayout->addWidget(mFileViewNavigator);
@@ -837,7 +842,7 @@ namespace FFX {
 
 		connect(mSetFileFilterShortcut, &QShortcut::activated, this, &FileMainView::OnFocusFileFilterSet);
 		connect(mFilterEdit, &QLineEdit::textChanged, this, &FileMainView::OnFileFilterEditTextChanged);
-		connect(mClearFilterAction, &QAction::triggered, this, &FileMainView::OnClearFileFilter);
+		connect(mClearFilterAction, &QAction::triggered, this, &FileMainView::OnClearFileFilter);		
 		//connect(mRefreshFileListButton, &QToolButton::clicked, this, &DefaultFileListView::Refresh);
 	}
 

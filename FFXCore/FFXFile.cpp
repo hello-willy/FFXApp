@@ -2,7 +2,9 @@
 
 namespace FFX {
 	QString G_FILE_VALIDATOR = "^[^/\\\\:*?\"<>|]+$";
-	QSet<QString> File::CustomSuffix = { "shp.xml", "sbnand.sbx", "fbnand.fbx", "ainand.aih" };
+	QSet<QString> File::CustomSuffix = { "shp.xml", "sbnand.sbx", "fbnand.fbx", "ainand.aih",
+										 "tar.gz", "tar.bz2"
+									   };
 
 	QFileInfoList FileInfoList(const QStringList& files) {
 		QFileInfoList fileInfoList;

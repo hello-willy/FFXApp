@@ -336,6 +336,11 @@ namespace FFX {
 	 *
 	 *
 	/************************************************************************************************************************/
+	FileRenameHandler::FileRenameHandler(const QString& after, bool caseSensitive, bool suffixInc) {
+		mHandlers << std::make_shared<FFX::FileNameReplaceByExpHandler>("*", after, QRegExp::Wildcard, true, suffixInc);
+		mHandlers << std::make_shared<FFX::FileDuplicateHandler>();
+	}
+
 	QFileInfoList FileRenameHandler::Filter(const QFileInfoList& files) {
 		QFileInfoList result(files);
 		SortByDepth(result, false);
@@ -754,5 +759,28 @@ namespace FFX {
 			QString theFilePath = fi.absoluteFilePath();
 			DeleteFile(theFilePath, progress);
 		}
+	}
+
+	HandlerFactory::HandlerFactory() {
+		Append(std::make_shared<FileRenameHandler>(""));
+		Append(std::make_shared<FileCopyHandler>(""));
+		Append(std::make_shared<FileMoveHandler>(""));
+		Append(std::make_shared<FileDeleteHandler>());
+		Append(std::make_shared<FileEnvelopeByDirHandler>());
+		Append(std::make_shared<ClearFolderHandler>());
+	}
+
+	void HandlerFactory::Append(FileHandlerPtr handler) {
+		mFileHandlerMap[handler->Name()] = handler;
+	}
+
+	void HandlerFactory::Remove(const QString& name) {
+		mFileHandlerMap.remove(name);
+	}
+
+	FileHandlerPtr HandlerFactory::Handler(const QString& name) const {
+		if (mFileHandlerMap.contains(name))
+			return mFileHandlerMap[name];
+		return FileHandlerPtr();
 	}
 }

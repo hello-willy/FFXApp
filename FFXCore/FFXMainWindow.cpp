@@ -7,6 +7,7 @@
 #include "FFXClipboardPanel.h"
 #include "FFXAppConfig.h"
 #include "FFXFileQuickView.h"
+#include "FFXFileHandler.h"
 
 #include <QtWidgets/QMessageBox>
 #include <QSplitter>
@@ -32,29 +33,35 @@ namespace FFX {
 			abort();
 		}
 		sInstance = this;
-		mAppConfig = new AppConfig;
+		
 		SetupUi();
-		mPluginManager = new PluginManager;
 	}
 
-	MainWindow::~MainWindow()
-	{}
+	MainWindow::~MainWindow() {
+		delete mAppConfig;
+		delete mPluginManager;
+		delete mHandlerFactory;
+	}
 
 	void MainWindow::SetupUi() {
 		mMenuBar = new QMenuBar;
 		mMainToolBar = new QToolBar;
 		mStatusBar = new QStatusBar;
+		mAppConfig = new AppConfig;
 		mTaskPanel = new TaskPanel;
 		mFileMainView = new FileMainView(this);
 		mFileSearchView = new FileSearchView(this);
+		mHandlerFactory = new HandlerFactory;
+		mPluginManager = new PluginManager;
 
 		//! Init menubar
 		setMenuBar(mMenuBar);
 		mFileMenu = new QMenu(QObject::tr("&File"));
 		mViewMenu = new QMenu(QObject::tr("&View"));
+		mPluginMenu = new QMenu(QObject::tr("&Plugin"));
 		mMenuBar->addAction(mFileMenu->menuAction());
 		mMenuBar->addAction(mViewMenu->menuAction());
-
+		mMenuBar->addAction(mPluginMenu->menuAction());
 		//! Init main toolbar
 		addToolBar(mMainToolBar);
 		mMainToolBar->addAction(mFileMainView->MakeDirAction());
@@ -76,6 +83,8 @@ namespace FFX {
 		mFileMenu->addAction(mFileMainView->EnvelopeFilesAction());
 		mFileMenu->addAction(mFileMainView->ClearFolderAction());
 
+		//! Init plugin menu
+		mPluginMenu->addAction(mPluginManager->InstallPluginAction());
 		//! Init status bar
 		mShowTaskBoardButton = new QToolButton;
 		mCurrentDirInfoLabel = new QLabel;
@@ -141,14 +150,14 @@ namespace FFX {
 		QClipboard* clipboard = QApplication::clipboard();
 		connect(clipboard, &QClipboard::dataChanged, this, &MainWindow::OnClipboardDataChanged);
 
-		
-
 		mFileMainView->FileQuickViewPtr()->QuickNaviPanelPtr()->AddItem(mAppConfig->RestoreQuickItem());
 		QString rootPath = mAppConfig->RestoreCurrentRoot();
 		if (rootPath.isEmpty()) {
 			rootPath = QDir::currentPath();
 		}
 		mFileMainView->Goto(rootPath);
+
+		mPluginManager->AutoLoad();
 	}
 
 	void MainWindow::closeEvent(QCloseEvent* event) {
@@ -190,8 +199,12 @@ namespace FFX {
 		return mAppConfig;
 	}
 
+	HandlerFactory* MainWindow::HandlerFactoryPtr() {
+		return mHandlerFactory;
+	}
+
 	void MainWindow::AddMenu(QMenu* menu) {
-		mMenuBar->insertAction(mViewMenu->menuAction(), menu->menuAction());
+		mMenuBar->addAction(menu->menuAction());
 	}
 
 	void MainWindow::RemoveMenu(QMenu* menu) {
@@ -208,6 +221,12 @@ namespace FFX {
 
 	void MainWindow::ShowMessage(const QString& message, int timeout) {
 		mStatusBar->showMessage(message, timeout);
+	}
+
+	QString MainWindow::PluginPath() const {
+		QDir currentDir(QCoreApplication::applicationDirPath());
+		currentDir.cd("ffxplugins");
+		return currentDir.absolutePath();
 	}
 
 	void MainWindow::UpdateCurrentDirInfo() {

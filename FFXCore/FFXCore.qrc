@@ -36,5 +36,9 @@
         <file>res/image/sort.svg</file>
         <file>res/image/backspace.svg</file>
         <file>res/image/edit.svg</file>
+        <file>res/image/plug-install.svg</file>
+        <file>res/image/plug-uninstall.svg</file>
+        <file>res/image/text-input.svg</file>
+        <file>res/image/file-prop.svg</file>
     </qresource>
 </RCC>

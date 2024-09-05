@@ -19,6 +19,7 @@ namespace FFX {
 	class FileQuickView;
 	class ClipboardPanel;
 	class AppConfig;
+	class HandlerFactory;
 
 	class FFXCORE_EXPORT MainWindow : public QMainWindow, public Application
 	{
@@ -42,8 +43,10 @@ namespace FFX {
 		virtual void AddToolbar(QToolBar* toolbar, Qt::ToolBarArea area = Qt::TopToolBarArea);
 		virtual void RemoveToolbar(QToolBar* toolbar);
 		virtual void ShowMessage(const QString& message, int timeout = 5);
+		virtual QString PluginPath() const;
 		virtual TaskPanel* TaskPanelPtr();
 		virtual FileMainView* FileMainViewPtr();
+		virtual HandlerFactory* HandlerFactoryPtr();
 
 	protected:
 		void closeEvent(QCloseEvent* event) override;
@@ -61,6 +64,7 @@ namespace FFX {
 		QMenuBar* mMenuBar;
 		QMenu* mFileMenu;
 		QMenu* mViewMenu;
+		QMenu* mPluginMenu;
 
 		QToolBar* mMainToolBar;
 		
@@ -80,5 +84,6 @@ namespace FFX {
 		ClipboardPanel* mClipboardPanel;
 		QDockWidget* mClipboardPanelDocker;
 		AppConfig* mAppConfig;
+		HandlerFactory* mHandlerFactory;
 	};
 }
