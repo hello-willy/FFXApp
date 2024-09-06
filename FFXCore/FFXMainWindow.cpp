@@ -5,7 +5,6 @@
 #include "FFXTaskPanel.h"
 #include "FFXString.h"
 #include "FFXClipboardPanel.h"
-#include "FFXAppConfig.h"
 #include "FFXFileQuickView.h"
 #include "FFXFileHandler.h"
 
@@ -44,6 +43,7 @@ namespace FFX {
 	}
 
 	void MainWindow::SetupUi() {
+		setObjectName("MainWindow");
 		mMenuBar = new QMenuBar;
 		mMainToolBar = new QToolBar;
 		mStatusBar = new QStatusBar;
@@ -150,33 +150,21 @@ namespace FFX {
 		QClipboard* clipboard = QApplication::clipboard();
 		connect(clipboard, &QClipboard::dataChanged, this, &MainWindow::OnClipboardDataChanged);
 
-		mFileMainView->FileQuickViewPtr()->QuickNaviPanelPtr()->AddItem(mAppConfig->RestoreQuickItem());
-		QString rootPath = mAppConfig->RestoreCurrentRoot();
-		if (rootPath.isEmpty()) {
-			rootPath = QDir::currentPath();
-		}
-		mFileMainView->Goto(rootPath);
+		mFileMainView->Restore(mAppConfig);
+		//mFileMainView->FileQuickViewPtr()->QuickNaviPanelPtr()->AddItem(mAppConfig->RestoreQuickItem());
+		//QString rootPath = mAppConfig->RestoreCurrentRoot();
+		//if (rootPath.isEmpty()) {
+		//	rootPath = QDir::currentPath();
+		//}
+		//mFileMainView->Goto(rootPath);
 
 		mPluginManager->AutoLoad();
 	}
 
 	void MainWindow::closeEvent(QCloseEvent* event) {
-		// save window pos
-		int isFull = this->isMaximized();
-		if (!isFull)
-		{
-			QRect r = rect();
-			QPoint p = pos();
-			mAppConfig->SaveMainWindowPos(QRect(p.x(), p.y(), r.width(), r.height()));
-		} else {
-			mAppConfig->SaveMainWindowPos(QRect(-1, -1, 0, 0));
-		}
-		// save quick view item
-		FileQuickView* fileQuickView = mFileMainView->FileQuickViewPtr();
-		QuickNavigatePanel* quickPanel = fileQuickView->QuickNaviPanelPtr();
-		mAppConfig->SaveQuickItem(quickPanel->Items());
-		// save current root
-		mAppConfig->SaveCurrentRoot(mFileMainView->RootPath());
+		Save(mAppConfig);
+
+		mFileMainView->Save(mAppConfig);
 	}
 
 	MainWindow* MainWindow::Instance() {
@@ -201,6 +189,34 @@ namespace FFX {
 
 	HandlerFactory* MainWindow::HandlerFactoryPtr() {
 		return mHandlerFactory;
+	}
+
+	void MainWindow::Save(AppConfig* config) {
+		// save window pos
+		int isFull = this->isMaximized();
+		if (!isFull)
+		{
+			QRect r = rect();
+			QPoint p = pos();
+			mAppConfig->WriteItem(objectName(), "WinPos", QRect(p.x(), p.y(), r.width(), r.height()));
+			//mAppConfig->SaveMainWindowPos(QRect(p.x(), p.y(), r.width(), r.height()));
+		}
+		else {
+			mAppConfig->WriteItem(objectName(), "WinPos", QRect(-1, -1, 0, 0));
+			//mAppConfig->SaveMainWindowPos(QRect(-1, -1, 0, 0));
+		}
+	}
+
+	void MainWindow::Restore(AppConfig* config) {
+		QRect rect = config->ReadItem(objectName(), "WinPos").toRect();
+		if (!rect.isValid()) {
+			showMaximized();
+			setWindowFlags(Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint | Qt::WindowMinimizeButtonHint);
+		}
+		else {
+			resize(rect.width(), rect.height());
+			move(rect.x(), rect.y());
+		}
 	}
 
 	void MainWindow::AddMenu(QMenu* menu) {

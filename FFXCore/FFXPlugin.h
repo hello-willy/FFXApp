@@ -56,9 +56,9 @@ namespace FFX {
 		virtual QFileInfoList Filter(const QFileInfoList& files) override;
 		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress = G_DebugProgress) override;
 		virtual std::shared_ptr<FileHandler> Clone() override;
-		virtual QString Name() { return QStringLiteral("UnzipHandler"); }
-		virtual QString DisplayName() { return QObject::tr("UnzipHandler"); }
-		virtual QString Description() { return QObject::tr("Unzip file."); }
+		virtual QString Name() { return QStringLiteral("PluginInstallHandler"); }
+		virtual QString DisplayName() { return QObject::tr("PluginInstallHandler"); }
+		virtual QString Description() { return QObject::tr("Install a ffx plugin."); }
 		virtual void Cancel() { mCancelled = true; }
 
 	private:

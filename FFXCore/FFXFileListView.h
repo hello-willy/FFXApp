@@ -1,6 +1,7 @@
 #pragma once
 #include "FFXCore.h"
 #include "FFXFileFilter.h"
+#include "FFXAppConfig.h"
 
 #include <QListView>
 #include <QUndoCommand>
@@ -32,10 +33,15 @@ namespace FFX {
 		DefaultSortProxyModel(QObject* parent = nullptr);
 		
 	public:
+		OrderBy GetOrderBy() const { return mOrderBy; }
+		Qt::SortOrder GetSortOrder() const { return mSortOrder; }
+
+	public:
 		void SetFilterExpr(const QString& filter);
 		virtual void sort(int column, Qt::SortOrder order = Qt::AscendingOrder) override;
+
 	public:
-		void invalidateFilter();
+		void Invalidate();
 
 	protected:
 		virtual bool lessThan(const QModelIndex& source_left, const QModelIndex& source_right) const override;
@@ -43,6 +49,7 @@ namespace FFX {
 
 	private:
 		OrderBy mOrderBy = OBName;
+		Qt::SortOrder mSortOrder = Qt::AscendingOrder;
 		FileFilterPtr mFileFilter;
 	};
 
@@ -98,6 +105,8 @@ namespace FFX {
 		void SetRootPath(const QFileInfo& root);
 		void SetSortBy(OrderBy ob, Qt::SortOrder = Qt::AscendingOrder);
 		void SetFilter(const QString& filter);
+		OrderBy GetOrderBy() const { return mSortProxyModel->GetOrderBy(); }
+		Qt::SortOrder GetSortOrder() const { return mSortProxyModel->GetSortOrder(); }
 
 	public slots:
 		void MakeDirAndEdit();
@@ -140,7 +149,6 @@ namespace FFX {
 		QShortcut* mCollectFilesShortcut;
 		QShortcut* mAppendCollectFilesShortcut;
 		//! Actions
-		
 	};
 
 	class PathEditWidget : public QLineEdit {
@@ -203,10 +211,14 @@ namespace FFX {
 		QFileInfo mOldPath;
 	};
 
-	class FFXCORE_EXPORT FileMainView : public QWidget {
+	class FFXCORE_EXPORT FileMainView : public QWidget, public Configurable {
 		Q_OBJECT
 	public:
 		FileMainView(QWidget* parent = nullptr);
+
+	public:
+		virtual void Save(AppConfig* config) override;
+		virtual void Restore(AppConfig* config) override;
 
 	public:
 		void Goto(const QString& path);

@@ -31,6 +31,7 @@
 #include <QActionGroup>
 #include <QPainter>
 #include <QFileIconProvider>
+#include <QDebug>
 
 #ifdef Q_OS_WIN
 #include <cstdlib>
@@ -62,13 +63,16 @@ namespace FFX {
 	DefaultSortProxyModel::DefaultSortProxyModel(QObject* parent) : QSortFilterProxyModel(parent) {
 		setFilterKeyColumn(0);
 	}
-
-	void DefaultSortProxyModel::invalidateFilter() {
-		QSortFilterProxyModel::invalidateFilter();
+	
+	void DefaultSortProxyModel::Invalidate() {
+		//! invalidate will clear all order and filter, so we must sort again.
+		QSortFilterProxyModel::invalidate();
+		sort((int)mOrderBy, mSortOrder);
 	}
-
+	
 	void DefaultSortProxyModel::sort(int column, Qt::SortOrder order) {
 		mOrderBy = (OrderBy)column;
+		mSortOrder = order;
 		QSortFilterProxyModel::sort(column, order);
 	}
 
@@ -79,12 +83,9 @@ namespace FFX {
 		QFileInfo rightInfo = model->fileInfo(source_right);
 		bool left = leftInfo.isDir();
 		bool right = rightInfo.isDir();
-		//if (left ^ right)
-		//	return left;
+		if (left ^ right)
+			return (mSortOrder == Qt::AscendingOrder) ? left : right;
 
-		if (!(left && right)) {
-			return false;
-		}
 		if (mOrderBy == OBName) {
 			QCollator collator;
 			return collator.compare(leftInfo.fileName(), rightInfo.fileName()) < 0;
@@ -114,6 +115,7 @@ namespace FFX {
 		QFileSystemModel* model = (QFileSystemModel*)sourceModel();
 		QString root = model->rootPath();
 		QString filePath = model->filePath(idx);
+		qDebug() << "root:" << root << ", " << "file" << filePath;
 		return filePath == root || mFileFilter->Accept(filePath);
 	}
 	
@@ -353,8 +355,9 @@ namespace FFX {
 	}
 
 	void DefaultFileListView::SetRootPath(const QFileInfo& root) {
-		if (CurrentDir() == root.absoluteFilePath())
+		if (CurrentDir() == root.absoluteFilePath()) {
 			return;
+		}
 
 		if (root.isDir()) {
 			QModelIndex index = mFileModel->setRootPath(root.absoluteFilePath());
@@ -605,7 +608,7 @@ namespace FFX {
 
 	void DefaultFileListView::SetFilter(const QString& filter) {
 		mSortProxyModel->SetFilterExpr(filter);
-		mSortProxyModel->invalidate();
+		mSortProxyModel->Invalidate();
 	}
 
 	PathEditWidget::PathEditWidget(QWidget* parent)
@@ -732,6 +735,8 @@ namespace FFX {
 	}
 
 	void FileMainView::SetupUi() {
+		setObjectName("FileMainView");
+
 		mFileViewNavigator = new DefaultFileListViewNavigator;
 		mFileListView = new DefaultFileListView;
 		mFileQuickView = new FileQuickView;
@@ -803,7 +808,6 @@ namespace FFX {
 
 		mSetFileListOrderButton->setMenu(menu);
 
-		
 		mFileViewNavigator->AddWidget(mSetFileListOrderButton);
 		
 		mMainLayout->setContentsMargins(5, 0, 0, 0);
@@ -986,6 +990,30 @@ namespace FFX {
 		mFilterEdit->clear();
 		mClearFilterAction->setVisible(false);
 		mFileListView->SetFilter("*");
+	}
+
+	void FileMainView::Save(AppConfig* config) {
+		QuickNavigatePanel* quickPanel = mFileQuickView->QuickNaviPanelPtr();
+	
+		config->WritePairItemArray(objectName(), quickPanel->Items());
+		config->WriteItem(objectName(), "RootPath", RootPath());
+		
+		config->WriteItem(objectName(), "OrderBy", mFileListView->GetOrderBy());
+		config->WriteItem(objectName(), "SortOrder", mFileListView->GetSortOrder());
+	}
+
+	void FileMainView::Restore(AppConfig* config) {
+		FileQuickViewPtr()->QuickNaviPanelPtr()->AddItem(config->ReadPairItemArray(objectName()));
+		QString rootPath = config->ReadItem(objectName(), "RootPath").toString();
+		if (rootPath.isEmpty()) {
+			rootPath = QDir::currentPath();
+		}
+		Goto(rootPath);
+		int orderBy = config->ReadItem(objectName(), "OrderBy").toInt();
+		int sortOrder = config->ReadItem(objectName(), "SortOrder").toInt();
+		mOrderByActionGroup->actions()[orderBy]->setChecked(true);
+		mSortActionGroup->actions()[sortOrder]->setChecked(true);
+		mFileListView->SetSortBy((OrderBy)orderBy, (Qt::SortOrder)sortOrder);
 	}
 }
 

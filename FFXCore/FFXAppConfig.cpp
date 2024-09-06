@@ -14,18 +14,7 @@ namespace FFX {
 
 	AppConfig::~AppConfig()
 	{}
-
-	void AppConfig::SaveMainWindowPos(const QRect& loc) {
-		QSettings settings(mConfigFile, QSettings::IniFormat);
-
-		settings.beginGroup(MainWindowPos);
-		settings.setValue("x", loc.x());
-		settings.setValue("y", loc.y());
-		settings.setValue("width", loc.width());
-		settings.setValue("height", loc.height());
-		settings.endGroup();
-	}
-
+	
 	QRect AppConfig::RestoreMainWindowPos() {
 		QSettings settings(mConfigFile, QSettings::IniFormat);
 		settings.beginGroup(MainWindowPos);
@@ -35,6 +24,17 @@ namespace FFX {
 		QVariant height = settings.value("height");
 		settings.endGroup();
 		return QRect(x.toInt(), y.toInt(), width.toInt(), height.toInt());
+	}
+/*
+	void AppConfig::SaveMainWindowPos(const QRect& loc) {
+		QSettings settings(mConfigFile, QSettings::IniFormat);
+
+		settings.beginGroup(MainWindowPos);
+		settings.setValue("x", loc.x());
+		settings.setValue("y", loc.y());
+		settings.setValue("width", loc.width());
+		settings.setValue("height", loc.height());
+		settings.endGroup();
 	}
 
 	void AppConfig::SaveQuickItem(const QList<QPair<QString, QVariant>>& items) {
@@ -60,7 +60,7 @@ namespace FFX {
 		settings.endGroup();
 		return rootPath.toString();
 	}
-
+	*/
 	void AppConfig::WriteItem(const QString& group, const QString& key, const QVariant& value) {
 		QSettings settings(mConfigFile, QSettings::IniFormat);
 

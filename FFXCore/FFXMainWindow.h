@@ -1,6 +1,7 @@
 #pragma once
 #include "FFXCore.h"
 #include "FFXApplication.h"
+#include "FFXAppConfig.h"
 
 #include <QtWidgets/QMainWindow>
 
@@ -21,7 +22,7 @@ namespace FFX {
 	class AppConfig;
 	class HandlerFactory;
 
-	class FFXCORE_EXPORT MainWindow : public QMainWindow, public Application
+	class FFXCORE_EXPORT MainWindow : public QMainWindow, public Application, public Configurable
 	{
 		Q_OBJECT
 	public:
@@ -47,6 +48,10 @@ namespace FFX {
 		virtual TaskPanel* TaskPanelPtr();
 		virtual FileMainView* FileMainViewPtr();
 		virtual HandlerFactory* HandlerFactoryPtr();
+
+	public:
+		virtual void Save(AppConfig* config);
+		virtual void Restore(AppConfig* config);
 
 	protected:
 		void closeEvent(QCloseEvent* event) override;

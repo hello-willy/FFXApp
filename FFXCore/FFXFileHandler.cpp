@@ -12,15 +12,15 @@ namespace FFX {
 	*
 	*************************************************************************************************************************/
 	void DebugProgress::OnProgress(double percent, const QString& msg) {
-		qDebug() << percent << "% " << msg;
+		//qDebug() << percent << "% " << msg;
 	}
 
 	void DebugProgress::OnFileComplete(const QFileInfo& input, const QFileInfo& output, bool success, const QString& msg) {
-		qDebug() << input << "->" << output << ":" << success << ", " << msg;
+		//qDebug() << input << "->" << output << ":" << success << ", " << msg;
 	}
 
 	void DebugProgress::OnComplete(bool success, const QString& msg) {
-		qDebug() << "Complete:" << success << ":" << msg;
+		//qDebug() << "Complete:" << success << ":" << msg;
 	}
 
 	/************************************************************************************************************************
