@@ -64,7 +64,7 @@ namespace FFX {
 		setFilterKeyColumn(0);
 	}
 	
-	void DefaultSortProxyModel::Invalidate() {
+	void DefaultSortProxyModel::Refresh() {
 		//! invalidate will clear all order and filter, so we must sort again.
 		QSortFilterProxyModel::invalidate();
 		sort((int)mOrderBy, mSortOrder);
@@ -115,11 +115,11 @@ namespace FFX {
 		QFileSystemModel* model = (QFileSystemModel*)sourceModel();
 		QString root = model->rootPath();
 		QString filePath = model->filePath(idx);
-		qDebug() << "root:" << root << ", " << "file" << filePath;
 		return filePath == root || mFileFilter->Accept(filePath);
 	}
 	
 	void DefaultSortProxyModel::SetFilterExpr(const QString& filter) {
+		mFilterExp = filter;
 		FileFilterExpr fe(filter.toStdString(), true);
 		mFileFilter = fe.Filter();
 	}
@@ -360,9 +360,12 @@ namespace FFX {
 		}
 
 		if (root.isDir()) {
+			QString oldFilterExp = mSortProxyModel->FilterExp();
+			SetFilter("*");
 			QModelIndex index = mFileModel->setRootPath(root.absoluteFilePath());
 			//setRootIndex(index); // IMPORTANT! refresh the ui
 			setRootIndex(mSortProxyModel->mapFromSource(index));
+			SetFilter(oldFilterExp);
 		}
 	}
 
@@ -608,7 +611,7 @@ namespace FFX {
 
 	void DefaultFileListView::SetFilter(const QString& filter) {
 		mSortProxyModel->SetFilterExpr(filter);
-		mSortProxyModel->Invalidate();
+		mSortProxyModel->Refresh();
 	}
 
 	PathEditWidget::PathEditWidget(QWidget* parent)

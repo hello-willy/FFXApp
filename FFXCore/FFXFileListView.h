@@ -41,8 +41,8 @@ namespace FFX {
 		virtual void sort(int column, Qt::SortOrder order = Qt::AscendingOrder) override;
 
 	public:
-		void Invalidate();
-
+		void Refresh();
+		QString FilterExp() { return mFilterExp; }
 	protected:
 		virtual bool lessThan(const QModelIndex& source_left, const QModelIndex& source_right) const override;
 		virtual bool filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const override;
@@ -50,6 +50,7 @@ namespace FFX {
 	private:
 		OrderBy mOrderBy = OBName;
 		Qt::SortOrder mSortOrder = Qt::AscendingOrder;
+		QString mFilterExp;
 		FileFilterPtr mFileFilter;
 	};
 
