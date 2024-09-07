@@ -352,6 +352,8 @@ namespace FFX {
 		QString root = CurrentDir();
 		mFileModel->setRootPath("");
 		SetRootPath(root);
+
+		qDebug() << "-->Refreshed";
 	}
 
 	void DefaultFileListView::SetRootPath(const QFileInfo& root) {
@@ -748,16 +750,18 @@ namespace FFX {
 		mMakeFileAction = new QAction(QIcon(":/ffx/res/image/mk-file.svg"), QObject::tr("New File"));
 		mMakeFileActions.append(mMakeFileAction);
 		mMakeFileActions.append(new QAction("New Zip File"));
-		mPasteFilesAction = new QAction(QIcon(":/ffx/res/image/paste-files.svg"), QObject::tr("Copy Files"));
+		mPasteFilesAction = new QAction(QIcon(":/ffx/res/image/paste-files.svg"), QObject::tr("Copy Files Here"));
 		mRefreshAction = new QAction(QIcon(":/ffx/res/image/refresh.svg"), QObject::tr("Refresh"));
-		mMoveFilesAction = new QAction(QIcon(":/ffx/res/image/move-files.svg"), QObject::tr("Move Files"));
-		mEnvelopeFilesAction = new QAction(QIcon(":/ffx/res/image/file-envelope.svg"), QObject::tr("Envelope Files"));
+		mRefreshAction->setShortcut(QKeySequence("F5"));
+		mRefreshAction->setShortcutContext(Qt::WindowShortcut);
+		mMoveFilesAction = new QAction(QIcon(":/ffx/res/image/move-files.svg"), QObject::tr("Move Files Here"));
+		mEnvelopeFilesAction = new QAction(QIcon(":/ffx/res/image/file-envelope.svg"), QObject::tr("Envelope Files By Folder"));
 		mClearFolderAction = new QAction(QIcon(":/ffx/res/image/clear-folders.svg"), QObject::tr("Clear Folder"));
-		mFixedToQuickPanelAction = new QAction(QIcon(":/ffx/res/image/pin.svg"), QObject::tr("Fix to quick panel"));
+		mFixedToQuickPanelAction = new QAction(QIcon(":/ffx/res/image/pin.svg"), QObject::tr("Fix in Quick Panel"));
 		mRenameAction = new QAction(QIcon(":/ffx/res/image/edit.svg"), QObject::tr("Rename"));
 		mPropertyAction = new QAction(QIcon(":/ffx/res/image/file-prop.svg"), QObject::tr("Property"));
-		mCopyFilePathAction = new QAction(QIcon(":/ffx/res/image/text-input.svg"), QObject::tr("Copy file path"));
-		mOpenCommandPromptAction = new QAction(QIcon(":/ffx/res/image/terminal.svg"), QObject::tr("Open in command prompt"));
+		mCopyFilePathAction = new QAction(QIcon(":/ffx/res/image/text-input.svg"), QObject::tr("Copy File Path"));
+		mOpenCommandPromptAction = new QAction(QIcon(":/ffx/res/image/terminal.svg"), QObject::tr("Open in Command Prompt"));
 
 		mMainLayout->addWidget(mFileViewNavigator);
 		QSplitter* splitter = new QSplitter(Qt::Horizontal);

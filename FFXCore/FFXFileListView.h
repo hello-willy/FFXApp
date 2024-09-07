@@ -300,6 +300,7 @@ namespace FFX {
 		QAction* mOpenCommandPromptAction;
 
 		QShortcut* mSetFileFilterShortcut;
+		//QShortcut* mRefreshShortcut;
 	};
 }
 

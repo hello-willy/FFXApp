@@ -44,6 +44,7 @@ namespace FFX {
 
 	void MainWindow::SetupUi() {
 		setObjectName("MainWindow");
+		
 		mMenuBar = new QMenuBar;
 		mMainToolBar = new QToolBar;
 		mStatusBar = new QStatusBar;
@@ -117,6 +118,7 @@ namespace FFX {
 		addDockWidget(Qt::BottomDockWidgetArea, mTaskDocker);
 		mViewMenu->addAction(mTaskDocker->toggleViewAction());
 		mTaskDocker->toggleViewAction()->setIcon(QIcon(":/ffx/res/image/task.svg"));
+		mTaskDocker->setHidden(true);
 
 		//! Init clipboard panel
 		mClipboardPanel = new ClipboardPanel;
@@ -151,12 +153,6 @@ namespace FFX {
 		connect(clipboard, &QClipboard::dataChanged, this, &MainWindow::OnClipboardDataChanged);
 
 		mFileMainView->Restore(mAppConfig);
-		//mFileMainView->FileQuickViewPtr()->QuickNaviPanelPtr()->AddItem(mAppConfig->RestoreQuickItem());
-		//QString rootPath = mAppConfig->RestoreCurrentRoot();
-		//if (rootPath.isEmpty()) {
-		//	rootPath = QDir::currentPath();
-		//}
-		//mFileMainView->Goto(rootPath);
 
 		mPluginManager->AutoLoad();
 	}
