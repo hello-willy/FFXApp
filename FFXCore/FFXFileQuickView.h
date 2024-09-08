@@ -26,6 +26,9 @@ namespace FFX {
 	public:
 		void AddAction(QAction* action);
 
+	protected:
+		virtual void paintEvent(QPaintEvent* event) override;
+
 	private:
 		void SetupUi();
 
@@ -63,6 +66,7 @@ namespace FFX {
 		QVBoxLayout* mMainLayout;
 		QList<QShortcut*> mQuickNaviShortcuts;
 		QAction* mRemoveItemAction;
+		bool mFreezeSignal = false;
 		int mMaxItems = 9;
 
 	Q_SIGNALS:
@@ -113,7 +117,7 @@ namespace FFX {
 		FileTreeNavigatePanel* FileTreeNaviPanelPtr() { return mFileTreeNavigatePanel; }
 
 	protected:
-		virtual void paintEvent(QPaintEvent* event) override;
+		// virtual void paintEvent(QPaintEvent* event) override;
 
 	private:
 		void SetupUi();

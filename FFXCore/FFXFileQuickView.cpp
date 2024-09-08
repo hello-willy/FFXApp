@@ -11,6 +11,7 @@
 #include <QSizePolicy>
 #include <QShortcut>
 #include <QMenu>
+#include <QDebug>
 
 namespace FFX {
 
@@ -26,11 +27,23 @@ namespace FFX {
     }
 
     void FileQuickViewHeader::SetupUi() {
-        mHeaderLabel = new QLabel;
+        mHeaderLabel = new QLabel(QObject::tr("Quick Panel"));
+        mHeaderLabel->setFixedHeight(32);
         mMainLayout = new QHBoxLayout;
-        mMainLayout->setMargin(0);
+        mMainLayout->setContentsMargins(0, 9, 0, 0);
 
         mMainLayout->addWidget(mHeaderLabel, 1);
+        setLayout(mMainLayout);
+    }
+
+    void FileQuickViewHeader::paintEvent(QPaintEvent* event) {
+        QPainter painter(this);
+        painter.setRenderHint(QPainter::Antialiasing);
+        painter.fillRect(rect().marginsAdded(QMargins(0, -9, 0, 0)), QColor("#EAEAEA"));
+        //QPen borderPen(Qt::black);
+        //borderPen.setWidth(1);
+        //painter.setPen(borderPen);
+        //painter.drawRect(rect());
     }
 
     QuickNavigatePanel::QuickNavigatePanel(QWidget* parent)
@@ -46,11 +59,11 @@ namespace FFX {
         InitShortcuts();
 
         //! Init list widget
-        mItemList->setStyleSheet("QListView { border: transparent; }"); // set the list no border
+        //mItemList->setStyleSheet("QListView { border: transparent; }"); // set the list no border
         mItemList->setEditTriggers(QAbstractItemView::SelectedClicked | QAbstractItemView::EditKeyPressed); // Set edit mode.
         mItemList->setContextMenuPolicy(Qt::CustomContextMenu);
 
-        mMainLayout->setContentsMargins(9, 0, 0, 0);
+        mMainLayout->setContentsMargins(0, 0, 0, 0);
         mMainLayout->addWidget(mHeader);
         mMainLayout->addWidget(mItemList, 1);
 
@@ -125,10 +138,15 @@ namespace FFX {
     }
 
     void QuickNavigatePanel::OnCurrentItemChanged(QListWidgetItem* current, QListWidgetItem* previous) {
-        if (current == nullptr)
+        //! This slot will be triggered at system startup, SO ADD the previous == nullptr
+        if (current == nullptr || previous == nullptr)
             return;
         QString path = current->data(Qt::UserRole).toString();
-        emit RootPathChanged(path);
+        if (!mFreezeSignal) {
+            emit RootPathChanged(path);
+        } else {
+            qDebug() << "Freeze Signal";
+        }
     }
 
     void QuickNavigatePanel::InitShortcuts() {
@@ -198,28 +216,31 @@ namespace FFX {
 	FileQuickView::~FileQuickView()
 	{}
 
+    /*
     void FileQuickView::paintEvent(QPaintEvent* event) {
+        
         QPainter painter(this);
         painter.setRenderHint(QPainter::Antialiasing);
         QPen borderPen(Qt::black);
         borderPen.setWidth(1);
         painter.setPen(borderPen);
         painter.drawRect(rect());
+        
     }
-
+    */
     void FileQuickView::SetupUi() {
         mQuickNaviPanel = new QuickNavigatePanel;
         mFileTreeNavigatePanel = new FileTreeNavigatePanel;
         mMainLayout = new QVBoxLayout;
 
-        mMainLayout->setContentsMargins(5, 0, 5, 1);
+        mMainLayout->setContentsMargins(0, 0, 0, 0);
         mMainLayout->addWidget(mQuickNaviPanel, 2);
-        QFrame* line = new QFrame;
-        line->setFrameShape(QFrame::HLine);
-        line->setFrameShadow(QFrame::Sunken);
-        mMainLayout->addWidget(line);
-        mMainLayout->addWidget(mFileTreeNavigatePanel, 3);
-        mMainLayout->setSpacing(9);
+        //QFrame* line = new QFrame;
+        //line->setFrameShape(QFrame::HLine);
+        //line->setFrameShadow(QFrame::Sunken);
+        //mMainLayout->addWidget(line);
+        mMainLayout->addWidget(mFileTreeNavigatePanel, 5);
+        //mMainLayout->setSpacing(9);
         setLayout(mMainLayout);
 
         //! Init item list, fill the drivers.

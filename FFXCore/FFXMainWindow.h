@@ -11,6 +11,7 @@ class QStatusBar;
 class QToolButton;
 class QDockWidget;
 class QLabel;
+class QShortcut;
 
 namespace FFX {
 	class PluginManager;
@@ -53,6 +54,9 @@ namespace FFX {
 		virtual void Save(AppConfig* config);
 		virtual void Restore(AppConfig* config);
 
+	public:
+		void UpdateFileSearchInfo(int count);
+
 	protected:
 		void closeEvent(QCloseEvent* event) override;
 
@@ -62,8 +66,8 @@ namespace FFX {
 		void UpdateSelectFilesInfo(QStringList files);
 
 	private slots:
-		void OnClipboardDataChanged();
 		void OnTaskInfoUpdate();
+		void OnActivateFileSearch();
 
 	private:
 		QMenuBar* mMenuBar;
@@ -79,16 +83,18 @@ namespace FFX {
 		QLabel* mCurrentDirInfoLabel;
 		QLabel* mSelectFilesInfoLabel;
 		QToolButton* mClipboardButton;
-		QLabel* mClipboardInfoLabel;
+		QLabel* mFileSearchFileInfoLabel;
 
 		PluginManager* mPluginManager = nullptr;
 		FileMainView* mFileMainView;
 		FileSearchView* mFileSearchView;
 		QDockWidget* mTaskDocker;
 		TaskPanel* mTaskPanel;
-		ClipboardPanel* mClipboardPanel;
-		QDockWidget* mClipboardPanelDocker;
+		
+		QDockWidget* mFileSearchDocker;
 		AppConfig* mAppConfig;
 		HandlerFactory* mHandlerFactory;
+
+		QShortcut* mActiveSearchShortcut;
 	};
 }

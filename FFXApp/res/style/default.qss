@@ -25,7 +25,6 @@ QDockWidget::close-button:hover, QDockWidget::float-button:hover {
 QTreeView
 {
     padding: 6px;
-    border: transparent;
 }
 
 QTreeView::item

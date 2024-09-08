@@ -6,8 +6,67 @@
 #include <QMimeData>
 #include <QUrl>
 #include <QAction>
+#include <QPainter>
+#include <QLabel>
+#include <QMenu>
 
 namespace FFX {
+	ClipboardPanelHeader::ClipboardPanelHeader(QWidget* parent)
+		: QWidget(parent) {
+		SetupUi();
+	}
+
+	void ClipboardPanelHeader::AddWidget(QWidget* widget) {
+		mMainLayout->insertWidget(1, widget);
+	}
+
+	void ClipboardPanelHeader::AddAction(QAction* action) {
+		mOperatorMenu->addAction(action);
+	}
+
+	void ClipboardPanelHeader::AddSeperator()
+	{
+		QFrame* seperator = new QFrame;
+		seperator->setFrameShape(QFrame::VLine);
+		seperator->setFrameShadow(QFrame::Sunken);
+		mMainLayout->addWidget(seperator);
+	}
+
+	void ClipboardPanelHeader::SetupUi() {
+		mHeaderLabel = new QLabel(QObject::tr("Clipboard Panel"));
+		mHeaderLabel->setFixedHeight(32);
+		mMainLayout = new QHBoxLayout;
+		mOperatorButton = new QToolButton;
+		mOperatorMenu = new QMenu;
+
+		mMainLayout->setContentsMargins(0, 9, 0, 0);
+
+		mMainLayout->addWidget(mHeaderLabel, 1);
+		AddSeperator();
+
+		mOperatorButton->setText(QObject::tr("Operator"));
+		mOperatorButton->setIcon(QIcon(":/ffx/res/image/menu-ext.svg"));
+		mOperatorButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+		mOperatorButton->setFixedHeight(32);
+		mOperatorButton->setIconSize(QSize(24, 24));
+		mOperatorButton->setPopupMode(QToolButton::InstantPopup);
+		mOperatorButton->setMenu(mOperatorMenu);
+
+		mMainLayout->addWidget(mOperatorButton);
+
+		setLayout(mMainLayout);
+	}
+
+	void ClipboardPanelHeader::paintEvent(QPaintEvent* event) {
+		QPainter painter(this);
+		painter.setRenderHint(QPainter::Antialiasing);
+		painter.fillRect(rect().marginsAdded(QMargins(0, -9, 0, 0)), QColor("#EAEAEA"));
+		//QPen borderPen(Qt::black);
+		//borderPen.setWidth(1);
+		//painter.setPen(borderPen);
+		//painter.drawRect(rect());
+	}
+
 	ClipboardPanel::ClipboardPanel(QWidget*parent)
 		: QWidget(parent) {
 		SetupUi();
@@ -17,26 +76,44 @@ namespace FFX {
 	{}
 
 	void ClipboardPanel::SetupUi() {
+		mClipboardPanelHeader = new ClipboardPanelHeader;
 		mMainLayout = new QGridLayout;
 		mItemListView = new CommonFileListView;
 		mClearButton = new QToolButton;
+		mClearButton->setText(QObject::tr("Clear"));
 		mClearButton->setIcon(QIcon(":/ffx/res/image/delete.svg"));
-		mRemoveSelection = new QAction(QObject::tr("Remove"));
+		mClearButton->setFixedHeight(32);
+		mClearButton->setIconSize(QSize(24, 24));
 
-		mMainLayout->setContentsMargins(0, 5, 0, 0);
-		mMainLayout->addWidget(mClearButton, 0, 0, 1, 1);
-		mMainLayout->addItem(new QSpacerItem(1, 1, QSizePolicy::Minimum, QSizePolicy::Expanding), 0, 1, 1, 1);
-		mMainLayout->addWidget(mItemListView, 1, 0, 1, 2);
+		mRemoveSelectionAction = new QAction(QIcon(":/ffx/res/image/remove-item.svg"), QObject::tr("Remove Selected Item(s)"));
+		mRemoveSelectionButton = new QToolButton;
+		mRemoveSelectionButton->setDefaultAction(mRemoveSelectionAction);
+		mRemoveSelectionButton->setFixedHeight(32);
+		mRemoveSelectionButton->setIconSize(QSize(24, 24));
+
+		mGotoParentDirButton = new QToolButton;
+		mGotoParentDirButton->setDefaultAction(mItemListView->Action("Goto"));
+		mGotoParentDirButton->setFixedHeight(32);
+		mGotoParentDirButton->setIconSize(QSize(24, 24));
+
+		mClipboardPanelHeader->AddWidget(mClearButton);
+		mClipboardPanelHeader->AddWidget(mRemoveSelectionButton);
+		mClipboardPanelHeader->AddWidget(mGotoParentDirButton);
+
+		mMainLayout->addWidget(mClipboardPanelHeader, 0, 0, 1, 1);
+		mMainLayout->addWidget(mItemListView, 1, 0, 1, 1);
 		mMainLayout->setRowStretch(1, 1);
+		mMainLayout->setContentsMargins(0, 0, 5, 0);
 		setLayout(mMainLayout);
 
 		QClipboard* clipboard = QApplication::clipboard();
 		connect(clipboard, &QClipboard::dataChanged, this, &ClipboardPanel::OnClipboardDataChanged);
 		
-		connect(mRemoveSelection, &QAction::triggered, this, &ClipboardPanel::OnRemoveSelection);
+		connect(mRemoveSelectionAction, &QAction::triggered, this, &ClipboardPanel::OnRemoveSelection);
 		connect(mClearButton, &QToolButton::clicked, this, &ClipboardPanel::OnClear);
 
-		mItemListView->AddAction("RemoveSelection", mRemoveSelection);
+		mItemListView->AddAction("RemoveSelection", mRemoveSelectionAction);
+		mClipboardPanelHeader->AddAction(mRemoveSelectionAction);
 	}
 
 	void ClipboardPanel::OnClear() {
@@ -48,8 +125,10 @@ namespace FFX {
 	void ClipboardPanel::OnClipboardDataChanged() {
 		QClipboard* clipboard = QApplication::clipboard();
 		const QMimeData* mimeData = clipboard->mimeData();
-		if (mimeData == nullptr || !mimeData->hasUrls())
+		if (mimeData == nullptr || !mimeData->hasUrls()) {
+			mItemListView->RemoveAll();
 			return;
+		}
 
 		QStringList filesInClipboard;
 		QList<QUrl> urls = mimeData->urls();
@@ -114,4 +193,7 @@ namespace FFX {
 		clipboard->setMimeData(newMimeData);
 	}
 
+	ClipboardPanelHeader* ClipboardPanel::Header () {
+		return mClipboardPanelHeader;
+	}
 }

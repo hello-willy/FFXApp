@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
     //FFX::FileHandlerPtr del = std::make_shared<FFX::FileDeleteHandler>();
     //del->Handle(toMatch);
     FFX::MainWindow w;
-    w.setWindowTitle(QString("Final File X-V1.0"));
+    w.setWindowTitle(QStringLiteral("Final File X-V1.0 (轮子哥出品)"));
     w.setWindowIcon(QIcon(":/FFXApp/FFXApp.ico"));
     w.Restore(w.AppConfigPtr());
     w.show();

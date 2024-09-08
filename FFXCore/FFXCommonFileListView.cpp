@@ -1,4 +1,6 @@
 #include "FFXCommonFileListView.h"
+#include "FFXMainWindow.h"
+
 #include <QPainter>
 #include <QFileIconProvider>
 #include <QMenu>
@@ -15,6 +17,10 @@ namespace FFX {
 	}
 
 	int CommonFileListViewModel::rowCount(const QModelIndex& parent) const {
+		return mListFileLoaded.size();
+	}
+
+	int CommonFileListViewModel::Count() {
 		return mListFileLoaded.size();
 	}
 
@@ -91,6 +97,9 @@ namespace FFX {
 		setItemDelegate(mItemDelegate);
 		setContextMenuPolicy(Qt::CustomContextMenu);
 
+		mGotoFileParentDirAction = new QAction(QIcon(":/ffx/res/image/goto.svg"), QObject::tr("Parent dir"));
+		connect(mGotoFileParentDirAction, &QAction::triggered, this, &CommonFileListView::OnGotoParentDir);
+		AddAction("Goto", mGotoFileParentDirAction);
 		//connect(this, &QListView::customContextMenuRequested, this, &CommonFileListView::OnCustomContextMenuRequested);
 	}
 
@@ -108,6 +117,10 @@ namespace FFX {
 			files << file;
 		}
 		return files;
+	}
+
+	int CommonFileListView::Count() {
+		return mViewModel->Count();
 	}
 
 	QString CommonFileListView::CurrentDir() {
@@ -154,5 +167,15 @@ namespace FFX {
 		}
 		menu->exec(QCursor::pos());
 		delete menu;
+	}
+
+	void CommonFileListView::OnGotoParentDir() {
+		QStringList files = SelectedFiles();
+		if (files.isEmpty())
+			return;
+
+		QFileInfo fileInfo(files[0]);
+		QDir d = fileInfo.absoluteDir();
+		MainWindow::Instance()->FileMainViewPtr()->Goto(d.absolutePath());
 	}
 }

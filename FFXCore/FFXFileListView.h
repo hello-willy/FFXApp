@@ -19,6 +19,7 @@ class QActionGroup;
 
 namespace FFX {
 	class FileQuickView;
+	class ClipboardPanel;
 
 	enum OrderBy {
 		OBName = 0,
@@ -43,6 +44,8 @@ namespace FFX {
 	public:
 		void Refresh();
 		QString FilterExp() { return mFilterExp; }
+		bool IsFilterSet() const;
+
 	protected:
 		virtual bool lessThan(const QModelIndex& source_left, const QModelIndex& source_right) const override;
 		virtual bool filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const override;
@@ -272,6 +275,7 @@ namespace FFX {
 		DefaultFileListViewNavigator* mFileViewNavigator;
 		DefaultFileListView* mFileListView;
 		FileQuickView* mFileQuickView;
+		ClipboardPanel* mClipboardPanel;
 		QVBoxLayout* mMainLayout;
 		//! Widgets
 		QLineEdit* mFilterEdit;

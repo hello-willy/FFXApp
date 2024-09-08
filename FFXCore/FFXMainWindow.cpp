@@ -19,6 +19,7 @@
 #include <QClipboard>
 #include <QApplication>
 #include <QMimeData>
+#include <QShortcut>
 
 namespace FFX {
 	MainWindow* MainWindow::sInstance = nullptr;
@@ -90,7 +91,7 @@ namespace FFX {
 		mShowTaskBoardButton = new QToolButton;
 		mCurrentDirInfoLabel = new QLabel;
 		mSelectFilesInfoLabel = new QLabel;
-		mClipboardInfoLabel = new QLabel;
+		mFileSearchFileInfoLabel = new QLabel;
 		mClipboardButton = new QToolButton;
 		mTaskInfoLabel = new QLabel(QObject::tr("Ready"));
 		//mClipboardButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
@@ -98,18 +99,13 @@ namespace FFX {
 		mStatusBar->addWidget(mCurrentDirInfoLabel);
 		mStatusBar->addWidget(mSelectFilesInfoLabel);
 		mStatusBar->addPermanentWidget(mClipboardButton);
-		mStatusBar->addPermanentWidget(mClipboardInfoLabel);
+		mStatusBar->addPermanentWidget(mFileSearchFileInfoLabel);
 		mStatusBar->addPermanentWidget(mShowTaskBoardButton);
 		mStatusBar->addPermanentWidget(mTaskInfoLabel);
 		setStatusBar(mStatusBar);
 
 		//! Init central widget
-		QSplitter* splitterMain = new QSplitter(Qt::Horizontal);
-		splitterMain->addWidget(mFileMainView);
-		splitterMain->addWidget(mFileSearchView);
-		splitterMain->setStretchFactor(0, 4);
-		splitterMain->setStretchFactor(1, 1);
-		setCentralWidget(splitterMain);
+		setCentralWidget(mFileMainView);
 
 		//! Init task panel
 		mTaskDocker = new QDockWidget;
@@ -120,19 +116,22 @@ namespace FFX {
 		mTaskDocker->toggleViewAction()->setIcon(QIcon(":/ffx/res/image/task.svg"));
 		mTaskDocker->setHidden(true);
 
-		//! Init clipboard panel
-		mClipboardPanel = new ClipboardPanel;
-		mClipboardPanelDocker = new QDockWidget;
-		mClipboardPanelDocker->setWidget(mClipboardPanel);
-		mClipboardPanelDocker->setWindowTitle(QObject::tr("Clipboard Panel"));
-		addDockWidget(Qt::RightDockWidgetArea, mClipboardPanelDocker);
-		mClipboardPanelDocker->setHidden(true);
-		mViewMenu->addAction(mClipboardPanelDocker->toggleViewAction());
-		mClipboardPanelDocker->toggleViewAction()->setIcon(QIcon(":/ffx/res/image/clipboard.svg"));
-		mClipboardInfoLabel->setText(QObject::tr(" %1 items").arg(0));
-		mClipboardButton->setDefaultAction(mClipboardPanelDocker->toggleViewAction());
+		//! Init file search panel
+		mFileSearchDocker = new QDockWidget;
+		mFileSearchDocker->setWidget(mFileSearchView);
+		mFileSearchDocker->setWindowTitle(QObject::tr("File Search Panel"));
+		addDockWidget(Qt::RightDockWidgetArea, mFileSearchDocker);
+		mFileSearchDocker->setHidden(true);
+		mViewMenu->addAction(mFileSearchDocker->toggleViewAction());
+		mFileSearchDocker->toggleViewAction()->setIcon(QIcon(":/ffx/res/image/search.svg"));
+		mFileSearchFileInfoLabel->setText(QObject::tr(" %1 files").arg(0));
+		mClipboardButton->setDefaultAction(mFileSearchDocker->toggleViewAction());
 
 		mShowTaskBoardButton->setDefaultAction(mTaskDocker->toggleViewAction());
+
+		mActiveSearchShortcut = new QShortcut(QKeySequence("Ctrl+F"), this);
+		mActiveSearchShortcut->setContext(Qt::WindowShortcut);
+		connect(mActiveSearchShortcut, &QShortcut::activated, this, &MainWindow::OnActivateFileSearch);
 
 		//! Setup signals/slots
 		connect(mFileMainView, &FileMainView::CurrentPathChanged, this, [=](const QString& path) { 
@@ -149,8 +148,8 @@ namespace FFX {
 		connect(mFileMainView, &FileMainView::SelectionChanged, this, [=](QStringList files) {
 			UpdateSelectFilesInfo(files);
 			});
-		QClipboard* clipboard = QApplication::clipboard();
-		connect(clipboard, &QClipboard::dataChanged, this, &MainWindow::OnClipboardDataChanged);
+		//QClipboard* clipboard = QApplication::clipboard();
+		//connect(clipboard, &QClipboard::dataChanged, this, &MainWindow::OnClipboardDataChanged);
 
 		mFileMainView->Restore(mAppConfig);
 
@@ -265,14 +264,8 @@ namespace FFX {
 		mSelectFilesInfoLabel->setText(info);
 	}
 
-	void MainWindow::OnClipboardDataChanged() {
-		QClipboard* clipboard = QApplication::clipboard();
-		const QMimeData* mimeData = clipboard->mimeData();
-		int count = 0;
-		if (!(mimeData == nullptr || !mimeData->hasUrls())) {
-			count = mimeData->urls().size();
-		}
-		mClipboardInfoLabel->setText(QObject::tr(" %1 items").arg(count));
+	void MainWindow::UpdateFileSearchInfo(int count) {
+		mFileSearchFileInfoLabel->setText(QObject::tr(" %1 files").arg(count));
 	}
 
 	void MainWindow::OnTaskInfoUpdate() {
@@ -281,6 +274,15 @@ namespace FFX {
 			mTaskInfoLabel->setText(QObject::tr("Ready"));
 		} else {
 			mTaskInfoLabel->setText(QObject::tr("%1 task running").arg(running));
+		}
+	}
+
+	void MainWindow::OnActivateFileSearch() {
+		if (mFileSearchDocker->isHidden()) {
+			mFileSearchDocker->setHidden(false);
+			mFileSearchView->ActivateSearch();
+		} else {
+			mFileSearchDocker->setHidden(true);
 		}
 	}
 }

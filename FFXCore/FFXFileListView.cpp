@@ -8,6 +8,7 @@
 #include "FFXFile.h"
 #include "FFXString.h"
 #include "FFXFileFilterExpr.h"
+#include "FFXClipboardPanel.h"
 
 #include <QLineEdit>
 #include <QDesktopServices>
@@ -122,6 +123,10 @@ namespace FFX {
 		mFilterExp = filter;
 		FileFilterExpr fe(filter.toStdString(), true);
 		mFileFilter = fe.Filter();
+	}
+
+	bool DefaultSortProxyModel::IsFilterSet() const {
+		return mFileFilter != nullptr && mFilterExp != "*";
 	}
 
 	/************************************************************************************************************************
@@ -352,8 +357,6 @@ namespace FFX {
 		QString root = CurrentDir();
 		mFileModel->setRootPath("");
 		SetRootPath(root);
-
-		qDebug() << "-->Refreshed";
 	}
 
 	void DefaultFileListView::SetRootPath(const QFileInfo& root) {
@@ -362,12 +365,18 @@ namespace FFX {
 		}
 
 		if (root.isDir()) {
-			QString oldFilterExp = mSortProxyModel->FilterExp();
-			SetFilter("*");
+			if (mSortProxyModel->IsFilterSet()) {
+				QString oldFilterExp = mSortProxyModel->FilterExp();
+				SetFilter("*");
+			}
+			
 			QModelIndex index = mFileModel->setRootPath(root.absoluteFilePath());
-			//setRootIndex(index); // IMPORTANT! refresh the ui
-			setRootIndex(mSortProxyModel->mapFromSource(index));
-			SetFilter(oldFilterExp);
+			setRootIndex(mSortProxyModel->mapFromSource(index)); // IMPORTANT! refresh the ui
+
+			qDebug() << "SetRootPath: " << root;
+			if (mSortProxyModel->IsFilterSet()) {
+				SetFilter(mSortProxyModel->FilterExp());
+			}
 		}
 	}
 
@@ -745,6 +754,8 @@ namespace FFX {
 		mFileViewNavigator = new DefaultFileListViewNavigator;
 		mFileListView = new DefaultFileListView;
 		mFileQuickView = new FileQuickView;
+		mClipboardPanel = new ClipboardPanel;
+
 		mMainLayout = new QVBoxLayout;
 		mMakeDirAction = new QAction(QIcon(":/ffx/res/image/mk-folder.svg"), QObject::tr("Make Directory"));
 		mMakeFileAction = new QAction(QIcon(":/ffx/res/image/mk-file.svg"), QObject::tr("New File"));
@@ -763,13 +774,23 @@ namespace FFX {
 		mCopyFilePathAction = new QAction(QIcon(":/ffx/res/image/text-input.svg"), QObject::tr("Copy File Path"));
 		mOpenCommandPromptAction = new QAction(QIcon(":/ffx/res/image/terminal.svg"), QObject::tr("Open in Command Prompt"));
 
-		mMainLayout->addWidget(mFileViewNavigator);
+		//mMainLayout->addWidget(mFileViewNavigator);
 		QSplitter* splitter = new QSplitter(Qt::Horizontal);
+		QWidget* rightWidget = new QWidget;
+		QVBoxLayout* rightWidgetLayout = new QVBoxLayout;
+		rightWidget->setLayout(rightWidgetLayout);
+		rightWidgetLayout->setMargin(0);
+		rightWidgetLayout->addWidget(mFileViewNavigator);
+		rightWidgetLayout->addWidget(mFileListView);
+
 		splitter->addWidget(mFileQuickView);
-		splitter->addWidget(mFileListView);
-		splitter->setStretchFactor(0, 1);
-		splitter->setStretchFactor(1, 4);
-		mMainLayout->addWidget(splitter, 1);
+		splitter->addWidget(rightWidget);
+		splitter->addWidget(mClipboardPanel);
+
+		splitter->setStretchFactor(0, 2);
+		splitter->setStretchFactor(1, 5);
+		splitter->setStretchFactor(2, 4);
+		mMainLayout->addWidget(splitter);
 
 		mSetFileFilterShortcut = new QShortcut(QKeySequence("Ctrl+Shift+F"), this);
 		mSetFileFilterShortcut->setContext(Qt::WindowShortcut);
@@ -1011,16 +1032,18 @@ namespace FFX {
 
 	void FileMainView::Restore(AppConfig* config) {
 		FileQuickViewPtr()->QuickNaviPanelPtr()->AddItem(config->ReadPairItemArray(objectName()));
-		QString rootPath = config->ReadItem(objectName(), "RootPath").toString();
-		if (rootPath.isEmpty()) {
-			rootPath = QDir::currentPath();
-		}
-		Goto(rootPath);
+		
 		int orderBy = config->ReadItem(objectName(), "OrderBy").toInt();
 		int sortOrder = config->ReadItem(objectName(), "SortOrder").toInt();
 		mOrderByActionGroup->actions()[orderBy]->setChecked(true);
 		mSortActionGroup->actions()[sortOrder]->setChecked(true);
 		mFileListView->SetSortBy((OrderBy)orderBy, (Qt::SortOrder)sortOrder);
+
+		QString rootPath = config->ReadItem(objectName(), "RootPath").toString();
+		if (rootPath.isEmpty()) {
+			rootPath = QDir::currentPath();
+		}
+		Goto(rootPath);
 	}
 }
 

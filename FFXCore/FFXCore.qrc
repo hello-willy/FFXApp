@@ -40,5 +40,7 @@
         <file>res/image/plug-uninstall.svg</file>
         <file>res/image/text-input.svg</file>
         <file>res/image/file-prop.svg</file>
+        <file>res/image/remove-item.svg</file>
+        <file>res/image/menu-ext.svg</file>
     </qresource>
 </RCC>

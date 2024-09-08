@@ -35,9 +35,7 @@ namespace FFX {
 
 		mSearchAction = new QAction(QIcon(":/ffx/res/image/search.svg"), "", mSearchFileListView);
 		connect(mSearchAction, &QAction::triggered, this, &FileSearchView::OnSearchActionTriggered);
-		mGotoFileParentDirAction = new QAction(QIcon(":/ffx/res/image/goto.svg"), QObject::tr("Parent dir"));
-		connect(mGotoFileParentDirAction, &QAction::triggered, this, &FileSearchView::OnGotoParentDir);
-		mSearchFileListView->AddAction("Goto", mGotoFileParentDirAction);
+		
 
 		mSearchEdit->addAction(mSearchAction, QLineEdit::TrailingPosition);
 		mSearchFileOnlyButton = new QToolButton;
@@ -60,10 +58,6 @@ namespace FFX {
 		mMainLayout->setRowStretch(0, 1);
 		mMainLayout->setColumnStretch(1, 1);
 		mMainLayout->setContentsMargins(0, 9, 5, 0); // Set the right margin to 5 pixels.
-
-		mActiveSearchShortcut = new QShortcut(QKeySequence("Ctrl+F"), this);
-		mActiveSearchShortcut->setContext(Qt::WindowShortcut);
-		connect(mActiveSearchShortcut, &QShortcut::activated, this, &FileSearchView::OnActiveSearch);
 
 		setLayout(mMainLayout);
 	}
@@ -89,6 +83,8 @@ namespace FFX {
 		if (taskId != mSearchTaskId || !success)
 			return;
 		mSearchFileListView->AddItem(fileOutput.absoluteFilePath());
+
+		MainWindow::Instance()->UpdateFileSearchInfo(mSearchFileListView->Count());
 	}
 
 	void FileSearchView::OnSearchActionTriggered() {
@@ -125,17 +121,7 @@ namespace FFX {
 		mSearchTaskId = MainWindow::Instance()->TaskPanelPtr()->Submit(FileInfoList(mSearchDir), std::make_shared<FileSearchHandler>(filter));
 	}
 
-	void FileSearchView::OnGotoParentDir() {
-		QStringList files = mSearchFileListView->SelectedFiles();
-		if (files.isEmpty())
-			return;
-
-		QFileInfo fileInfo(files[0]);
-		QDir d = fileInfo.absoluteDir();
-		MainWindow::Instance()->FileMainViewPtr()->Goto(d.absolutePath());
-	}
-
-	void FileSearchView::OnActiveSearch() {
+	void FileSearchView::ActivateSearch() {
 		mSearchEdit->setFocus();
 	}
 }
