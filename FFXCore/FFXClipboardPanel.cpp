@@ -1,4 +1,8 @@
 #include "FFXClipboardPanel.h"
+#include "FFXMainWindow.h"
+#include "FFXFileHandler.h"
+#include "FFXTaskPanel.h"
+
 #include <QGridLayout>
 #include <QToolButton>
 #include <QApplication>
@@ -9,6 +13,7 @@
 #include <QPainter>
 #include <QLabel>
 #include <QMenu>
+#include <QFileDialog>
 
 namespace FFX {
 	ClipboardPanelHeader::ClipboardPanelHeader(QWidget* parent)
@@ -24,8 +29,7 @@ namespace FFX {
 		mOperatorMenu->addAction(action);
 	}
 
-	void ClipboardPanelHeader::AddSeperator()
-	{
+	void ClipboardPanelHeader::AddSeperator() {
 		QFrame* seperator = new QFrame;
 		seperator->setFrameShape(QFrame::VLine);
 		seperator->setFrameShadow(QFrame::Sunken);
@@ -61,10 +65,6 @@ namespace FFX {
 		QPainter painter(this);
 		painter.setRenderHint(QPainter::Antialiasing);
 		painter.fillRect(rect().marginsAdded(QMargins(0, -9, 0, 0)), QColor("#EAEAEA"));
-		//QPen borderPen(Qt::black);
-		//borderPen.setWidth(1);
-		//painter.setPen(borderPen);
-		//painter.drawRect(rect());
 	}
 
 	ClipboardPanel::ClipboardPanel(QWidget*parent)
@@ -86,6 +86,9 @@ namespace FFX {
 		mClearButton->setIconSize(QSize(24, 24));
 
 		mRemoveSelectionAction = new QAction(QIcon(":/ffx/res/image/remove-item.svg"), QObject::tr("Remove Selected Item(s)"));
+		mCopyFileToAction = new QAction(QObject::tr("Copy to..."));
+		mMoveFileToAction = new QAction(QObject::tr("Move to..."));
+
 		mRemoveSelectionButton = new QToolButton;
 		mRemoveSelectionButton->setDefaultAction(mRemoveSelectionAction);
 		mRemoveSelectionButton->setFixedHeight(32);
@@ -111,9 +114,14 @@ namespace FFX {
 		
 		connect(mRemoveSelectionAction, &QAction::triggered, this, &ClipboardPanel::OnRemoveSelection);
 		connect(mClearButton, &QToolButton::clicked, this, &ClipboardPanel::OnClear);
+		connect(mCopyFileToAction, &QAction::triggered, this, &ClipboardPanel::OnCopyFileTo);
+		connect(mMoveFileToAction, &QAction::triggered, this, &ClipboardPanel::OnMoveFileTo);
 
+		connect(MainWindow::Instance()->TaskPanelPtr(), &TaskPanel::TaskComplete, this, &ClipboardPanel::OnTaskComplete);
 		mItemListView->AddAction("RemoveSelection", mRemoveSelectionAction);
-		mClipboardPanelHeader->AddAction(mRemoveSelectionAction);
+		
+		mClipboardPanelHeader->AddAction(mCopyFileToAction);
+		mClipboardPanelHeader->AddAction(mMoveFileToAction);
 	}
 
 	void ClipboardPanel::OnClear() {
@@ -195,5 +203,50 @@ namespace FFX {
 
 	ClipboardPanelHeader* ClipboardPanel::Header () {
 		return mClipboardPanelHeader;
+	}
+
+	void ClipboardPanel::OnTaskComplete(int taskId, bool success) {
+		QClipboard* clipboard = QApplication::clipboard();
+		const QMimeData* mimeData = clipboard->mimeData();
+		if (mimeData == nullptr || !mimeData->hasUrls()) {
+			mItemListView->RemoveAll();
+			return;
+		}
+		
+		QList<QUrl> filesInClipboard;
+		QList<QUrl> urls = mimeData->urls();
+		for (const QUrl& url : urls) {
+			QString file = url.toLocalFile();
+			if(!QFileInfo::exists(file))
+				continue;
+			filesInClipboard << url;
+		}
+
+		QMimeData* newMimeData = new QMimeData;
+		newMimeData->setUrls(filesInClipboard);
+		clipboard->clear();
+		clipboard->setMimeData(newMimeData);
+	}
+
+	void ClipboardPanel::OnTaskFileHandled(int taskId, const QFileInfo& fileInput, const QFileInfo& fileOutput, bool success, const QString& message) {
+	
+	}
+
+	void ClipboardPanel::OnCopyFileTo() {
+		QStringList files = mItemListView->AllFiles();
+		if (files.isEmpty())
+			return;
+
+		QString outputDir = QFileDialog::getExistingDirectory(nullptr, QObject::tr("Select output directory"), MainWindow::Instance()->FileMainViewPtr()->RootPath());
+		MainWindow::Instance()->TaskPanelPtr()->Submit(FileInfoList(files), std::make_shared<FileCopyHandler>(outputDir));
+	}
+
+	void ClipboardPanel::OnMoveFileTo() {
+		QStringList files = mItemListView->AllFiles();
+		if (files.isEmpty())
+			return;
+
+		QString outputDir = QFileDialog::getExistingDirectory(nullptr, QObject::tr("Select output directory"), MainWindow::Instance()->FileMainViewPtr()->RootPath());
+		MainWindow::Instance()->TaskPanelPtr()->Submit(FileInfoList(files), std::make_shared<FileMoveHandler>(outputDir));
 	}
 }

@@ -73,7 +73,7 @@ namespace FFX {
 		//! Init File Menu
 		mFileMenu->addAction(mFileMainView->MakeDirAction());
 		QMenu* makefileMenu = new QMenu(QObject::tr("Make File..."));
-		makefileMenu->setIcon(QIcon(":/ffx/res/image/plus.svg"));
+		makefileMenu->setIcon(QIcon(":/ffx/res/image/mk-file.svg"));
 		mFileMenu->addAction(makefileMenu->menuAction());
 		for (int i = 0; i < makefileActions.size(); i++) {
 			makefileMenu->addAction(makefileActions[i]);

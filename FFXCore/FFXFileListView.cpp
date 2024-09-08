@@ -344,6 +344,17 @@ namespace FFX {
 		return files;
 	}
 
+	QStringList DefaultFileListView::AllFiles() {
+		QStringList ret;
+		int rowCount = mSortProxyModel->rowCount();
+		for (int i = 0; i < rowCount; i++) {
+			QModelIndex idx = mSortProxyModel->index(i, 0);
+			QModelIndex fileIdx = mSortProxyModel->mapToSource(idx);
+			ret << mFileModel->filePath(fileIdx);
+		}
+		return ret;
+	}
+
 	QString DefaultFileListView::CurrentDir() {
 		return mFileModel->rootPath();
 	}
@@ -459,7 +470,7 @@ namespace FFX {
 			menu->addSeparator();
 			menu->addAction(MainWindow::Instance()->FileMainViewPtr()->MakeDirAction());
 			QMenu* makefileMenu = new QMenu(QObject::tr("Make File..."));
-			makefileMenu->setIcon(QIcon(":/ffx/res/image/plus.svg"));
+			makefileMenu->setIcon(QIcon(":/ffx/res/image/mk-file.svg"));
 			menu->addAction(makefileMenu->menuAction());
 			QList<QAction*> makefileActions = MainWindow::Instance()->FileMainViewPtr()->MakeFileActions();
 			for (int i = 0; i < makefileActions.size(); i++) {
@@ -555,6 +566,7 @@ namespace FFX {
 			return;
 
 		QList<QUrl> urls = mimeData->urls();
+
 		QString targetDir = CurrentDir();
 		MainWindow::Instance()->TaskPanelPtr()->Submit(FileInfoList(urls), std::make_shared<FileCopyHandler>(targetDir, overwrite));
 	}
@@ -758,9 +770,9 @@ namespace FFX {
 
 		mMainLayout = new QVBoxLayout;
 		mMakeDirAction = new QAction(QIcon(":/ffx/res/image/mk-folder.svg"), QObject::tr("Make Directory"));
-		mMakeFileAction = new QAction(QIcon(":/ffx/res/image/mk-file.svg"), QObject::tr("New File"));
+		mMakeFileAction = new QAction(QIcon(":/ffx/res/image/file-txt.svg"), QObject::tr("File"));
 		mMakeFileActions.append(mMakeFileAction);
-		mMakeFileActions.append(new QAction("New Zip File"));
+		//mMakeFileActions.append(new QAction("New Zip File"));
 		mPasteFilesAction = new QAction(QIcon(":/ffx/res/image/paste-files.svg"), QObject::tr("Copy Files Here"));
 		mRefreshAction = new QAction(QIcon(":/ffx/res/image/refresh.svg"), QObject::tr("Refresh"));
 		mRefreshAction->setShortcut(QKeySequence("F5"));
@@ -787,9 +799,10 @@ namespace FFX {
 		splitter->addWidget(rightWidget);
 		splitter->addWidget(mClipboardPanel);
 
+		splitter->setSizes({2000, 7000, 3000});
 		splitter->setStretchFactor(0, 2);
-		splitter->setStretchFactor(1, 5);
-		splitter->setStretchFactor(2, 4);
+		splitter->setStretchFactor(1, 7);
+		splitter->setStretchFactor(2, 3);
 		mMainLayout->addWidget(splitter);
 
 		mSetFileFilterShortcut = new QShortcut(QKeySequence("Ctrl+Shift+F"), this);

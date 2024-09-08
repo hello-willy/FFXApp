@@ -21,6 +21,7 @@ namespace FFX {
 		void RemoveRow(int row);
 		QModelIndex IndexOf(const QString& file);
 		int Count();
+		QStringList AllItems() const;
 
 	private:
 		QStringList mListFileLoaded;
@@ -42,6 +43,7 @@ namespace FFX {
 		~CommonFileListView();
 
 	public:
+		virtual QStringList AllFiles();
 		virtual QStringList SelectedFiles() override;
 		virtual QString CurrentDir() override;
 		virtual QModelIndex IndexOf(const QString& file) override;

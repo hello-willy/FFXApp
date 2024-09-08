@@ -36,6 +36,10 @@ namespace FFX {
 		endResetModel();
 	}
 
+	QStringList CommonFileListViewModel::AllItems() const {
+		return mListFileLoaded;
+	}
+
 	void CommonFileListViewModel::Clear() {
 		beginResetModel();
 		mListFileLoaded.clear();
@@ -97,7 +101,7 @@ namespace FFX {
 		setItemDelegate(mItemDelegate);
 		setContextMenuPolicy(Qt::CustomContextMenu);
 
-		mGotoFileParentDirAction = new QAction(QIcon(":/ffx/res/image/goto.svg"), QObject::tr("Parent dir"));
+		mGotoFileParentDirAction = new QAction(QIcon(":/ffx/res/image/goto.svg"), QObject::tr("Goto Parent Dir"));
 		connect(mGotoFileParentDirAction, &QAction::triggered, this, &CommonFileListView::OnGotoParentDir);
 		AddAction("Goto", mGotoFileParentDirAction);
 		//connect(this, &QListView::customContextMenuRequested, this, &CommonFileListView::OnCustomContextMenuRequested);
@@ -105,6 +109,10 @@ namespace FFX {
 
 	CommonFileListView::~CommonFileListView()
 	{}
+
+	QStringList CommonFileListView::AllFiles() {
+		return mViewModel->AllItems();
+	}
 
 	QStringList CommonFileListView::SelectedFiles() {
 		QList<QString> files;

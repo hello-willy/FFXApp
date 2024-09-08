@@ -41,6 +41,7 @@ namespace FFX {
 
 	public:
 		ClipboardPanelHeader* Header();
+		QStringList AllFiles();
 
 	private:
 		void SetupUi();
@@ -48,7 +49,11 @@ namespace FFX {
 	private slots:
 		void OnClipboardDataChanged();
 		void OnClear();
+		void OnTaskComplete(int taskId, bool success);
+		void OnTaskFileHandled(int taskId, const QFileInfo& fileInput, const QFileInfo& fileOutput, bool success, const QString& message);
 		void OnRemoveSelection();
+		void OnCopyFileTo();
+		void OnMoveFileTo();
 
 	private:
 		ClipboardPanelHeader* mClipboardPanelHeader;
@@ -58,6 +63,8 @@ namespace FFX {
 		QToolButton* mRemoveSelectionButton;
 		QToolButton* mGotoParentDirButton;
 		QAction* mRemoveSelectionAction;
+		QAction* mCopyFileToAction;
+		QAction* mMoveFileToAction;
 	};
 }
 

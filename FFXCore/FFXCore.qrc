@@ -42,5 +42,6 @@
         <file>res/image/file-prop.svg</file>
         <file>res/image/remove-item.svg</file>
         <file>res/image/menu-ext.svg</file>
+        <file>res/image/file-txt.svg</file>
     </qresource>
 </RCC>

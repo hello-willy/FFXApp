@@ -101,6 +101,7 @@ namespace FFX {
 		friend class FileMainView;
 
 	public:
+		virtual QStringList AllFiles();
 		virtual QStringList SelectedFiles();
 		virtual QString CurrentDir();
 		virtual QModelIndex IndexOf(const QString& file);
