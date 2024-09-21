@@ -376,8 +376,8 @@ namespace FFX {
 		}
 
 		if (root.isDir()) {
+			QString oldFilterExp = mSortProxyModel->FilterExp();
 			if (mSortProxyModel->IsFilterSet()) {
-				QString oldFilterExp = mSortProxyModel->FilterExp();
 				SetFilter("*");
 			}
 			
@@ -385,8 +385,8 @@ namespace FFX {
 			setRootIndex(mSortProxyModel->mapFromSource(index)); // IMPORTANT! refresh the ui
 
 			qDebug() << "SetRootPath: " << root;
-			if (mSortProxyModel->IsFilterSet()) {
-				SetFilter(mSortProxyModel->FilterExp());
+			if (!oldFilterExp.isEmpty() || oldFilterExp != "*") {
+				SetFilter(oldFilterExp);
 			}
 		}
 	}

@@ -7,6 +7,7 @@
 #include "FFXClipboardPanel.h"
 #include "FFXFileQuickView.h"
 #include "FFXFileHandler.h"
+#include "FFXHandlerSettingDialog.h"
 
 #include <QtWidgets/QMessageBox>
 #include <QSplitter>
@@ -87,6 +88,11 @@ namespace FFX {
 
 		//! Init plugin menu
 		mPluginMenu->addAction(mPluginManager->InstallPluginAction());
+
+		mHandlerSettingAction = new QAction(QStringLiteral("Handler Setting"));
+		connect(mHandlerSettingAction, &QAction::triggered, this, &MainWindow::OnHandlerSetting);
+		mPluginMenu->addAction(mHandlerSettingAction);
+
 		//! Init status bar
 		mShowTaskBoardButton = new QToolButton;
 		mCurrentDirInfoLabel = new QLabel;
@@ -284,6 +290,11 @@ namespace FFX {
 		} else {
 			mFileSearchDocker->setHidden(true);
 		}
+	}
+
+	void MainWindow::OnHandlerSetting() {
+		HandlerSettingDialog dlg(std::make_shared<FileMoveHandler>("d:/", true), this);
+		dlg.exec();
 	}
 }
 

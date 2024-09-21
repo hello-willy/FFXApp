@@ -3,9 +3,12 @@
 namespace FFX {
 
 	PdfToImageHandler::PdfToImageHandler(const QString& outputDir, const QString& pages, int dpi) {
-		mArgMap["OutputDir"] = Argument("OutputDir", QObject::tr("OutputDir"), QObject::tr("Storage directory for images."), outputDir);
-		mArgMap["PageRange"] = Argument("PageRange", QObject::tr("PageRange"), QObject::tr("Comma separated list of page ranges, 1,2,4 or 3-7,3,7-10, default is 1-N"), pages);
+		mArgMap["OutputDir"] = Argument("OutputDir", QObject::tr("Output Dir"), QObject::tr("Storage directory for images."), outputDir, Argument::Dir);
+		mArgMap["PageRange"] = Argument("PageRange", QObject::tr("Page Range"), QObject::tr("Comma separated list of page ranges, 1,2,4 or 3-7,3,7-10, default is 1-N"), pages);
+		mArgMap["PageRange"].AddLimit("[1-9][1-9|,|\\-|N]*");
+
 		mArgMap["DPI"] = Argument("DPI", QObject::tr("DPI"), QObject::tr("DPI of output image, default 72"), dpi);
+		mArgMap["DPI"].AddLimit("[1-9][0-9]*");
 	}
 
 	std::shared_ptr<FileHandler> PdfToImageHandler::Clone() {

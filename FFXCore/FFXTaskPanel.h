@@ -54,6 +54,7 @@ namespace FFX {
 		void TaskSubmit(int taskId);
 		void TaskComplete(int taskId, bool success);
 		void TaskFileHandled(int taskId, const QFileInfo& fileInput, const QFileInfo& fileOutput, bool success, const QString& message);
+		void TaskProgressChanged(int taskId, const QString& message, int pos);
 
 	private:
 		void SetupUi();

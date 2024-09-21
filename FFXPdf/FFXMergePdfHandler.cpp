@@ -144,8 +144,10 @@ namespace FFX {
 	}
 
 	MergePdfHandler::MergePdfHandler(const QString& outPdf, bool compress) {
-		mArgMap["OutPdf"] = Argument("OutPdf", QObject::tr("OutPdf"), QObject::tr("Output PDF file, absolute path."), outPdf);
-		mArgMap["Compress"] = Argument("Compress", QObject::tr("Compress"), QObject::tr("Compress the output PDF file, default is false."), outPdf);
+		mArgMap["OutPdf"] = Argument("OutPdf", QObject::tr("Output pdf"), QObject::tr("Output PDF file, absolute path."), outPdf, Argument::SaveFile);
+		mArgMap["OutPdf"].AddLimit("Pdf file(*.pdf)");
+
+		mArgMap["Compress"] = Argument("Compress", QObject::tr("Compress"), QObject::tr("Compress the output PDF file, default is false."), outPdf, Argument::Bool);
 	}
 
 	void MergePdfHandler::Cancel() {
@@ -157,6 +159,10 @@ namespace FFX {
 	}
 
 	QFileInfoList MergePdfHandler::DoHandle(const QFileInfoList& files, ProgressPtr progress) {
+		if (files.isEmpty()) {
+			progress->OnComplete(true, QObject::tr("Finished, nothing to do"));
+			return QFileInfoList();
+		}
 		QString	out = mArgMap["OutPdf"].Value().toString();
 		bool compress = mArgMap["Compress"].Value().toBool();
 
@@ -191,11 +197,12 @@ namespace FFX {
 			fz_catch(mContext) {
 				progress->OnFileComplete(file, file, false, QObject::tr("Merge %1 failed.").arg(filePath));
 			}
-			progress->OnFileComplete(file, file);
 		}
 
-		fz_try(mContext)
+		fz_try(mContext) {
 			pdf_save_document(mContext, doc_des, out.toStdString().c_str(), &opts);
+			progress->OnFileComplete(files[0], out);
+		}
 		fz_catch(mContext) {
 			progress->OnComplete(false, QObject::tr("Failed: Cannot save output file."));
 			return QFileInfoList();

@@ -44,6 +44,12 @@
     <ClInclude Include="FFXPdfToImageHandler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="FFXPdfAddImageWatermarkHandler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FFXPdfAddTextWatermarkHandler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="FFXPdfPlugin.cpp">
@@ -65,6 +71,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="FFXPdfToImageHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FFXPdfAddImageWatermarkHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FFXPdfAddTextWatermarkHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

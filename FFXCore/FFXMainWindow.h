@@ -68,6 +68,7 @@ namespace FFX {
 	private slots:
 		void OnTaskInfoUpdate();
 		void OnActivateFileSearch();
+		void OnHandlerSetting();
 
 	private:
 		QMenuBar* mMenuBar;
@@ -96,5 +97,8 @@ namespace FFX {
 		HandlerFactory* mHandlerFactory;
 
 		QShortcut* mActiveSearchShortcut;
+
+		// test
+		QAction* mHandlerSettingAction;
 	};
 }

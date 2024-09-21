@@ -21,7 +21,8 @@ namespace FFX {
 	private slots:
 		void OnImageToPdfAction();
 		void OnMergePdfAction();
-		void OnAddWatermarkAction();
+		void OnAddTextWatermarkAction();
+		void OnAddImageWatermarkAction();
 		void OnExtractImageAction();
 		void OnPdfToImageAction();
 
@@ -29,7 +30,8 @@ namespace FFX {
 		QMenu* mPdfMenu;
 		QAction* mImageToPdfAction;
 		QAction* mMergePdfAction;
-		QAction* mAddWatermarkAction;
+		QAction* mAddTextWatermarkAction;
+		QAction* mAddImageWatermarkAction;
 		QAction* mExtractImageAction;
 		QAction* mPdfToImageAction;
 	};

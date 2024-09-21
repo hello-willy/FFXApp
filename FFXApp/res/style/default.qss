@@ -85,12 +85,14 @@ QToolButton:disabled
 
 QPushButton
 {
-    background-color: transparent;
+    background-color: #E5F3FF;
+    border: 1px solid #999999;
+    border-radius: 3px;
 }
 
 QPushButton:hover
 {
-    background-color: #E0E0E0;
+    background-color: #CCE8FF;
     border: 1px solid #999999;
 }
 
@@ -102,7 +104,7 @@ QPushButton:pressed
 
 QPushButton:disabled
 {
-    background-color: transparent;
+    background-color: #E0E0E0;
 }
 
 QComboBox
@@ -218,6 +220,7 @@ QMenu::item:selected
 QProgressBar 
 {
     border: 1px solid #999999;
+    border-radius: 3px;
     text-align: center;
 }
 
@@ -230,4 +233,9 @@ QTableWidget
 {
     selection-color: black;
     selection-background-color: #E0E0E0;
+}
+
+QTabBar::tab
+{
+    height: 37px;   
 }

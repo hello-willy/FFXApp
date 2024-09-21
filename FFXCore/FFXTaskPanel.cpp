@@ -366,6 +366,8 @@ namespace FFX {
 	}
 
 	void TaskPanel::OnTaskProgressChanged(int taskId, const QString& message, int pos) {
+		emit TaskProgressChanged(taskId, message, pos);
+
 		int row = RowOf(taskId);
 		if (row < 0)
 			return;

@@ -122,10 +122,12 @@
     <ClCompile Include="FFXFileFilter.cpp" />
     <ClCompile Include="FFXFileFilterExpr.cpp" />
     <ClCompile Include="FFXFileHandler.cpp" />
+    <ClCompile Include="FFXFileHandlerSettingWidget.cpp" />
     <ClCompile Include="FFXFileListView.cpp" />
     <ClCompile Include="FFXFilePropertyDialog.cpp" />
     <ClCompile Include="FFXFileQuickView.cpp" />
     <ClCompile Include="FFXFileSearchView.cpp" />
+    <ClCompile Include="FFXHandlerSettingDialog.cpp" />
     <ClCompile Include="FFXMainWindow.cpp" />
     <ClCompile Include="FFXPlugin.cpp" />
     <ClCompile Include="FFXRenameDialog.cpp" />
@@ -135,6 +137,8 @@
     <QtMoc Include="FFXRenameDialog.h" />
     <QtMoc Include="FFXFilePropertyDialog.h" />
     <QtMoc Include="FFXAppConfig.h" />
+    <QtMoc Include="FFXHandlerSettingDialog.h" />
+    <QtMoc Include="FFXFileHandlerSettingWidget.h" />
     <ClInclude Include="FFXUtils.h" />
     <QtMoc Include="FFXTaskPanel.h" />
     <QtMoc Include="FFXActionManager.h" />
@@ -156,6 +160,9 @@
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="FFXCore.qrc" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtTranslation Include="language\ffx-core_zh_CN.ts" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

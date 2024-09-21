@@ -36,6 +36,12 @@ namespace FFX {
 		endResetModel();
 	}
 
+	void CommonFileListViewModel::Append(const QStringList& files) {
+		beginResetModel();
+		mListFileLoaded << files;
+		endResetModel();
+	}
+
 	QStringList CommonFileListViewModel::AllItems() const {
 		return mListFileLoaded;
 	}
@@ -145,14 +151,22 @@ namespace FFX {
 
 	void CommonFileListView::RemoveRow(int row) {
 		mViewModel->RemoveRow(row);
+		emit itemChanged();
 	}
 
 	void CommonFileListView::AddItem(const QString& file) {
 		mViewModel->Append(file);
+		emit itemChanged();
+	}
+
+	void CommonFileListView::AddItems(const QStringList& files) {
+		mViewModel->Append(files);
+		emit itemChanged();
 	}
 
 	void CommonFileListView::RemoveAll() {
 		mViewModel->Clear();
+		emit itemChanged();
 	}
 
 	void CommonFileListView::AddAction(const QString& name, QAction* action) {

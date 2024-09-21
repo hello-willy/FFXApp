@@ -5,7 +5,7 @@
 #include <QFontMetrics>
 
 namespace FFX {
-	fz_matrix CalCentralTextMatrix(float tw, float th, const fz_rect& page_box, float r) {
+	fz_matrix CalCentralTextMatrix_(float tw, float th, const fz_rect& page_box, float r) {
 		float w = page_box.x1 - page_box.x0;
 		float h = page_box.y1 - page_box.y0;
 
@@ -19,7 +19,7 @@ namespace FFX {
 		return m;
 	}
 
-	int JM_insert_contents(fz_context* ctx, pdf_document* pdf,
+	int JM_insert_contents_(fz_context* ctx, pdf_document* pdf,
 		pdf_obj* pageref, fz_buffer* newcont, int overlay) {
 		int xref = 0;
 		fz_try(ctx) {
@@ -96,7 +96,8 @@ namespace FFX {
 			fz_try(mContext) {
 				doc = pdf_open_document(mContext, filePath.toStdString().c_str());
 				QString newPdf = file.absoluteDir().absoluteFilePath(QString("%1_Marked.pdf").arg(file.completeBaseName()));
-
+				if (QFileInfo::exists(newPdf))
+					QFile::remove(newPdf);
 				if (wt == 1)
 					AddImageWatermark(doc, content.toStdString().c_str(), newPdf.toStdString().c_str());
 				else
@@ -134,7 +135,7 @@ namespace FFX {
 				sprintf(buf, "\nq\n%f %f %f %f %f %f cm\n/watermark888 Do\nQ", m.a, m.b, m.c, m.d, m.e, m.f);
 
 				fz_append_string(mContext, contents, buf);
-				JM_insert_contents(mContext, doc, page->obj, contents, 1);
+				JM_insert_contents_(mContext, doc, page->obj, contents, 1);
 			
 				fz_drop_buffer(mContext, contents);
 			}
@@ -186,7 +187,7 @@ namespace FFX {
 				sprintf(buf, "\nq/%s gs\n0 0 0 rg\n%f %f %f %f %f %f Tm\nBT %s ET\nQ", opstr, m.a, m.b, m.c, m.d, m.e, m.f, tjstr.toStdString().c_str());
 
 				fz_append_string(mContext, contents, buf);
-				JM_insert_contents(mContext, doc, page->obj, contents, 1);
+				JM_insert_contents_(mContext, doc, page->obj, contents, 1);
 
 				fz_drop_buffer(mContext, contents);
 			}
@@ -269,7 +270,7 @@ namespace FFX {
 		fz_matrix m = fz_make_matrix(1, 0, 0, 1, 0, 0);
 		switch (position) {
 		case 0: // central
-			m = CalCentralTextMatrix(tw, th, pagebox, r);
+			m = CalCentralTextMatrix_(tw, th, pagebox, r);
 			break;
 		case 1: // lower left corner
 			m = fz_concat(m, fz_translate(margin, margin));

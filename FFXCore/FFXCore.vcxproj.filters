@@ -103,6 +103,12 @@
     <ClCompile Include="FFXAppConfig.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="FFXHandlerSettingDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FFXFileHandlerSettingWidget.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="FFXTask.h">
@@ -144,10 +150,21 @@
     <QtMoc Include="FFXAppConfig.h">
       <Filter>Header Files</Filter>
     </QtMoc>
+    <QtMoc Include="FFXHandlerSettingDialog.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="FFXFileHandlerSettingWidget.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="FFXCore.qrc">
       <Filter>Resource Files</Filter>
     </QtRcc>
+  </ItemGroup>
+  <ItemGroup>
+    <QtTranslation Include="language\ffx-core_zh_CN.ts">
+      <Filter>Translation Files</Filter>
+    </QtTranslation>
   </ItemGroup>
 </Project>

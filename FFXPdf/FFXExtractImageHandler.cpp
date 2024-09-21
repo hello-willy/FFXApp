@@ -2,7 +2,7 @@
 
 namespace FFX {
 	ExtractImageHandler::ExtractImageHandler(const QString& outputDir) {
-		mArgMap["OutputDir"] = Argument("OutputDir", QObject::tr("OutputDir"), QObject::tr("Storage directory for images."), outputDir);
+		mArgMap["OutputDir"] = Argument("OutputDir", QObject::tr("Output Dir"), QObject::tr("Storage directory for images"), outputDir, Argument::Dir, true);
 	}
 
 	std::shared_ptr<FileHandler> ExtractImageHandler::Clone() {

@@ -33,6 +33,13 @@ namespace FFX {
 		return fileInfoList;
 	}
 
+	QStringList StringList(const QFileInfoList& files) {
+		QStringList ret;
+		for (const QFileInfo& fi : files)
+			ret << fi.absoluteFilePath();
+		return ret;
+	}
+
 	qint64 SymbolLinkSize(const QFileInfo& file) {
 		QFile link(file.absoluteFilePath());
 		link.open(QIODevice::ReadOnly);

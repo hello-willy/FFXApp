@@ -553,8 +553,8 @@ namespace FFX {
 	 *
 	/************************************************************************************************************************/
 	FileMoveHandler::FileMoveHandler(const QString& destPath, bool overwrite) {
-		mArgMap["DestPath"] = Argument("DestPath", QObject::tr("DestPath"), QObject::tr("Target directory for files moving."), destPath);
-		mArgMap["Overwrite"] = Argument("Overwrite", QObject::tr("Overwrite"), QObject::tr("Is it overwrite the existing file, default is false."), overwrite);
+		mArgMap["DestPath"] = Argument("DestPath", QObject::tr("Dest Path"), QObject::tr("Target directory for files moving."), destPath, Argument::Dir, true);
+		mArgMap["Overwrite"] = Argument("Overwrite", QObject::tr("Overwrite"), QObject::tr("Is it overwrite the existing file, default is false."), overwrite, Argument::Bool);
 	}
 
 	QFileInfoList FileMoveHandler::Handle(const QFileInfoList& files, ProgressPtr progress) {

@@ -455,7 +455,7 @@ namespace FFX {
 	void RenameDialog::SetupUi() {
 		//layout()->setContentsMargins(20, 10, 20, 10);
 		setWindowTitle(QObject::tr("File Rename Pro"));
-		resize(QSize(1024, 768));
+		resize(QSize(1024, 900));
 		setWindowFlags(Qt::WindowCloseButtonHint);
 
 		mRenameFileListTitleLabel = new QLabel(QObject::tr("File List"));

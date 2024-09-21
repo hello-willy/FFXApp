@@ -1,5 +1,7 @@
 #include <QtWidgets/QApplication>
 #include <QDebug>
+#include <QVariant>
+
 #include "FFXFileHandler.h"
 #include "FFXMainWindow.h"
 #include "FFXAppConfig.h"
@@ -33,6 +35,10 @@ int main(int argc, char *argv[])
     //    qDebug() << f.filePath();
     //FFX::FileHandlerPtr del = std::make_shared<FFX::FileDeleteHandler>();
     //del->Handle(toMatch);
+
+    QVariant v = 123;
+    qDebug() << v.toString();
+
     FFX::MainWindow w;
     w.setWindowTitle(QStringLiteral("Final File X-V1.0 (轮子哥出品)"));
     w.setWindowIcon(QIcon(":/FFXApp/FFXApp.ico"));
