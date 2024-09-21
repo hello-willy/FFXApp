@@ -98,6 +98,23 @@ namespace FFX {
 	FilePropertyDialog::~FilePropertyDialog()
 	{}
 
+	void FilePropertyDialog::reject() {
+		MainWindow::Instance()->TaskPanelPtr()->Cancel(mTaskId);
+		QDialog::reject();
+	}
+
+	void FilePropertyDialog::accept() {
+		MainWindow::Instance()->TaskPanelPtr()->Cancel(mTaskId);
+
+		Qt::CheckState readonly = mFileBasicPropertyWidget->mReadOnlyCheckBox->checkState();
+		Qt::CheckState hidden = mFileBasicPropertyWidget->mHiddenCheckBox->checkState();
+		if (readonly != Qt::PartiallyChecked || hidden != Qt::PartiallyChecked) {
+			MainWindow::Instance()->TaskPanelPtr()->Submit(mFiles, std::make_shared<FileModifyAttributeHandler>(readonly == Qt::Checked, hidden == Qt::Checked));
+		}
+
+		QDialog::accept();
+	}
+
 	void FilePropertyDialog::SetupUi() {
 		setWindowTitle(QObject::tr("Property"));
 		resize(QSize(768, 1024));
@@ -125,8 +142,8 @@ namespace FFX {
 		setLayout(mMainLayout);
 
 		connect(MainWindow::Instance()->TaskPanelPtr(), &TaskPanel::TaskFileHandled, this, &FilePropertyDialog::OnFileHandled);
-		connect(mCancelButton, &QToolButton::clicked, this, &FilePropertyDialog::OnCancel);
-		connect(mOkButton, &QToolButton::clicked, this, &FilePropertyDialog::OnOk);
+		connect(mCancelButton, &QToolButton::clicked, this, &FilePropertyDialog::reject);
+		connect(mOkButton, &QToolButton::clicked, this, &FilePropertyDialog::accept);
 	}
 
 	void FilePropertyDialog::OnFileHandled(int taskId, const QFileInfo& fileInput, const QFileInfo& fileOutput, bool success, const QString& message) {
@@ -181,23 +198,6 @@ namespace FFX {
 		mFileBasicPropertyWidget->mDateInfoLabel->setText(dateStr);
 		mFileBasicPropertyWidget->mCountInfoLabel->setText(QObject::tr("%1 files %2 directories").arg(mFileCount).arg(mDirCount));
 		mFileBasicPropertyWidget->mTotalSizeInfoLabel->setText(QString("%1 (%2 Bytes)").arg(String::BytesHint(mTotalSize)).arg(mTotalSize));
-	}
-
-	void FilePropertyDialog::OnCancel() {
-		MainWindow::Instance()->TaskPanelPtr()->Cancel(mTaskId);
-		QDialog::reject();
-	}
-
-	void FilePropertyDialog::OnOk() {
-		MainWindow::Instance()->TaskPanelPtr()->Cancel(mTaskId);
-
-		Qt::CheckState readonly = mFileBasicPropertyWidget->mReadOnlyCheckBox->checkState();
-		Qt::CheckState hidden = mFileBasicPropertyWidget->mHiddenCheckBox->checkState();
-		if (readonly != Qt::PartiallyChecked || hidden != Qt::PartiallyChecked) {
-			MainWindow::Instance()->TaskPanelPtr()->Submit(mFiles, std::make_shared<FileModifyAttributeHandler>(readonly == Qt::Checked, hidden == Qt::Checked));
-		}
-		
-		QDialog::accept();
 	}
 }
 

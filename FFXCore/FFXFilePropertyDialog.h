@@ -71,8 +71,8 @@ namespace FFX {
 
 	private slots:
 		void OnFileHandled(int taskId, const QFileInfo& fileInput, const QFileInfo& fileOutput, bool success, const QString& message);
-		void OnCancel();
-		void OnOk();
+		virtual void reject();
+		virtual void accept();
 
 	private:
 		QTabWidget* mTabWidget;
