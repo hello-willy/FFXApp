@@ -15,6 +15,7 @@
 #include <QClipboard>
 #include <QMimeData>
 #include <QTabBar>
+#include <QMessageBox>
 
 namespace FFX{
 
@@ -141,19 +142,24 @@ namespace FFX{
 	}
 
 	void HandlerSettingDialog::OnRunInBackground() {
-		mArgCollectorList->GetArgumentMap(mHandler->ArgMap());
+		if (!ValidateArgument())
+			return;
+		//mArgCollectorList->GetArgumentMap(mHandler->ArgMap());
 		QStringList files = mFileListView->AllFiles();
 		mTaskId = MainWindow::Instance()->TaskPanelPtr()->Submit(FileInfoList(files), mHandler);
 		accept();
 	}
 
 	void HandlerSettingDialog::OnRun() {
+		if (!ValidateArgument())
+			return;
+
 		mRunButton->setEnabled(false);
 		mRunInBackgroundButton->setEnabled(false);
 		mOutputFileListView->RemoveAll();
 		mFailedHandledFileListView->RemoveAll();
 
-		mArgCollectorList->GetArgumentMap(mHandler->ArgMap());
+		//mArgCollectorList->GetArgumentMap(mHandler->ArgMap());
 		QStringList files = mFileListView->AllFiles();
 		mTaskId = MainWindow::Instance()->TaskPanelPtr()->Submit(FileInfoList(files), mHandler, false);
 		mCancelButton->setEnabled(mTaskId > 0);
@@ -203,6 +209,21 @@ namespace FFX{
 		if(mTaskId == taskId && !success) {
 			mFailedHandledFileListView->AddItem(fileInput.absoluteFilePath());
 		}
+	}
+
+	bool HandlerSettingDialog::ValidateArgument() {
+		mArgCollectorList->GetArgumentMap(mHandler->ArgMap());
+		const ArgumentMap& argmap = mHandler->ArgMap();
+		
+		ArgumentMap::const_iterator it = argmap.begin();
+		for (; it != argmap.end(); it++) {
+			if (it.value().IsRequired() && !it.value().Value().isNull()) {
+				QMessageBox::information(this, QObject::tr("Infomation"), QObject::tr("Argument (%1) can not be empty").arg(it.key()));
+				mArgCollectorList->FocusAt(it.key());
+				return false;
+			}
+		}
+		return true;
 	}
 
 	void HandlerSettingDialog::OnLoadFileFromClipboard() {

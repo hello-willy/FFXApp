@@ -42,6 +42,10 @@ namespace FFX {
 		return mLineEdit->text();
 	}
 
+	void NormalEditor::Focus() {
+		mLineEdit->setFocus();
+	}
+
 	BoolEditor::BoolEditor(const Argument& arg, QWidget* parent)
 		: ArgumentEditor(arg, parent) {
 		mMainLayout = new QHBoxLayout;
@@ -58,6 +62,10 @@ namespace FFX {
 		return mCheckBox->isChecked();
 	}
 
+	void BoolEditor::Focus() {
+		mCheckBox->setFocus();
+	}
+
 	DateEditor::DateEditor(const Argument& arg, QWidget* parent)
 		: ArgumentEditor(arg, parent) {
 		mMainLayout = new QHBoxLayout;
@@ -70,6 +78,10 @@ namespace FFX {
 
 	QVariant DateEditor::Value() {
 		return mDateEdit->date();
+	}
+
+	void DateEditor::Focus() {
+		mDateEdit->setFocus();
 	}
 
 	OptionEditor::OptionEditor(const Argument& arg, QWidget* parent)
@@ -89,6 +101,10 @@ namespace FFX {
 
 	QVariant OptionEditor::Value() {
 		return mComboBox->currentData(Qt::UserRole);
+	}
+
+	void OptionEditor::Focus() {
+		mComboBox->setFocus();
 	}
 
 	NormalRangeEditor::NormalRangeEditor(const Argument& arg, QWidget* parent)
@@ -116,6 +132,10 @@ namespace FFX {
 		return ret;
 	}
 
+	void NormalRangeEditor::Focus() {
+		mLineEdit1->setFocus();
+	}
+
 	DateRangeEditor::DateRangeEditor(const Argument& arg, QWidget* parent)
 		: ArgumentEditor(arg, parent) {
 		mMainLayout = new QHBoxLayout;
@@ -133,6 +153,10 @@ namespace FFX {
 		QVariantList ret;
 		ret << mDateEdit1->date() << mDateEdit2->date();
 		return ret;
+	}
+
+	void DateRangeEditor::Focus() {
+		mDateEdit1->setFocus();
 	}
 
 	RectEditor::RectEditor(const Argument& arg, QWidget* parent)
@@ -169,6 +193,10 @@ namespace FFX {
 		return QRect(minx, miny, maxx - minx, maxy - miny);
 	}
 
+	void RectEditor::Focus() {
+		mLineEditMinX->setFocus();
+	}
+
 	SizeEditor::SizeEditor(const Argument& arg, QWidget* parent)
 		: ArgumentEditor(arg, parent) {
 		mMainLayout = new QHBoxLayout;
@@ -191,6 +219,10 @@ namespace FFX {
 		return QSize(w, h);
 	}
 
+	void SizeEditor::Focus() {
+		mLineEdit1->setFocus();
+	}
+
 	FileEditor::FileEditor(const Argument& arg, QWidget* parent)
 		: ArgumentEditor(arg, parent) {
 		mMainLayout = new QHBoxLayout;
@@ -208,6 +240,10 @@ namespace FFX {
 
 	QVariant FileEditor::Value() {
 		return mPathEdit->text();
+	}
+
+	void FileEditor::Focus() {
+		mPathEdit->setFocus();
 	}
 
 	void FileEditor::OnBrowseFile() {
@@ -243,6 +279,10 @@ namespace FFX {
 
 	QVariant DirEditor::Value() {
 		return mPathEdit->text();
+	}
+
+	void DirEditor::Focus() {
+		mPathEdit->setFocus();
 	}
 
 	void DirEditor::OnBrowseFile() {
@@ -314,5 +354,13 @@ namespace FFX {
 		for (; it != mArgumentWidgetMap.end(); it++) {
 			argmap[it.key()].SetValue(it.value()->Value());
 		}
+	}
+
+	void ArgumentCollectorListWidget::FocusAt(const QString& arg) {
+		QMap<QString, ArgumentEditor*>::iterator it = mArgumentWidgetMap.find(arg);
+		if (it == mArgumentWidgetMap.end())
+			return;
+
+		mArgumentWidgetMap[arg]->Focus();
 	}
 }

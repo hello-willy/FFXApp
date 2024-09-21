@@ -25,6 +25,7 @@ namespace FFX {
 		void SetupUi();
 		void InitFileList();
 		void SetupSignalsConnect();
+		bool ValidateArgument();
 
 	private slots:
 		void OnRunInBackground();

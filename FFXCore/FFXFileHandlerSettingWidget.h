@@ -23,6 +23,8 @@ namespace FFX {
 		ArgumentEditor(const Argument& arg, QWidget* parent = nullptr);
 	public:
 		virtual QVariant Value() = 0;
+		virtual void Focus() = 0;
+
 	protected:
 		const Argument& mArgument;
 		int mItemHeight = 37;
@@ -34,6 +36,7 @@ namespace FFX {
 		NormalEditor(const Argument& arg, QWidget* parent = nullptr);
 	public:
 		virtual QVariant Value();
+		virtual void Focus();
 	private:
 		QHBoxLayout* mMainLayout;
 		QLineEdit* mLineEdit;
@@ -45,6 +48,7 @@ namespace FFX {
 		BoolEditor(const Argument& arg, QWidget* parent = nullptr);
 	public:
 		virtual QVariant Value();
+		virtual void Focus();
 	private:
 		QHBoxLayout* mMainLayout;
 		QCheckBox* mCheckBox;
@@ -56,6 +60,7 @@ namespace FFX {
 		DateEditor(const Argument& arg, QWidget* parent = nullptr);
 	public:
 		virtual QVariant Value();
+		virtual void Focus();
 	private:
 		QHBoxLayout* mMainLayout;
 		QDateEdit* mDateEdit;
@@ -67,6 +72,7 @@ namespace FFX {
 		OptionEditor(const Argument& arg, QWidget* parent = nullptr);
 	public:
 		virtual QVariant Value();
+		virtual void Focus();
 	private:
 		QHBoxLayout* mMainLayout;
 		QComboBox* mComboBox;
@@ -78,6 +84,7 @@ namespace FFX {
 		NormalRangeEditor(const Argument& arg, QWidget* parent = nullptr);
 	public:
 		virtual QVariant Value();
+		virtual void Focus();
 	private:
 		QHBoxLayout* mMainLayout;
 		QLineEdit* mLineEdit1;
@@ -90,6 +97,7 @@ namespace FFX {
 		DateRangeEditor(const Argument& arg, QWidget* parent = nullptr);
 	public:
 		virtual QVariant Value();
+		virtual void Focus();
 	private:
 		QHBoxLayout* mMainLayout;
 		QDateEdit* mDateEdit1;
@@ -102,6 +110,7 @@ namespace FFX {
 		RectEditor(const Argument& arg, QWidget* parent = nullptr);
 	public:
 		virtual QVariant Value();
+		virtual void Focus();
 	private:
 		QHBoxLayout* mMainLayout;
 		QLineEdit* mLineEditMinX;
@@ -116,6 +125,7 @@ namespace FFX {
 		SizeEditor(const Argument& arg, QWidget* parent = nullptr);
 	public:
 		virtual QVariant Value();
+		virtual void Focus();
 	private:
 		QHBoxLayout* mMainLayout;
 		QLineEdit* mLineEdit1;
@@ -128,6 +138,7 @@ namespace FFX {
 		FileEditor(const Argument& arg, QWidget* parent = nullptr);
 	public:
 		virtual QVariant Value();
+		virtual void Focus();
 	private slots:
 		void OnBrowseFile();
 
@@ -143,6 +154,7 @@ namespace FFX {
 		DirEditor(const Argument& arg, QWidget* parent = nullptr);
 	public:
 		virtual QVariant Value();
+		virtual void Focus();
 	private slots:
 		void OnBrowseFile();
 
@@ -160,6 +172,7 @@ namespace FFX {
 	public:
 		void Add(const Argument& arg);
 		void GetArgumentMap(ArgumentMap& argmap) const;
+		void FocusAt(const QString& arg);
 
 	protected:
 		virtual void paintEvent(QPaintEvent* event) override;
