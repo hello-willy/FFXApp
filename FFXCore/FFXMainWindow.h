@@ -75,6 +75,7 @@ namespace FFX {
 		QMenu* mFileMenu;
 		QMenu* mViewMenu;
 		QMenu* mPluginMenu;
+		QMenu* mHelpMenu;
 
 		QToolBar* mMainToolBar;
 		
@@ -97,7 +98,6 @@ namespace FFX {
 		HandlerFactory* mHandlerFactory;
 
 		QShortcut* mActiveSearchShortcut;
-
 		// test
 		QAction* mHandlerSettingAction;
 	};

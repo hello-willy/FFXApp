@@ -2,10 +2,86 @@
 
 namespace FFX {
 
+	typedef struct
+	{
+		fz_document_writer super;
+		fz_draw_options options;
+		fz_pixmap* pixmap;
+		void (*save)(fz_context* ctx, fz_pixmap* pix, const char* filename);
+		int count;
+		char* path;
+	} ffx_pixmap_writer;
+
+	static fz_device*
+		pixmap_begin_page(fz_context* ctx, fz_document_writer* wri_, fz_rect mediabox)
+	{
+		ffx_pixmap_writer* wri = (ffx_pixmap_writer*)wri_;
+		return fz_new_draw_device_with_options(ctx, &wri->options, mediabox, &wri->pixmap);
+	}
+
+	static void
+		pixmap_end_page(fz_context* ctx, fz_document_writer* wri_, fz_device* dev)
+	{
+		ffx_pixmap_writer* wri = (ffx_pixmap_writer*)wri_;
+		char path[PATH_MAX];
+
+		fz_try(ctx)
+		{
+			fz_close_device(ctx, dev);
+			//wri->count += 1;
+			fz_format_output_path(ctx, path, sizeof path, wri->path, wri->count);
+			wri->save(ctx, wri->pixmap, path);
+		}
+		fz_always(ctx)
+		{
+			fz_drop_device(ctx, dev);
+			fz_drop_pixmap(ctx, wri->pixmap);
+			wri->pixmap = NULL;
+		}
+		fz_catch(ctx)
+			fz_rethrow(ctx);
+	}
+
+	static void
+		pixmap_drop_writer(fz_context* ctx, fz_document_writer* wri_)
+	{
+		ffx_pixmap_writer* wri = (ffx_pixmap_writer*)wri_;
+		fz_drop_pixmap(ctx, wri->pixmap);
+		fz_free(ctx, wri->path);
+	}
+
+	fz_document_writer*
+		ffx_new_pixmap_writer(fz_context* ctx, const char* path, const char* options,
+			const char* default_path, int n,
+			void (*save)(fz_context* ctx, fz_pixmap* pix, const char* filename))
+	{
+		ffx_pixmap_writer* wri = fz_new_derived_document_writer(ctx, ffx_pixmap_writer, pixmap_begin_page, pixmap_end_page, NULL, pixmap_drop_writer);
+
+		fz_try(ctx)
+		{
+			fz_parse_draw_options(ctx, &wri->options, options);
+			wri->path = fz_strdup(ctx, path ? path : default_path);
+			wri->save = save;
+			switch (n)
+			{
+			case 1: wri->options.colorspace = fz_device_gray(ctx); break;
+			case 3: wri->options.colorspace = fz_device_rgb(ctx); break;
+			case 4: wri->options.colorspace = fz_device_cmyk(ctx); break;
+			}
+		}
+		fz_catch(ctx)
+		{
+			fz_free(ctx, wri);
+			fz_rethrow(ctx);
+		}
+
+		return (fz_document_writer*)wri;
+	}
+
 	PdfToImageHandler::PdfToImageHandler(const QString& outputDir, const QString& pages, int dpi) {
 		mArgMap["OutputDir"] = Argument("OutputDir", QObject::tr("Output Dir"), QObject::tr("Storage directory for images."), outputDir, Argument::Dir);
 		mArgMap["PageRange"] = Argument("PageRange", QObject::tr("Page Range"), QObject::tr("Comma separated list of page ranges, 1,2,4 or 3-7,3,7-10, default is 1-N"), pages);
-		mArgMap["PageRange"].AddLimit("[1-9][1-9|,|\\-|N]*");
+		mArgMap["PageRange"].AddLimit("[1-9][0-9|,|\\-|N]*");
 
 		mArgMap["DPI"] = Argument("DPI", QObject::tr("DPI"), QObject::tr("DPI of output image, default 72"), dpi);
 		mArgMap["DPI"].AddLimit("[1-9][0-9]*");
@@ -53,7 +129,8 @@ namespace FFX {
 			
 			fz_try(mContext) {
 				doc = fz_open_accelerated_document(mContext, filePath.toStdString().c_str(), NULL);
-				writer = fz_new_document_writer(mContext, out.toStdString().c_str(), "png", "");
+				writer = ffx_new_pixmap_writer(mContext, out.toStdString().c_str(), NULL, "out-%04d.png", 0, fz_save_pixmap_as_png);
+				//writer = fz_new_document_writer(mContext, out.toStdString().c_str(), "png", "");
 				fz_layout_document(mContext, doc, layout_w, layout_h, layout_em);
 				int count = fz_count_pages(mContext, doc);
 
@@ -66,6 +143,11 @@ namespace FFX {
 					RunPage(doc, writer, pages[p]);
 					double prog = ((p + 1.) / (double)pageCount) * 100;
 					progress->OnProgress(prog, QObject::tr("Converting file: %1").arg(file.absoluteFilePath()));
+					char buf[1024];
+					std::sprintf(buf, out.toStdString().c_str(), pages[p]);
+					QString imageFile = QString::fromLocal8Bit(buf);
+					result << imageFile;
+					progress->OnFileComplete(file, imageFile);
 				}
 			}
 			fz_always(mContext) {
@@ -78,7 +160,7 @@ namespace FFX {
 			}
 		}
 		progress->OnComplete(true, QObject::tr("Finish."));
-		return QFileInfoList();
+		return result;
 	}
 
 	QString PdfToImageHandler::MakeOutput(const QFileInfo& file) {
@@ -144,6 +226,8 @@ namespace FFX {
 			//ctm = fz_translate(-box.x0, -box.y0);
 			box = fz_transform_rect(box, ctm);
 
+			ffx_pixmap_writer* fpw = (ffx_pixmap_writer*)writer;
+			fpw->count = pageNum;
 			dev = fz_begin_page(mContext, writer, box);
 			fz_run_page(mContext, page, dev, ctm, NULL);
 			fz_end_page(mContext, writer);

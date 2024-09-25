@@ -62,9 +62,11 @@ namespace FFX {
 		mFileMenu = new QMenu(QObject::tr("&File"));
 		mViewMenu = new QMenu(QObject::tr("&View"));
 		mPluginMenu = new QMenu(QObject::tr("&Plugin"));
+		mHelpMenu = new QMenu;
 		mMenuBar->addAction(mFileMenu->menuAction());
 		mMenuBar->addAction(mViewMenu->menuAction());
 		mMenuBar->addAction(mPluginMenu->menuAction());
+		mMenuBar->addAction(mHelpMenu->menuAction());
 		//! Init main toolbar
 		addToolBar(mMainToolBar);
 		mMainToolBar->addAction(mFileMainView->MakeDirAction());

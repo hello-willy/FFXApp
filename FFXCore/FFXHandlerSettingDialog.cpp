@@ -98,6 +98,7 @@ namespace FFX{
 		
 		setWindowTitle(QObject::tr("Handler setting (%1)").arg(mHandler->DisplayName()));
 		setWindowFlags(Qt::Dialog | Qt::WindowCloseButtonHint);
+		setWindowIcon(QIcon(":/ffx/res/image/handler-setting.svg"));
 		resize(900, 1024);
 	}
 
@@ -217,7 +218,7 @@ namespace FFX{
 		
 		ArgumentMap::const_iterator it = argmap.begin();
 		for (; it != argmap.end(); it++) {
-			if (it.value().IsRequired() && !it.value().Value().isNull()) {
+			if (it.value().IsRequired() && it.value().Value().isNull()) {
 				QMessageBox::information(this, QObject::tr("Infomation"), QObject::tr("Argument (%1) can not be empty").arg(it.key()));
 				mArgCollectorList->FocusAt(it.key());
 				return false;

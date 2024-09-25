@@ -49,7 +49,7 @@ namespace FFX {
 			, mType(type)
 			, mRequired(required) {}
 		~Argument() {
-			qDebug() << "Hllo";
+			
 		}
 
 	public:

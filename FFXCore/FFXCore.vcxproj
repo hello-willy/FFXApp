@@ -114,6 +114,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="FFXAboutDialog.cpp" />
     <ClCompile Include="FFXActionManager.cpp" />
     <ClCompile Include="FFXAppConfig.cpp" />
     <ClCompile Include="FFXClipboardPanel.cpp" />
@@ -139,6 +140,7 @@
     <QtMoc Include="FFXAppConfig.h" />
     <QtMoc Include="FFXHandlerSettingDialog.h" />
     <QtMoc Include="FFXFileHandlerSettingWidget.h" />
+    <QtMoc Include="FFXAboutDialog.h" />
     <ClInclude Include="FFXUtils.h" />
     <QtMoc Include="FFXTaskPanel.h" />
     <QtMoc Include="FFXActionManager.h" />
