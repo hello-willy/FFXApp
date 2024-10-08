@@ -3,6 +3,8 @@
 
 class QMenu;
 class QAction;
+class QTranslator;
+
 namespace FFX {
 	class PdfPlugin : public QObject, public Plugin	{
 		Q_OBJECT
@@ -18,6 +20,9 @@ namespace FFX {
 		virtual QString Id() override { return "pdf.finalfilex.com"; };
 		virtual QString Name() override { return QObject::tr("Pdf tools"); }
 
+	private:
+		void SetupUi();
+
 	private slots:
 		void OnImageToPdfAction();
 		void OnMergePdfAction();
@@ -28,6 +33,7 @@ namespace FFX {
 		void OnPdfToImageActionOnClipboardPanel();
 
 	private:
+		QTranslator* mTranslator;
 		QMenu* mPdfMenu;
 		QMenu* mPdfMenuInClipboard;
 		QAction* mImageToPdfAction;

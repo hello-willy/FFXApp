@@ -64,9 +64,6 @@
     <ClCompile Include="FFXMergePdfHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="FFXAddWatermarkToPdfHandler.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="FFXExtractImageHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -89,5 +86,10 @@
     <QtRcc Include="FFXPdf.qrc">
       <Filter>Resource Files</Filter>
     </QtRcc>
+  </ItemGroup>
+  <ItemGroup>
+    <QtTranslation Include="ffx-pdf_zh_CN.ts">
+      <Filter>Translation Files</Filter>
+    </QtTranslation>
   </ItemGroup>
 </Project>

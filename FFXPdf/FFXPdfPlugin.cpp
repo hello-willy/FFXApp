@@ -15,10 +15,18 @@
 #include <QMenu>
 #include <QAction>
 #include <QVector4D>
+#include <QTranslator>
+#include <QCoreApplication>
+#include <QDebug>
 
 namespace FFX {
 	PdfPlugin::PdfPlugin(QObject* parent)
-		: QObject(parent) {
+		: QObject(parent) {		
+	}
+
+	PdfPlugin::~PdfPlugin()	{}
+
+	void PdfPlugin::SetupUi() {
 		mPdfMenu = new QMenu(QObject::tr("&PDF"));
 		mImageToPdfAction = new QAction(QObject::tr("Images to PDF"));
 		mImageToPdfActionOnClipboardPanel = new QAction(QObject::tr("Images to PDF"));
@@ -81,9 +89,14 @@ namespace FFX {
 		mPdfMenuInClipboard->addAction(mPdfToImageActionOnClipboardPanel);
 	}
 
-	PdfPlugin::~PdfPlugin()	{}
-
 	void PdfPlugin::Install() {
+		// add language
+		mTranslator = new QTranslator;
+		if (mTranslator->load(QLocale(), QLatin1String("ffx-pdf"), QLatin1String("_"), QLatin1String(":/ffx/res/i18n"))) {
+			bool flag = QCoreApplication::installTranslator(mTranslator);
+		}
+
+		SetupUi();
 		App()->AddMenu(mPdfMenu);
 	}
 

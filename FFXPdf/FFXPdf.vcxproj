@@ -128,7 +128,6 @@
     <QtMoc Include="FFXPdfPlugin.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="FFXAddWatermarkToPdfHandler.cpp" />
     <ClCompile Include="FFXExtractImageHandler.cpp" />
     <ClCompile Include="FFXImageToPdfHandler.cpp" />
     <ClCompile Include="FFXMergePdfHandler.cpp" />
@@ -140,6 +139,9 @@
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="FFXPdf.qrc" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtTranslation Include="ffx-pdf_zh_CN.ts" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">
