@@ -8,7 +8,7 @@ class QLabel;
 class QMenu;
 
 namespace FFX {
-	class ClipboardPanelHeader : public QWidget {
+	class FFXCORE_EXPORT ClipboardPanelHeader : public QWidget {
 		Q_OBJECT
 	public:
 		ClipboardPanelHeader(QWidget* parent = nullptr);
@@ -16,6 +16,8 @@ namespace FFX {
 	public:
 		void AddWidget(QWidget* widget);
 		void AddAction(QAction* action);
+		QMenu* AddMenuAction(const QString& name);
+		void RemoveMenu(const QMenu* menu);
 		void AddSeperator();
 
 	protected:
@@ -31,8 +33,7 @@ namespace FFX {
 		QHBoxLayout* mMainLayout;
 	};
 
-	class ClipboardPanel : public QWidget
-	{
+	class FFXCORE_EXPORT ClipboardPanel : public QWidget {
 		Q_OBJECT
 
 	public:

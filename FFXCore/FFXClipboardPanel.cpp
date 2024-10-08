@@ -29,6 +29,16 @@ namespace FFX {
 		mOperatorMenu->addAction(action);
 	}
 
+	QMenu* ClipboardPanelHeader::AddMenuAction(const QString& name) {
+		QMenu* menu = new QMenu(name);
+		mOperatorMenu->addAction(menu->menuAction());
+		return menu;
+	}
+
+	void ClipboardPanelHeader::RemoveMenu(const QMenu* menu) {
+		mOperatorMenu->removeAction(menu->menuAction());
+	}
+
 	void ClipboardPanelHeader::AddSeperator() {
 		QFrame* seperator = new QFrame;
 		seperator->setFrameShape(QFrame::VLine);

@@ -2,5 +2,6 @@
     <qresource prefix="/FFXApp">
         <file>res/style/default.qss</file>
         <file>FFXApp.ico</file>
+        <file>res/i18n/ffx-core_zh_CN.qm</file>
     </qresource>
 </RCC>

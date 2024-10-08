@@ -62,6 +62,7 @@ namespace FFX {
 		void itemChanged();
 
 	private slots:
+		virtual void OnItemDoubleClicked(const QModelIndex& index) {}
 		virtual void OnCustomContextMenuRequested(const QPoint& pos) override;
 		void OnGotoParentDir();
 

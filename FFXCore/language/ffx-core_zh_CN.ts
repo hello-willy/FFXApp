@@ -141,7 +141,7 @@
     </message>
     <message>
         <source>Recursion</source>
-        <translation type="unfinished"></translation>
+        <translation>递归</translation>
     </message>
     <message>
         <source>Recursive statistics of all directories, default is true</source>
@@ -149,27 +149,27 @@
     </message>
     <message>
         <source>Scanning...</source>
-        <translation type="unfinished"></translation>
+        <translation>正在扫描...</translation>
     </message>
     <message>
         <source>Handled failed: %s</source>
-        <translation type="unfinished"></translation>
+        <translation>处理失败:%s</translation>
     </message>
     <message>
         <source>count of files not equals.</source>
-        <translation type="unfinished"></translation>
+        <translation>文件数量不匹配。</translation>
     </message>
     <message>
         <source>Finish.</source>
-        <translation type="unfinished"></translation>
+        <translation>完成。</translation>
     </message>
     <message>
         <source>Matching: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>正在匹配:%1</translation>
     </message>
     <message>
         <source>Finish, %1 files matched.</source>
-        <translation type="unfinished"></translation>
+        <translation>完成,共检索到%1个文件.</translation>
     </message>
     <message>
         <source>Recursive of all directories to set the attributes, default is false</source>
@@ -177,7 +177,7 @@
     </message>
     <message>
         <source>Readonly</source>
-        <translation type="unfinished"></translation>
+        <translation>只读</translation>
     </message>
     <message>
         <source>Set the files to readonly or not.</source>
@@ -193,7 +193,7 @@
     </message>
     <message>
         <source>Handling: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>正在处理:%1</translation>
     </message>
     <message>
         <source>DestPath</source>
@@ -217,7 +217,7 @@
     </message>
     <message>
         <source>Copying: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>正在拷贝:%1</translation>
     </message>
     <message>
         <source>Target directory for files moving.</source>
@@ -225,7 +225,7 @@
     </message>
     <message>
         <source>Overwrite</source>
-        <translation type="unfinished"></translation>
+        <translation>覆盖</translation>
     </message>
     <message>
         <source>Is it overwrite the existing file, default is false.</source>
@@ -253,7 +253,7 @@
     </message>
     <message>
         <source>Make File...</source>
-        <translation type="unfinished"></translation>
+        <translation>新建文件...</translation>
     </message>
     <message>
         <source>Warning</source>
@@ -261,107 +261,107 @@
     </message>
     <message>
         <source>New Directory</source>
-        <translation type="unfinished"></translation>
+        <translation>新建目录</translation>
     </message>
     <message>
         <source>New File</source>
-        <translation type="unfinished"></translation>
+        <translation>新建文件</translation>
     </message>
     <message>
         <source>Error</source>
-        <translation type="unfinished"></translation>
+        <translation>错误</translation>
     </message>
     <message>
         <source>Create file failed:%1</source>
-        <translation type="unfinished"></translation>
+        <translation>创建文件失败:%1</translation>
     </message>
     <message>
         <source>Invalid directory path.</source>
-        <translation type="unfinished"></translation>
+        <translation>无效的目录.</translation>
     </message>
     <message>
         <source>Make Directory</source>
-        <translation type="unfinished"></translation>
+        <translation>创建目录</translation>
     </message>
     <message>
         <source>File</source>
-        <translation type="unfinished"></translation>
+        <translation>文件</translation>
     </message>
     <message>
         <source>Copy Files Here</source>
-        <translation type="unfinished"></translation>
+        <translation>拷贝文件到这里</translation>
     </message>
     <message>
         <source>Refresh</source>
-        <translation type="unfinished"></translation>
+        <translation>刷新</translation>
     </message>
     <message>
         <source>Move Files Here</source>
-        <translation type="unfinished"></translation>
+        <translation>移动文件到这里</translation>
     </message>
     <message>
         <source>Envelope Files By Folder</source>
-        <translation type="unfinished"></translation>
+        <translation>给文件套层目录</translation>
     </message>
     <message>
         <source>Clear Folder</source>
-        <translation type="unfinished"></translation>
+        <translation>清空目录</translation>
     </message>
     <message>
         <source>Fix in Quick Panel</source>
-        <translation type="unfinished"></translation>
+        <translation>添加到快捷面板</translation>
     </message>
     <message>
         <source>Rename</source>
-        <translation type="unfinished"></translation>
+        <translation>重命名</translation>
     </message>
     <message>
         <source>Property</source>
-        <translation type="unfinished"></translation>
+        <translation>属性</translation>
     </message>
     <message>
         <source>Copy File Path</source>
-        <translation type="unfinished"></translation>
+        <translation>拷贝文件路径</translation>
     </message>
     <message>
         <source>Open in Command Prompt</source>
-        <translation type="unfinished"></translation>
+        <translation>命令行打开</translation>
     </message>
     <message>
         <source>Set Filter</source>
-        <translation type="unfinished"></translation>
+        <translation>设置过滤器</translation>
     </message>
     <message>
         <source>Order by</source>
-        <translation type="unfinished"></translation>
+        <translation>排序</translation>
     </message>
     <message>
         <source>Order by Name</source>
-        <translation type="unfinished"></translation>
+        <translation>按名称排序</translation>
     </message>
     <message>
         <source>Order by Date</source>
-        <translation type="unfinished"></translation>
+        <translation>按日期排序</translation>
     </message>
     <message>
         <source>Order by Size</source>
-        <translation type="unfinished"></translation>
+        <translation>按文件大小排序</translation>
     </message>
     <message>
         <source>Order by Type</source>
-        <translation type="unfinished"></translation>
+        <translation>按文件类型排序</translation>
     </message>
     <message>
         <source>Asc</source>
-        <translation type="unfinished"></translation>
+        <translation>升序</translation>
     </message>
     <message>
         <source>Desc</source>
-        <translation type="unfinished"></translation>
+        <translation>降序</translation>
     </message>
     <message>
         <source>Size: </source>
-        <translation type="unfinished"></translation>
+        <translation>大小: </translation>
     </message>
     <message>
         <source>239MB (12394304032 Bytes)</source>
@@ -369,271 +369,271 @@
     </message>
     <message>
         <source>Date: </source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">日期</translation>
     </message>
     <message>
         <source>Linked File Location: </source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">目标位置:</translation>
     </message>
     <message>
         <source>Attribute: </source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">属性:</translation>
     </message>
     <message>
         <source>Ok</source>
-        <translation type="unfinished"></translation>
+        <translation>确定</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished"></translation>
+        <translation>取消</translation>
     </message>
     <message>
         <source>Basic Info</source>
-        <translation type="unfinished"></translation>
+        <translation>基本信息</translation>
     </message>
     <message>
         <source>%1 files %2 directories</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 个文件 %2 个目录</translation>
     </message>
     <message>
         <source>Quick Panel</source>
-        <translation type="unfinished"></translation>
+        <translation>快捷面板</translation>
     </message>
     <message>
         <source>Search in [%1]</source>
-        <translation type="unfinished"></translation>
+        <translation>在[%1]中搜索</translation>
     </message>
     <message>
         <source>Final File X is aready started.</source>
-        <translation type="unfinished"></translation>
+        <translation>软件已启动.</translation>
     </message>
     <message>
         <source>&amp;File</source>
-        <translation type="unfinished"></translation>
+        <translation>文件(&amp;F)</translation>
     </message>
     <message>
         <source>&amp;View</source>
-        <translation type="unfinished"></translation>
+        <translation>视图(&amp;V)</translation>
     </message>
     <message>
         <source>&amp;Plugin</source>
-        <translation type="unfinished"></translation>
+        <translation>插件(&amp;P)</translation>
     </message>
     <message>
         <source>Ready</source>
-        <translation type="unfinished"></translation>
+        <translation>就绪</translation>
     </message>
     <message>
         <source>Task Panel</source>
-        <translation type="unfinished"></translation>
+        <translation>任务面板</translation>
     </message>
     <message>
         <source>File Search Panel</source>
-        <translation type="unfinished"></translation>
+        <translation>文件检索面板</translation>
     </message>
     <message>
         <source> %1 files</source>
-        <translation type="unfinished"></translation>
+        <translation> %1 个文件</translation>
     </message>
     <message>
         <source>%1 files%2 %3, %4 directories</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 个文件%2 %3, %4 个目录</translation>
     </message>
     <message>
         <source>(%1 Hidden files/directories)</source>
-        <translation type="unfinished"></translation>
+        <translation>(%1 个隐藏文件或目录)</translation>
     </message>
     <message>
         <source>%1 files %2 directories selected (%3)</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 个文件 %2 个目录被选中 %3</translation>
     </message>
     <message>
         <source>%1 task running</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 个任务正在执行中</translation>
     </message>
     <message>
         <source>Install...</source>
-        <translation type="unfinished"></translation>
+        <translation>安装插件...</translation>
     </message>
     <message>
         <source>Open FFX plugins</source>
-        <translation type="unfinished"></translation>
+        <translation>打开FFX插件</translation>
     </message>
     <message>
         <source>Unzipping: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>正在解压:%1</translation>
     </message>
     <message>
         <source>Installing: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>正在安装:%1</translation>
     </message>
     <message>
         <source>Input the pattern</source>
-        <translation type="unfinished"></translation>
+        <translation>输入匹配模板</translation>
     </message>
     <message>
         <source>Input the string to replace</source>
-        <translation type="unfinished"></translation>
+        <translation>将匹配结果替换为</translation>
     </message>
     <message>
         <source>Case Sensitive</source>
-        <translation type="unfinished"></translation>
+        <translation>大小写敏感</translation>
     </message>
     <message>
         <source>Suffix Include</source>
-        <translation type="unfinished"></translation>
+        <translation>包括后缀</translation>
     </message>
     <message>
         <source>RegExp</source>
-        <translation type="unfinished"></translation>
+        <translation>正则表达式</translation>
     </message>
     <message>
         <source>Wildcard</source>
-        <translation type="unfinished"></translation>
+        <translation>通配符</translation>
     </message>
     <message>
         <source>FixedString</source>
-        <translation type="unfinished"></translation>
+        <translation>固定字符串</translation>
     </message>
     <message>
         <source>File Rename Pro</source>
-        <translation type="unfinished"></translation>
+        <translation>高级文件重命名</translation>
     </message>
     <message>
         <source>File List</source>
-        <translation type="unfinished"></translation>
+        <translation>文件列表</translation>
     </message>
     <message>
         <source>Expr List</source>
-        <translation type="unfinished"></translation>
+        <translation>规则列表</translation>
     </message>
     <message>
         <source>Remove Digitals Expr</source>
-        <translation type="unfinished"></translation>
+        <translation>移除所有数字</translation>
     </message>
     <message>
         <source>Remove Spectial Char</source>
-        <translation type="unfinished"></translation>
+        <translation>移除特殊字符</translation>
     </message>
     <message>
         <source>Remove Chinese Char</source>
-        <translation type="unfinished"></translation>
+        <translation>移除中文</translation>
     </message>
     <message>
         <source>Case Transofrm:</source>
-        <translation type="unfinished"></translation>
+        <translation>大小写变换:</translation>
     </message>
     <message>
         <source>Lower case</source>
-        <translation type="unfinished"></translation>
+        <translation>小写</translation>
     </message>
     <message>
         <source>Upper case</source>
-        <translation type="unfinished"></translation>
+        <translation>大写</translation>
     </message>
     <message>
         <source>File Duplicated:</source>
-        <translation type="unfinished"></translation>
+        <translation>文件重复处理策略:</translation>
     </message>
     <message>
         <source>After name</source>
-        <translation type="unfinished"></translation>
+        <translation>在文件名之后</translation>
     </message>
     <message>
         <source>Before name</source>
-        <translation type="unfinished"></translation>
+        <translation>在文件名之前</translation>
     </message>
     <message>
         <source>Ignore first file</source>
-        <translation type="unfinished"></translation>
+        <translation>第一个文件不编号</translation>
     </message>
     <message>
         <source>Settings</source>
-        <translation type="unfinished"></translation>
+        <translation>设置</translation>
     </message>
     <message>
         <source>secs</source>
-        <translation type="unfinished"></translation>
+        <translation>秒</translation>
     </message>
     <message>
         <source>ms</source>
-        <translation type="unfinished"></translation>
+        <translation>毫秒</translation>
     </message>
     <message>
         <source>Queued</source>
-        <translation type="unfinished"></translation>
+        <translation>等待</translation>
     </message>
     <message>
         <source>Holded</source>
-        <translation type="unfinished"></translation>
+        <translation>挂起</translation>
     </message>
     <message>
         <source>Running</source>
-        <translation type="unfinished"></translation>
+        <translation>运行</translation>
     </message>
     <message>
         <source>Succeeded</source>
-        <translation type="unfinished"></translation>
+        <translation>成功</translation>
     </message>
     <message>
         <source>Failed</source>
-        <translation type="unfinished"></translation>
+        <translation>失败</translation>
     </message>
     <message>
         <source>Unknown</source>
-        <translation type="unfinished"></translation>
+        <translation>未知</translation>
     </message>
     <message>
         <source>&amp;Delete</source>
-        <translation type="unfinished"></translation>
+        <translation>删除(&amp;D)</translation>
     </message>
     <message>
         <source>Filter:</source>
-        <translation type="unfinished"></translation>
+        <translation>过滤器:</translation>
     </message>
     <message>
         <source>Please enter filtering keywords</source>
-        <translation type="unfinished"></translation>
+        <translation>请输入过滤关键词</translation>
     </message>
     <message>
         <source>&amp;New Task</source>
-        <translation type="unfinished"></translation>
+        <translation>新任务(&amp;T)</translation>
     </message>
     <message>
         <source>&amp;Cancel</source>
-        <translation type="unfinished"></translation>
+        <translation>取消(&amp;C)</translation>
     </message>
     <message>
         <source>Task ID</source>
-        <translation type="unfinished"></translation>
+        <translation>任务ID</translation>
     </message>
     <message>
         <source>Name</source>
-        <translation type="unfinished"></translation>
+        <translation>名称</translation>
     </message>
     <message>
         <source>Time Start</source>
-        <translation type="unfinished"></translation>
+        <translation>开始时间</translation>
     </message>
     <message>
         <source>Progress</source>
-        <translation type="unfinished"></translation>
+        <translation>进度</translation>
     </message>
     <message>
         <source>Time Cost</source>
-        <translation type="unfinished"></translation>
+        <translation>耗时</translation>
     </message>
     <message>
         <source>Status</source>
-        <translation type="unfinished"></translation>
+        <translation>状态</translation>
     </message>
     <message>
         <source>Message</source>
-        <translation type="unfinished"></translation>
+        <translation>信息</translation>
     </message>
     <message>
         <source>All</source>
-        <translation type="unfinished"></translation>
+        <translation>所有</translation>
     </message>
     <message>
         <source>CombineHandler</source>
@@ -708,10 +708,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>FileMoveHandler</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Move files to the specified location.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -746,6 +742,86 @@
     <message>
         <source>Install a ffx plugin.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>有文件处理需求，扫码联系我</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dest Path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select File</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save File</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source> Run in &amp;backgroud</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source> &amp;Run</source>
+        <translation> 执行(&amp;R)</translation>
+    </message>
+    <message>
+        <source> &amp;Close</source>
+        <translation> 关闭(&amp;C)</translation>
+    </message>
+    <message>
+        <source> Ca&amp;ncel</source>
+        <translation> 取消(&amp;n)</translation>
+    </message>
+    <message>
+        <source>Files(0)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Output Files(0)</source>
+        <translation>输出文件</translation>
+    </message>
+    <message>
+        <source>Unhandled Files(0)</source>
+        <translation>未处理的文件</translation>
+    </message>
+    <message>
+        <source>Handler setting (%1)</source>
+        <translation>处理器设置(%1)</translation>
+    </message>
+    <message>
+        <source>Files(%1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unhandled Files(%1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Output Files(%1)</source>
+        <translation>输出文件(%1)</translation>
+    </message>
+    <message>
+        <source>Infomation</source>
+        <translation>信息</translation>
+    </message>
+    <message>
+        <source>Argument (%1) can not be empty</source>
+        <translation>参数(%1)不能为空</translation>
+    </message>
+    <message>
+        <source>&amp;Help</source>
+        <translation>帮助(&amp;H)</translation>
+    </message>
+    <message>
+        <source>Move Files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>About</source>
+        <translation>关于</translation>
     </message>
 </context>
 </TS>

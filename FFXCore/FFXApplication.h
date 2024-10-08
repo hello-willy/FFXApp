@@ -7,6 +7,7 @@ namespace FFX {
 	class TaskPanel;
 	class FileMainView;
 	class HandlerFactory;
+	class ClipboardPanel;
 
 	class Application {
 	public:
@@ -19,5 +20,6 @@ namespace FFX {
 		virtual TaskPanel* TaskPanelPtr() = 0;
 		virtual FileMainView* FileMainViewPtr() = 0;
 		virtual HandlerFactory* HandlerFactoryPtr() = 0;
+		virtual ClipboardPanel* ClipboardPanelPtr() = 0;
 	};
 }

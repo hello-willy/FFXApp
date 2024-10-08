@@ -19,13 +19,13 @@
 
 namespace FFX{
 
-	HandlerSettingDialog::HandlerSettingDialog(FileHandlerPtr handler, QWidget*parent)
+	HandlerSettingDialog::HandlerSettingDialog(FileHandlerPtr handler, bool filesFromSelection, QWidget*parent)
 		: QDialog(parent)
 		, mHandler(handler) {
 		
 		SetupUi();
 		SetupSignalsConnect();
-		InitFileList();
+		InitFileList(filesFromSelection);
 	}
 
 	HandlerSettingDialog::~HandlerSettingDialog() {
@@ -102,9 +102,13 @@ namespace FFX{
 		resize(900, 1024);
 	}
 
-	void HandlerSettingDialog::InitFileList() {
-		QStringList files = MainWindow::Instance()->FileMainViewPtr()->SelectedFiles();
-		mFileListView->AddItems(StringList(mHandler->Filter(FileInfoList(files))));
+	void HandlerSettingDialog::InitFileList(bool fromListView) {
+		if(fromListView) {
+			QStringList files = MainWindow::Instance()->FileMainViewPtr()->SelectedFiles();
+			mFileListView->AddItems(StringList(mHandler->Filter(FileInfoList(files))));
+		} else {
+			OnLoadFileFromClipboard();
+		}
 	}
 
 	void HandlerSettingDialog::SetupSignalsConnect() {
@@ -219,7 +223,7 @@ namespace FFX{
 		ArgumentMap::const_iterator it = argmap.begin();
 		for (; it != argmap.end(); it++) {
 			if (it.value().IsRequired() && it.value().Value().isNull()) {
-				QMessageBox::information(this, QObject::tr("Infomation"), QObject::tr("Argument (%1) can not be empty").arg(it.key()));
+				QMessageBox::information(this, QObject::tr("Infomation"), QObject::tr("Argument (%1) can not be empty").arg(it.value().DisplayName()));
 				mArgCollectorList->FocusAt(it.key());
 				return false;
 			}

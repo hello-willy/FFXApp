@@ -170,6 +170,30 @@ namespace FFX {
 	Q_SIGNALS:
 		void ExprChanged();
 	};
+	
+	class DupExprWidget : public QWidget {
+		Q_OBJECT
+	public:
+		DupExprWidget(QWidget* parent = nullptr);
+
+	public:
+		QString Text() const;
+
+	private:
+		void SetupUi();
+
+	private slots:
+		void OnTextChanged();
+
+	Q_SIGNALS:
+		void TextChanged(const QString& text);
+
+	private:
+		QHBoxLayout* mMainLayout;
+		QLabel* mPlaceHolderLabel;
+		QLineEdit* mPrefixEdit;
+		QLineEdit* mSuffixEdit;
+	};
 
 	class RenameDialog : public QDialog	{
 		Q_OBJECT
@@ -232,7 +256,7 @@ namespace FFX {
 		QButtonGroup* mCaseButtonGroup;
 
 		QCheckBox* mDuplicatesCheckBox;
-		QLineEdit* mDupFormatEdit;
+		DupExprWidget* mDupFormatEdit;
 		QCheckBox* mDupSuffixCheckBox;
 		QCheckBox* mDupPrefixCheckBox;
 		QButtonGroup* mDupButtonGroup;

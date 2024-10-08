@@ -239,7 +239,11 @@ namespace FFX {
 	}
 
 	QVariant FileEditor::Value() {
-		return mPathEdit->text();
+		QString file = mPathEdit->text();
+		if (mArgument.GetType() == Argument::File && !QFileInfo::exists(file))
+			return QVariant();
+
+		return file.isEmpty() ? QVariant() : file;
 	}
 
 	void FileEditor::Focus() {
@@ -278,7 +282,12 @@ namespace FFX {
 	}
 
 	QVariant DirEditor::Value() {
-		return mPathEdit->text();
+		QString dir = mPathEdit->text();
+		QFileInfo fileInfo(dir);
+		if (!fileInfo.exists(dir) || !fileInfo.isDir())
+			return QVariant();
+
+		return dir.isEmpty() ? QVariant() : dir;
 	}
 
 	void DirEditor::Focus() {

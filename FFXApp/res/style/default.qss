@@ -44,43 +44,43 @@ QLabel
     padding-right: 3px;
 }
 
-QToolButton
-{
+QToolButton { /* all types of tool button */
+    border: transparent;
     background-color: transparent;
 }
-QToolButton:checked
-{
+
+QToolButton::menu-indicator{
+    subcontrol-position: right center;
+    subcontrol-origin: padding;
+}
+
+QToolButton:checked {
     background-color: #E6E6E6;
     border: 1px solid #999999;
 }
 
-QToolButton:hover
-{
+QToolButton[popupMode="1"] { /* only for MenuButtonPopup */
+    padding-right: 20px; /* make way for the popup button */
+}
+
+QToolButton:pressed {
     background-color: #E0E0E0;
-}
-
-QToolButton::menu-button {
-    background-color: transparent;
-}
-
-QToolButton::menu-button:hover {
     border: 1px solid #999999;
 }
 
-/*
+QToolButton:hover {
+    background-color: #E0E0E0;
+    border: 1px solid #999999;
+}
+
+/* the subcontrols below are used only in the MenuButtonPopup mode */
 QToolButton::menu-button {
-    background-color: transparent;
+    border-left-color: #E0E0E0;
     width: 16px;
 }
 
 QToolButton::menu-button:hover {
-    background-color: #E0E0E0;
     border: 1px solid #999999;
-}
-*/
-QToolButton:disabled
-{
-    background-color: transparent;
 }
 
 QPushButton
@@ -164,6 +164,9 @@ QTabWidget::pane
 QTabWidget::tab-bar
 {
     left: 1px;
+}
+QTabBar::tab:selected, QTabBar::tab:hover {
+    background: #CCE8FF;
 }
 
 QToolBar {

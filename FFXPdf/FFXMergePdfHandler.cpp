@@ -144,7 +144,7 @@ namespace FFX {
 	}
 
 	MergePdfHandler::MergePdfHandler(const QString& outPdf, bool compress) {
-		mArgMap["OutPdf"] = Argument("OutPdf", QObject::tr("Output pdf"), QObject::tr("Output PDF file, absolute path."), outPdf, Argument::SaveFile);
+		mArgMap["OutPdf"] = Argument("OutPdf", QObject::tr("Output pdf"), QObject::tr("Output PDF file, absolute path."), outPdf, Argument::SaveFile, true);
 		mArgMap["OutPdf"].AddLimit("Pdf file(*.pdf)");
 
 		mArgMap["Compress"] = Argument("Compress", QObject::tr("Compress"), QObject::tr("Compress the output PDF file, default is false."), outPdf, Argument::Bool);

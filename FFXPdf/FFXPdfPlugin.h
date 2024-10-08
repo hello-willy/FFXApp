@@ -25,15 +25,23 @@ namespace FFX {
 		void OnAddImageWatermarkAction();
 		void OnExtractImageAction();
 		void OnPdfToImageAction();
+		void OnPdfToImageActionOnClipboardPanel();
 
 	private:
 		QMenu* mPdfMenu;
+		QMenu* mPdfMenuInClipboard;
 		QAction* mImageToPdfAction;
+		QAction* mImageToPdfActionOnClipboardPanel;
 		QAction* mMergePdfAction;
+		QAction* mMergePdfActionOnClipboardPanel;
 		QAction* mAddTextWatermarkAction;
+		QAction* mAddTextWatermarkActionOnClipboardPanel;
 		QAction* mAddImageWatermarkAction;
+		QAction* mAddImageWatermarkActionOnClipboardPanel;
 		QAction* mExtractImageAction;
+		QAction* mExtractImageActionOnClipboardPanel;
 		QAction* mPdfToImageAction;
+		QAction* mPdfToImageActionOnClipboardPanel;
 	};
 
 }

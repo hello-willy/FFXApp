@@ -8,6 +8,7 @@
 #include "FFXFileQuickView.h"
 #include "FFXFileHandler.h"
 #include "FFXHandlerSettingDialog.h"
+#include "FFXAboutDialog.h"
 
 #include <QtWidgets/QMessageBox>
 #include <QSplitter>
@@ -62,7 +63,7 @@ namespace FFX {
 		mFileMenu = new QMenu(QObject::tr("&File"));
 		mViewMenu = new QMenu(QObject::tr("&View"));
 		mPluginMenu = new QMenu(QObject::tr("&Plugin"));
-		mHelpMenu = new QMenu;
+		mHelpMenu = new QMenu(QObject::tr("&Help"));
 		mMenuBar->addAction(mFileMenu->menuAction());
 		mMenuBar->addAction(mViewMenu->menuAction());
 		mMenuBar->addAction(mPluginMenu->menuAction());
@@ -90,10 +91,11 @@ namespace FFX {
 
 		//! Init plugin menu
 		mPluginMenu->addAction(mPluginManager->InstallPluginAction());
+		mPluginMenu->addSeparator();
 
-		mHandlerSettingAction = new QAction(QStringLiteral("Handler Setting"));
-		connect(mHandlerSettingAction, &QAction::triggered, this, &MainWindow::OnHandlerSetting);
-		mPluginMenu->addAction(mHandlerSettingAction);
+		mShowAboutAction = new QAction(QIcon(":/ffx/res/image/info.svg"), QObject::tr("About"));
+		connect(mShowAboutAction, &QAction::triggered, this, &MainWindow::OnAbout);
+		mHelpMenu->addAction(mShowAboutAction);
 
 		//! Init status bar
 		mShowTaskBoardButton = new QToolButton;
@@ -194,6 +196,10 @@ namespace FFX {
 		return mHandlerFactory;
 	}
 
+	ClipboardPanel* MainWindow::ClipboardPanelPtr() {
+		return mFileMainView->ClipboardPanelPtr();
+	}
+
 	void MainWindow::Save(AppConfig* config) {
 		// save window pos
 		int isFull = this->isMaximized();
@@ -223,11 +229,13 @@ namespace FFX {
 	}
 
 	void MainWindow::AddMenu(QMenu* menu) {
-		mMenuBar->addAction(menu->menuAction());
+		mPluginMenu->addAction(menu->menuAction());
+		//mMenuBar->addAction(menu->menuAction());
 	}
 
 	void MainWindow::RemoveMenu(QMenu* menu) {
-		mMenuBar->removeAction(menu->menuAction());
+		mPluginMenu->removeAction(menu->menuAction());
+		//mMenuBar->removeAction(menu->menuAction());
 	}
 
 	void MainWindow::AddToolbar(QToolBar* toolbar, Qt::ToolBarArea area) {
@@ -262,9 +270,10 @@ namespace FFX {
 
 	void MainWindow::UpdateSelectFilesInfo(QStringList files) {
 		if (files.isEmpty()) {
-			mSelectFilesInfoLabel->setText("0 files selected");
+			mSelectFilesInfoLabel->setVisible(false);
 			return;
 		}
+		mSelectFilesInfoLabel->setVisible(true);
 		FileStatHandler handler(false);
 		handler.Handle(FileInfoList(files));
 		QString info = QObject::tr("%1 files %2 directories selected (%3)").arg(handler.FileCount())
@@ -294,8 +303,8 @@ namespace FFX {
 		}
 	}
 
-	void MainWindow::OnHandlerSetting() {
-		HandlerSettingDialog dlg(std::make_shared<FileMoveHandler>("d:/", true), this);
+	void MainWindow::OnAbout() {
+		AboutDialog dlg;
 		dlg.exec();
 	}
 }

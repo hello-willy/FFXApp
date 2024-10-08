@@ -438,6 +438,42 @@ namespace FFX {
 		return handler;
 	}
 
+	DupExprWidget::DupExprWidget(QWidget* parent) : QWidget(parent) {
+		SetupUi();
+	}
+
+	void DupExprWidget::SetupUi() {
+		mMainLayout = new QHBoxLayout;
+		mPlaceHolderLabel = new QLabel("N");
+		mPrefixEdit = new QLineEdit;
+		mPrefixEdit->setAlignment(Qt::AlignRight);
+		QString qss = "QLineEdit { border-left: transparent; border-right: transparent; border-top: transparent; border-bottom: 1px solid #999999; }";
+		mPrefixEdit->setStyleSheet(qss);
+		mSuffixEdit = new QLineEdit;
+		mSuffixEdit->setStyleSheet(qss);
+		QValidator* validator = new QRegExpValidator(QRegExp("[^N\\*<>\\/\\|:\\?\"\\\\]*"));
+		mPrefixEdit->setValidator(validator);
+		mSuffixEdit->setValidator(validator);
+
+		mMainLayout->addWidget(mPrefixEdit, 1);
+		mMainLayout->addWidget(mPlaceHolderLabel);
+		mMainLayout->addWidget(mSuffixEdit, 1);
+		mMainLayout->setMargin(0);
+		mMainLayout->setSpacing(0);
+		setLayout(mMainLayout);
+
+		connect(mPrefixEdit, &QLineEdit::textChanged, this, &DupExprWidget::OnTextChanged);
+		connect(mSuffixEdit, &QLineEdit::textChanged, this, &DupExprWidget::OnTextChanged);
+	}
+
+	void DupExprWidget::OnTextChanged() {
+		emit TextChanged(Text());
+	}
+
+	QString DupExprWidget::Text() const {
+		return QString("%1N%2").arg(mPrefixEdit->text()).arg(mSuffixEdit->text());
+	}
+
 	RenameDialog::RenameDialog(QList<QString> files, QWidget* parent)
 		: QDialog(parent) 
 		, mFiles(files) {
@@ -524,7 +560,8 @@ namespace FFX {
 
 		mDuplicatesCheckBox = new QCheckBox(QObject::tr("File Duplicated:"));
 		mDuplicatesCheckBox->setChecked(true);
-		mDupFormatEdit = new QLineEdit;
+		mDupFormatEdit = new DupExprWidget;
+		
 
 		mDupSuffixCheckBox = new QCheckBox(QObject::tr("After name"));
 		mDupSuffixCheckBox->setChecked(true);
@@ -590,7 +627,7 @@ namespace FFX {
 		connect(mCaseButtonGroup, &QButtonGroup::idClicked, this, &RenameDialog::OnRuleChanged);
 		connect(mDuplicatesCheckBox, &QCheckBox::stateChanged, this, &RenameDialog::OnRuleChanged);
 		connect(mDupButtonGroup, &QButtonGroup::idClicked, this, &RenameDialog::OnRuleChanged);
-		connect(mDupFormatEdit, &QLineEdit::textChanged, this, &RenameDialog::OnRuleChanged);
+		connect(mDupFormatEdit, &DupExprWidget::TextChanged, this, &RenameDialog::OnRuleChanged);
 		connect(mFirstEffectCheckBox, &QCheckBox::stateChanged, this, &RenameDialog::OnRuleChanged);
 		connect(mOkButton, &QToolButton::clicked, this, &RenameDialog::OnOkClicked);
 		connect(mCancelButton, &QToolButton::clicked, this, &RenameDialog::OnCancelClicked);
@@ -604,7 +641,7 @@ namespace FFX {
 	void RenameDialog::OnOkClicked(){
 		// submit task
 		FileHandlerPtr handler = std::make_shared<FFX::FileRenameHandler>(mExprListWidget->MakeRenameHandler());
-		QString dupTempl = mDupFormatEdit->text();
+		QString dupTempl = mDupFormatEdit->Text();
 
 		if (mCaseTransformCheckBox->isChecked()) {
 			std::dynamic_pointer_cast<FFX::FileRenameHandler>(handler)->Append(std::make_shared<FFX::CaseTransformHandler>(mFileUpperCheckBox->isChecked()));
@@ -624,7 +661,7 @@ namespace FFX {
 	void RenameDialog::OnRuleChanged() {
 		// Update all files
 		FileHandlerPtr handler = mExprListWidget->MakeRenameHandler();
-		QString dupTempl = mDupFormatEdit->text();
+		QString dupTempl = mDupFormatEdit->Text();
 
 		if (mCaseTransformCheckBox->isChecked()) {
 			std::dynamic_pointer_cast<FFX::PipeFileHandler>(handler)->Append(std::make_shared<FFX::CaseTransformHandler>(mFileUpperCheckBox->isChecked()));

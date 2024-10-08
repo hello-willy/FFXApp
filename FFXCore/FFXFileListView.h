@@ -126,7 +126,7 @@ namespace FFX {
 		void MoveFiles(bool overwrite = false);
 
 	private slots:
-		void OnItemDoubleClicked(const QModelIndex& index);
+		virtual void OnItemDoubleClicked(const QModelIndex& index);
 		void OnItemRenamed(const QString& path, const QString& oldName, const QString& newName);
 		virtual void OnCustomContextMenuRequested(const QPoint& pos);
 		void OnActionDelete();
@@ -230,6 +230,7 @@ namespace FFX {
 		QStringList SelectedFiles();
 		QString RootPath();
 		FileQuickView* FileQuickViewPtr() { return mFileQuickView; }
+		ClipboardPanel* ClipboardPanelPtr() { return mClipboardPanel; }
 
 	public slots:
 		void RefreshFileListView();

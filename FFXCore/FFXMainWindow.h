@@ -49,6 +49,7 @@ namespace FFX {
 		virtual TaskPanel* TaskPanelPtr();
 		virtual FileMainView* FileMainViewPtr();
 		virtual HandlerFactory* HandlerFactoryPtr();
+		virtual ClipboardPanel* ClipboardPanelPtr();
 
 	public:
 		virtual void Save(AppConfig* config);
@@ -68,7 +69,7 @@ namespace FFX {
 	private slots:
 		void OnTaskInfoUpdate();
 		void OnActivateFileSearch();
-		void OnHandlerSetting();
+		void OnAbout();
 
 	private:
 		QMenuBar* mMenuBar;
@@ -99,6 +100,6 @@ namespace FFX {
 
 		QShortcut* mActiveSearchShortcut;
 		// test
-		QAction* mHandlerSettingAction;
+		QAction* mShowAboutAction;
 	};
 }

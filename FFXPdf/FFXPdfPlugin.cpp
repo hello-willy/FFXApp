@@ -2,6 +2,7 @@
 #include "FFXApplication.h"
 #include "FFXFileListView.h"
 #include "FFXTaskPanel.h"
+#include "FFXClipboardPanel.h"
 #include "FFXImageToPdfHandler.h"
 #include "FFXMergePdfHandler.h"
 #include "FFXPdfAddTextWatermarkHandler.h"
@@ -20,17 +21,45 @@ namespace FFX {
 		: QObject(parent) {
 		mPdfMenu = new QMenu(QObject::tr("&PDF"));
 		mImageToPdfAction = new QAction(QObject::tr("Images to PDF"));
+		mImageToPdfActionOnClipboardPanel = new QAction(QObject::tr("Images to PDF"));
 		mMergePdfAction = new QAction(QObject::tr("Merge"));
+		mMergePdfActionOnClipboardPanel = new QAction(QObject::tr("Merge"));
 		mAddTextWatermarkAction = new QAction(QObject::tr("Text Watermark"));
+		mAddTextWatermarkActionOnClipboardPanel = new QAction(QObject::tr("Text Watermark"));
 		mAddImageWatermarkAction = new QAction(QObject::tr("Image Watermark"));
+		mAddImageWatermarkActionOnClipboardPanel = new QAction(QObject::tr("Image Watermark"));
 		mExtractImageAction = new QAction(QObject::tr("Extract Images"));
+		mExtractImageActionOnClipboardPanel = new QAction(QObject::tr("Extract Images"));
 		mPdfToImageAction = new QAction(QObject::tr("Pdf to Images"));
+		mPdfToImageActionOnClipboardPanel = new QAction(QObject::tr("Pdf to Images"));
+
 		connect(mImageToPdfAction, &QAction::triggered, this, &PdfPlugin::OnImageToPdfAction);
+		connect(mImageToPdfActionOnClipboardPanel, &QAction::triggered, this, []() {
+			HandlerSettingDialog dialog(std::make_shared<ImageToPdfHandler>("", QSize(595, 842), QRect(), true, true, true), false);
+			dialog.exec(); });
+
 		connect(mMergePdfAction, &QAction::triggered, this, &PdfPlugin::OnMergePdfAction);
+		connect(mMergePdfActionOnClipboardPanel, &QAction::triggered, this, []() {
+			HandlerSettingDialog dialog(std::make_shared<MergePdfHandler>(""), false);
+			dialog.exec(); });
+
 		connect(mAddTextWatermarkAction, &QAction::triggered, this, &PdfPlugin::OnAddTextWatermarkAction);
+		connect(mAddTextWatermarkActionOnClipboardPanel, &QAction::triggered, this, []() {
+			HandlerSettingDialog dialog(std::make_shared<PdfAddTextWatermarkHandler>("水印测试"), false);
+			dialog.exec(); });
+
 		connect(mAddImageWatermarkAction, &QAction::triggered, this, &PdfPlugin::OnAddImageWatermarkAction);
+		connect(mAddImageWatermarkActionOnClipboardPanel, &QAction::triggered, this, []() {
+			HandlerSettingDialog dialog(std::make_shared<PdfAddImageWatermarkHandler>(""), false);
+			dialog.exec(); });
+
 		connect(mExtractImageAction, &QAction::triggered, this, &PdfPlugin::OnExtractImageAction);
+		connect(mExtractImageActionOnClipboardPanel, &QAction::triggered, this, []() {
+			HandlerSettingDialog dialog(std::make_shared<ExtractImageHandler>(""), false);
+			dialog.exec(); });
+
 		connect(mPdfToImageAction, &QAction::triggered, this, &PdfPlugin::OnPdfToImageAction);
+		connect(mPdfToImageActionOnClipboardPanel, &QAction::triggered, this, &PdfPlugin::OnPdfToImageActionOnClipboardPanel);
 
 		mPdfMenu->addAction(mImageToPdfAction);
 		mPdfMenu->addAction(mMergePdfAction);
@@ -40,6 +69,16 @@ namespace FFX {
 		mPdfMenu->addAction(watermarkMenu->menuAction());
 		mPdfMenu->addAction(mExtractImageAction);
 		mPdfMenu->addAction(mPdfToImageAction);
+
+		mPdfMenuInClipboard = App()->ClipboardPanelPtr()->Header()->AddMenuAction("PDF");
+		mPdfMenuInClipboard->addAction(mImageToPdfActionOnClipboardPanel);
+		mPdfMenuInClipboard->addAction(mMergePdfActionOnClipboardPanel);
+		QMenu* watermarkMenuOnClipboardPanel = new QMenu(QObject::tr("Add Watermark"));
+		watermarkMenuOnClipboardPanel->addAction(mAddTextWatermarkActionOnClipboardPanel);
+		watermarkMenuOnClipboardPanel->addAction(mAddImageWatermarkActionOnClipboardPanel);
+		mPdfMenuInClipboard->addAction(watermarkMenuOnClipboardPanel->menuAction());
+		mPdfMenuInClipboard->addAction(mExtractImageActionOnClipboardPanel);
+		mPdfMenuInClipboard->addAction(mPdfToImageActionOnClipboardPanel);
 	}
 
 	PdfPlugin::~PdfPlugin()	{}
@@ -50,6 +89,7 @@ namespace FFX {
 
 	void PdfPlugin::Uninstall() {
 		App()->RemoveMenu(mPdfMenu);
+		App()->ClipboardPanelPtr()->Header()->RemoveMenu(mPdfMenuInClipboard);
 	}
 
 	void PdfPlugin::OnImageToPdfAction() {
@@ -88,12 +128,13 @@ namespace FFX {
 	}
 
 	void PdfPlugin::OnPdfToImageAction() {
-		FileMainView* fmv = App()->FileMainViewPtr();
-		QStringList files = fmv->SelectedFiles();
 		HandlerSettingDialog dialog(std::make_shared<PdfToImageHandler>("E:/新文件夹"));
 		dialog.exec();
-		//App()->TaskPanelPtr()->Submit(FileInfoList(files), std::make_shared<PdfToImageHandler>("E:/新文件夹", QString()));
 	}
 
+	void PdfPlugin::OnPdfToImageActionOnClipboardPanel() {
+		HandlerSettingDialog dialog(std::make_shared<PdfToImageHandler>("E:/新文件夹"), false);
+		dialog.exec();
+	}
 }
 

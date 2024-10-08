@@ -18,12 +18,12 @@ namespace FFX {
 	class FFXCORE_EXPORT HandlerSettingDialog : public QDialog	{
 		Q_OBJECT
 	public:
-		HandlerSettingDialog(FileHandlerPtr handler, QWidget* parent = nullptr);
+		HandlerSettingDialog(FileHandlerPtr handler, bool filesFromSelection = true, QWidget* parent = nullptr);
 		~HandlerSettingDialog();
 
 	private:
 		void SetupUi();
-		void InitFileList();
+		void InitFileList(bool fromListView = true);
 		void SetupSignalsConnect();
 		bool ValidateArgument();
 

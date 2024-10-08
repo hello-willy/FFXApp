@@ -363,3 +363,4 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /FFXPdf/3rd/lib/libmupdf.lib
+/FFXPdf/3rd/lib/libmupdfd.lib

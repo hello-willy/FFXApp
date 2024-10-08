@@ -48,5 +48,7 @@
         <file>res/image/execute.svg</file>
         <file>res/image/execute-bk.svg</file>
         <file>res/image/handler-setting.svg</file>
+        <file>res/image/qr.jpg</file>
+        <file>res/image/info.svg</file>
     </qresource>
 </RCC>
