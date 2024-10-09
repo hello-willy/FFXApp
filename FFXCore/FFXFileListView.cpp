@@ -482,12 +482,15 @@ namespace FFX {
 		} else if(selectFiles.size() == 1) {
 			if (QFileInfo(selectFiles[0]).isDir()) {
 				menu->addAction(MainWindow::Instance()->FileMainViewPtr()->FixedToQuickPanelAction());
+				menu->addAction(MainWindow::Instance()->FileMainViewPtr()->ClearFolderAction());
+				menu->addAction(MainWindow::Instance()->FileMainViewPtr()->OpenCommandPromptAction());
 			}
 			menu->addAction(MainWindow::Instance()->FileMainViewPtr()->CopyFilePathAction());
-			menu->addAction(MainWindow::Instance()->FileMainViewPtr()->PropertyAction());
 		} else {
-			menu->addAction(MainWindow::Instance()->FileMainViewPtr()->PropertyAction());
+			menu->addAction(MainWindow::Instance()->FileMainViewPtr()->RenameAction());
+			menu->addAction(MainWindow::Instance()->FileMainViewPtr()->EnvelopeFilesAction());
 		}
+		menu->addAction(MainWindow::Instance()->FileMainViewPtr()->PropertyAction());
 		menu->exec(QCursor::pos());
 		delete menu;
 	}
