@@ -21,7 +21,14 @@
 
 namespace FFX {
 	PdfPlugin::PdfPlugin(QObject* parent)
-		: QObject(parent) {		
+		: QObject(parent) {	
+		// add language
+		mTranslator = new QTranslator;
+		if (mTranslator->load(QLocale(), QLatin1String("ffx-pdf"), QLatin1String("_"), QLatin1String(":/ffx/res/i18n"))) {
+			bool flag = QCoreApplication::installTranslator(mTranslator);
+		}
+
+		SetupUi();
 	}
 
 	PdfPlugin::~PdfPlugin()	{}
@@ -90,13 +97,6 @@ namespace FFX {
 	}
 
 	void PdfPlugin::Install() {
-		// add language
-		mTranslator = new QTranslator;
-		if (mTranslator->load(QLocale(), QLatin1String("ffx-pdf"), QLatin1String("_"), QLatin1String(":/ffx/res/i18n"))) {
-			bool flag = QCoreApplication::installTranslator(mTranslator);
-		}
-
-		SetupUi();
 		App()->AddMenu(mPdfMenu);
 	}
 

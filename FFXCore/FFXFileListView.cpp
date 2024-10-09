@@ -799,10 +799,10 @@ namespace FFX {
 		splitter->addWidget(rightWidget);
 		splitter->addWidget(mClipboardPanel);
 
-		splitter->setSizes({2000, 7000, 3000});
+		splitter->setSizes({2000, 8000, 2000});
 		splitter->setStretchFactor(0, 2);
-		splitter->setStretchFactor(1, 7);
-		splitter->setStretchFactor(2, 3);
+		splitter->setStretchFactor(1, 8);
+		splitter->setStretchFactor(2, 2);
 		mMainLayout->addWidget(splitter);
 
 		mSetFileFilterShortcut = new QShortcut(QKeySequence("Ctrl+Shift+F"), this);
