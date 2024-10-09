@@ -369,15 +369,15 @@
     </message>
     <message>
         <source>Date: </source>
-        <translation type="unfinished">日期</translation>
+        <translation>日期: </translation>
     </message>
     <message>
         <source>Linked File Location: </source>
-        <translation type="unfinished">目标位置:</translation>
+        <translation>目标位置: </translation>
     </message>
     <message>
         <source>Attribute: </source>
-        <translation type="unfinished">属性:</translation>
+        <translation>属性: </translation>
     </message>
     <message>
         <source>Ok</source>
@@ -761,7 +761,7 @@
     </message>
     <message>
         <source> Run in &amp;backgroud</source>
-        <translation type="unfinished"></translation>
+        <translation> 后台运行(&amp;b)</translation>
     </message>
     <message>
         <source> &amp;Run</source>
@@ -777,7 +777,7 @@
     </message>
     <message>
         <source>Files(0)</source>
-        <translation type="unfinished"></translation>
+        <translation>文件(0)</translation>
     </message>
     <message>
         <source>Output Files(0)</source>
@@ -793,7 +793,7 @@
     </message>
     <message>
         <source>Files(%1)</source>
-        <translation type="unfinished"></translation>
+        <translation>文件(%1)</translation>
     </message>
     <message>
         <source>Unhandled Files(%1)</source>

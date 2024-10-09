@@ -508,7 +508,7 @@ namespace FFX {
 	}
 
 	void FileCopyHandler::CopyFile(const QFileInfo& file, const QString& dest, ProgressPtr progress) {
-		int dupMode = mArgMap["Overwrite"].IntValue();
+		int dupMode = mArgMap["DupMode"].IntValue();
 
 		QString theTargetFile(dest);
 		if (QFile::exists(dest) && dupMode == 2)
@@ -632,7 +632,7 @@ namespace FFX {
 	 *
 	/************************************************************************************************************************/
 	FileDeleteHandler::FileDeleteHandler(bool forced) {
-		mArgMap["Forced"] = Argument("Overwrite", QObject::tr("Overwrite"), QObject::tr("Is it overwrite the existing file, default is false."), forced);
+		mArgMap["Forced"] = Argument("Forced", QObject::tr("Forced"), QObject::tr("Delete file with forced."), forced);
 	}
 
 	QFileInfoList FileDeleteHandler::Handle(const QFileInfoList& files, ProgressPtr progress) {
