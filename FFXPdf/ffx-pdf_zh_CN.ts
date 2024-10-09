@@ -205,7 +205,7 @@
     </message>
     <message>
         <source>&amp;PDF</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;PDF工具箱</translation>
     </message>
     <message>
         <source>Images to PDF</source>

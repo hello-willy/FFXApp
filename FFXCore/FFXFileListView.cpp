@@ -486,9 +486,21 @@ namespace FFX {
 				menu->addAction(MainWindow::Instance()->FileMainViewPtr()->OpenCommandPromptAction());
 			}
 			menu->addAction(MainWindow::Instance()->FileMainViewPtr()->CopyFilePathAction());
+			menu->addSeparator();
+			const QList<QMenu*>& subMenus = MainWindow::Instance()->FileMainViewPtr()->ContextMenus();
+			for (QMenu* subMenu : subMenus) {
+				menu->addAction(subMenu->menuAction());
+			}
+			menu->addSeparator();
 		} else {
 			menu->addAction(MainWindow::Instance()->FileMainViewPtr()->RenameAction());
 			menu->addAction(MainWindow::Instance()->FileMainViewPtr()->EnvelopeFilesAction());
+			menu->addSeparator();
+			const QList<QMenu*>& subMenus = MainWindow::Instance()->FileMainViewPtr()->ContextMenus();
+			for (QMenu* subMenu : subMenus) {
+				menu->addAction(subMenu->menuAction());
+			}
+			menu->addSeparator();
 		}
 		menu->addAction(MainWindow::Instance()->FileMainViewPtr()->PropertyAction());
 		menu->exec(QCursor::pos());
@@ -914,8 +926,20 @@ namespace FFX {
 		mMakeFileActions.append(action);
 	}
 
+	void FileMainView::AddContextMenu(QMenu* menu) {
+		mContextMenus.append(menu);
+	}
+
+	void FileMainView::RemoveContextMenu(QMenu* menu) {
+		mContextMenus.removeOne(menu);
+	}
+
 	QList<QAction*> FileMainView::MakeFileActions() {
 		return mMakeFileActions;
+	}
+
+	const QList<QMenu*>& FileMainView::ContextMenus() {
+		return mContextMenus;
 	}
 
 	QAction* FileMainView::PasteFilesAction() {

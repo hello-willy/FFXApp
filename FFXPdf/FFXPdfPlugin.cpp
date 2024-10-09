@@ -98,6 +98,7 @@ namespace FFX {
 
 	void PdfPlugin::Install() {
 		App()->AddMenu(mPdfMenu);
+		App()->FileMainViewPtr()->AddContextMenu(mPdfMenu);
 	}
 
 	void PdfPlugin::Uninstall() {

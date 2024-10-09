@@ -238,6 +238,9 @@ namespace FFX {
 	public:
 		QAction* MakeDirAction();
 		void AddMakeFileAction(QAction* action);
+		void AddContextMenu(QMenu* menu);
+		void RemoveContextMenu(QMenu* menu);
+		const QList<QMenu*>& ContextMenus();
 		QList<QAction*> MakeFileActions();
 		QAction* PasteFilesAction();
 		QAction* MoveFilesAction();
@@ -291,6 +294,7 @@ namespace FFX {
 		//! Actions
 		QAction* mMakeDirAction;
 		QList<QAction*> mMakeFileActions;
+		QList<QMenu*> mContextMenus;
 
 		QAction* mMakeFileAction;
 		QAction* mPasteFilesAction;
