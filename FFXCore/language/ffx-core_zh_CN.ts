@@ -185,7 +185,7 @@
     </message>
     <message>
         <source>Hidden</source>
-        <translation type="unfinished"></translation>
+        <translation>隐藏</translation>
     </message>
     <message>
         <source>Set the files to hidden or not.</source>
