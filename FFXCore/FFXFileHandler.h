@@ -7,10 +7,29 @@
 #include <QDir>
 #include <QSet>
 #include <QVariant>
+#include <QDateTime>
+#include <QSize>
+#include <QRect>
+#include <QDebug>
 #include <memory> // for shared_ptr
 
 namespace FFX {
 	class Argument {
+	public:
+		enum Type {
+			Normal = 1,
+			Option = 2,
+			Range = 4, // Only for numeric argument
+			Date = 8,
+			NormalRange = (Range | Normal),
+			DateRange = (Range | Date),
+			Bool = 16,
+			Rect = 32,
+			Size = 64,
+			File = 128,
+			SaveFile = 256,
+			Dir = 512
+		};
 	public:
 		Argument() = default;
 		Argument(const QString& name)
@@ -22,17 +41,30 @@ namespace FFX {
 			, mDisplayName(name)
 			, mDescription(name)
 			, mValue(value) {}
-		Argument(const QString& name, const QString& displayName, const QString& description, QVariant value)
+		Argument(const QString& name, const QString& displayName, const QString& description, QVariant value, Type type = Normal, bool required = false)
 			: mName(name)
 			, mDisplayName(displayName)
 			, mDescription(description)
-			, mValue(value) {}
+			, mValue(value)
+			, mType(type)
+			, mRequired(required) {}
+		~Argument() {
+			
+		}
 
 	public:
 		QString Name() const { return mName; }
+		Type GetType() const { return mType; }
 		QString DisplayName() const { return mDisplayName; }
 		QString Description() const { return mDescription; }
 		QVariant Value() const { return mValue; }
+		QString StringValue() const { return mValue.toString(); }
+		int IntValue() const { return mValue.toInt(); }
+		double DoubleValue() const { return mValue.toDouble(); }
+		bool BoolValue() const { return mValue.toBool(); }
+		QSize SizeValue() const { return mValue.toSize(); }
+		QRect RectValue() const { return mValue.toRect(); }
+		bool IsRequired() const { return mRequired; }
 		Argument& SetName(const QString& name) {
 			mName = name;
 			return *this;
@@ -49,6 +81,13 @@ namespace FFX {
 			mValue = value;
 			return *this;
 		}
+		Argument& AddLimit(QVariant limit) {
+			mLimit << limit;
+			return *this;
+		}
+		QVariantList Limit() const {
+			return mLimit;
+		}
 	public:
 		bool operator == (const Argument& other) {
 			return mName == other.mName;
@@ -58,8 +97,16 @@ namespace FFX {
 		QString mDisplayName;
 		QString mDescription;
 		QVariant mValue;
+		Type mType = Normal;
+		bool mRequired = false;
+		/// <summary>
+		/// Options: contains all options
+		/// Scope: contains one or more scope, for example: 1, 5, 8, 19, means value must be in [1, 5] or [8, 9]. only for numeric value.
+		/// Files: contains file filter expression, for example: *.tif|*.tiff|*.jpg|*.jpeg.
+		/// </summary>
+		QVariantList mLimit;
 	};
-	typedef QHash<QString, Argument> ArgumentMap;
+	typedef QMap<QString, Argument> ArgumentMap;
 
 	class Progress {
 	public:
@@ -90,11 +137,12 @@ namespace FFX {
 		virtual QString DisplayName() { return Name(); }
 		virtual QString Description() { return ""; }
 		virtual QString String();
-
+		virtual bool IsIdempotent() { return true; }
 	public:
 		FileHandler& SetArg(const QString& name, QVariant value);
 		QVariant Arg(const QString& name, QVariant defaultValue = QVariant());
-		ArgumentMap ArgMap() const { return mArgMap; }
+		const ArgumentMap& ArgMap() const { return mArgMap; }
+		ArgumentMap& ArgMap() { return mArgMap; }
 
 	protected:
 		ArgumentMap mArgMap;
@@ -166,7 +214,7 @@ namespace FFX {
 
 	class FFXCORE_EXPORT FileDuplicateHandler : public FileHandler {
 	public:
-		explicit FileDuplicateHandler(const QString& pattern = QStringLiteral("(N)"), int filedWidth = 4, int base = 10, QChar fill = '0', bool after = true);
+		explicit FileDuplicateHandler(const QString& pattern = QStringLiteral("(N)"), bool firstFileIgnored = true, bool after = true, int filedWidth = 4, int base = 10, QChar fill = '0');
 	public:
 		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress = G_DebugProgress) override;
 		virtual std::shared_ptr<FileHandler> Clone() override;
@@ -190,23 +238,30 @@ namespace FFX {
 		int DirCount() { return mDirCount; }
 		int FileCount() { return mFileCount + mLinkFileCount; }
 		int HiddenFileCount() { return mHiddenFileCount; }
+		int HiddenDirCount() { return mHiddenDirCount; }
 		qint64 TotalSize() { return mTotalSize; }
+		QDateTime OldestTime() const { return mOldestTime; }
+		QDateTime NewestTime() const { return mNewestTime; }
 
 	private:
 		void AppendFile(const QFileInfo& file);
 		void AppendLink(const QFileInfo& file);
+		void AppendDir(const QFileInfo& file);
 
 	private:
 		int mDirCount = 0;
 		int mFileCount = 0;
 		int mLinkFileCount = 0;
+		int mHiddenDirCount = 0;
 		int mHiddenFileCount = 0;
 		qint64 mTotalSize = 0;
+		QDateTime mOldestTime = QDateTime::currentDateTime();
+		QDateTime mNewestTime = QDateTime::fromTime_t(0);
 	};
 
 	class FFXCORE_EXPORT FileRenameHandler : public PipeFileHandler {
 	public:
-		FileRenameHandler() = default;
+		FileRenameHandler(const QString& after, bool caseSensitive = true, bool suffixInc = false);
 		FileRenameHandler(FileHandlerPtr handler)
 			: PipeFileHandler(handler) {}
 		
@@ -214,6 +269,7 @@ namespace FFX {
 		virtual QFileInfoList Filter(const QFileInfoList& files) override;
 		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress = G_DebugProgress) override;
 		virtual std::shared_ptr<FileHandler> Clone() override;
+		virtual bool IsIdempotent() override { return false; }
 		virtual QString Name() { return QStringLiteral("FileRenameHandler"); }
 		virtual QString DisplayName() { return QObject::tr("FileRenameHandler"); }
 		virtual QString Description() { return QObject::tr("Replace file name with specified text through expression matching."); }
@@ -234,9 +290,29 @@ namespace FFX {
 		bool mCancelled = false;
 	};
 
+	class FFXCORE_EXPORT FileModifyAttributeHandler : public FileHandler {
+	public:
+		FileModifyAttributeHandler(bool readonly = true, bool hidden = false, bool recursion = false);
+
+	public:
+		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress = G_DebugProgress) override;
+		virtual std::shared_ptr<FileHandler> Clone() override;
+		virtual bool IsIdempotent() override { return false; }
+		virtual QString Name() { return QStringLiteral("FileModifyAttributeHandler"); }
+		virtual QString DisplayName() { return QObject::tr("FileModifyAttributeHandler"); }
+		virtual QString Description() { return QObject::tr("Set files to readonly, hidden, etc."); }
+		virtual void Cancel() { mCancelled = true; }
+
+	private:
+		void SetFileReadonly(const QFileInfo& file);
+		void SetFileHidden(const QFileInfo& file);
+	private:
+		bool mCancelled = false;
+	};
+
 	class FFXCORE_EXPORT FileCopyHandler : public FileHandler {
 	public:
-		FileCopyHandler(const QString& destPath, bool overwrite = false);
+		FileCopyHandler(const QString& destPath, int dupMode = 0);
 	public:
 		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress = G_DebugProgress) override;
 		virtual std::shared_ptr<FileHandler> Clone() override;
@@ -261,8 +337,9 @@ namespace FFX {
 	public:
 		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress = G_DebugProgress) override;
 		virtual std::shared_ptr<FileHandler> Clone() override;
+		virtual bool IsIdempotent() override { return false; }
 		virtual QString Name() { return QStringLiteral("FileMoveHandler"); }
-		virtual QString DisplayName() { return QObject::tr("FileMoveHandler"); }
+		virtual QString DisplayName() { return QObject::tr("Move Files"); }
 		virtual QString Description() { return QObject::tr("Move files to the specified location."); }
 		virtual void Cancel() { mCancelled = true; }
 
@@ -283,6 +360,7 @@ namespace FFX {
 	public:
 		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress = G_DebugProgress) override;
 		virtual std::shared_ptr<FileHandler> Clone() override;
+		virtual bool IsIdempotent() override { return false; }
 		virtual QString Name() { return QStringLiteral("FileDeleteHandler"); }
 		virtual QString DisplayName() { return QObject::tr("FileDeleteHandler"); }
 		virtual QString Description() { return QObject::tr("Delete files to the specified location."); }
@@ -303,6 +381,7 @@ namespace FFX {
 	public:
 		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress = G_DebugProgress) override;
 		virtual std::shared_ptr<FileHandler> Clone() override;
+		virtual bool IsIdempotent() override { return false; }
 		virtual QString Name() { return QStringLiteral("FileEnvelopeByDirHandler"); }
 		virtual QString DisplayName() { return QObject::tr("FileEnvelopeByDirHandler"); }
 		virtual QString Description() { return QObject::tr("Move the file to a directory with the same name as it."); }
@@ -315,12 +394,26 @@ namespace FFX {
 	public:
 		virtual QFileInfoList Handle(const QFileInfoList& files, ProgressPtr progress = G_DebugProgress) override;
 		virtual std::shared_ptr<FileHandler> Clone() override;
+		virtual bool IsIdempotent() override { return false; }
 		virtual QString Name() { return QStringLiteral("ClearFolderHandler"); }
 		virtual QString DisplayName() { return QObject::tr("ClearFolderHandler"); }
 		virtual QString Description() { return QObject::tr("Clear all files in the directory, but preserve the directory structure."); }
 
 	private:
 		void ClearDir(const QFileInfo& dir, ProgressPtr progress);
+	};
+
+	class FFXCORE_EXPORT HandlerFactory {
+	public:
+		HandlerFactory();
+
+	public:
+		void Append(FileHandlerPtr handler);
+		void Remove(const QString& name);
+		FileHandlerPtr Handler(const QString& name) const;
+
+	private:
+		QMap<QString, FileHandlerPtr> mFileHandlerMap;
 	};
 }
 

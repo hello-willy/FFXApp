@@ -22,5 +22,33 @@
         <file>res/image/goto.svg</file>
         <file>res/image/file-envelope.svg</file>
         <file>res/image/clear-folders.svg</file>
+        <file>res/image/angle-bottom.svg</file>
+        <file>res/image/angle-down.svg</file>
+        <file>res/image/angle-top.svg</file>
+        <file>res/image/settings.svg</file>
+        <file>res/image/checkbox-checked.svg</file>
+        <file>res/image/checkbox-partially.svg</file>
+        <file>res/image/checkbox-unchecked.svg</file>
+        <file>res/image/ok.svg</file>
+        <file>res/image/stat-file.svg</file>
+        <file>res/image/terminal.svg</file>
+        <file>res/image/unpin.svg</file>
+        <file>res/image/sort.svg</file>
+        <file>res/image/backspace.svg</file>
+        <file>res/image/edit.svg</file>
+        <file>res/image/plug-install.svg</file>
+        <file>res/image/plug-uninstall.svg</file>
+        <file>res/image/text-input.svg</file>
+        <file>res/image/file-prop.svg</file>
+        <file>res/image/remove-item.svg</file>
+        <file>res/image/menu-ext.svg</file>
+        <file>res/image/file-txt.svg</file>
+        <file>res/image/more.svg</file>
+        <file>res/image/folder-open.svg</file>
+        <file>res/image/execute.svg</file>
+        <file>res/image/execute-bk.svg</file>
+        <file>res/image/handler-setting.svg</file>
+        <file>res/image/qr.jpg</file>
+        <file>res/image/info.svg</file>
     </qresource>
 </RCC>

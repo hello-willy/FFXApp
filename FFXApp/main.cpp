@@ -1,8 +1,12 @@
 #include <QtWidgets/QApplication>
 #include <QDebug>
+#include <QVariant>
+
 #include "FFXFileHandler.h"
 #include "FFXMainWindow.h"
+#include "FFXAppConfig.h"
 
+#include <QTranslator>
 
 int main(int argc, char *argv[])
 {
@@ -33,8 +37,16 @@ int main(int argc, char *argv[])
     //    qDebug() << f.filePath();
     //FFX::FileHandlerPtr del = std::make_shared<FFX::FileDeleteHandler>();
     //del->Handle(toMatch);
+
+    QTranslator translator;
+    if (translator.load(QLocale(), QLatin1String("ffx-core"), QLatin1String("_"), QLatin1String(":/FFXApp/res/i18n"))) {
+        a.installTranslator(&translator);
+    }
+
     FFX::MainWindow w;
-    
+    w.setWindowTitle(QStringLiteral("Final File X-V1.0 (轮子哥出品)"));
+    w.setWindowIcon(QIcon(":/FFXApp/FFXApp.ico"));
+    w.Restore(w.AppConfigPtr());
     w.show();
     return a.exec();
 }

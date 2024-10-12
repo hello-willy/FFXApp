@@ -3,6 +3,12 @@
 #include "FFXMainWindow.h"
 #include "FFXTaskPanel.h"
 #include "FFXFileQuickView.h"
+#include "FFXRenameDialog.h"
+#include "FFXFilePropertyDialog.h"
+#include "FFXFile.h"
+#include "FFXString.h"
+#include "FFXFileFilterExpr.h"
+#include "FFXClipboardPanel.h"
 
 #include <QLineEdit>
 #include <QDesktopServices>
@@ -20,7 +26,18 @@
 #include <QApplication>
 #include <QSplitter>
 #include <QMenu>
+#include <QProcess>
+#include <QTimer>
+#include <QCollator>
+#include <QActionGroup>
+#include <QPainter>
+#include <QFileIconProvider>
+#include <QDebug>
 
+#ifdef Q_OS_WIN
+#include <cstdlib>
+#include <Windows.h>
+#endif
 
 namespace FFX {
 	/************************************************************************************************************************
@@ -42,6 +59,74 @@ namespace FFX {
 
 	void ChangeRootPathCommand::redo() {
 		mFileListViewNavigator->ChangePath(mNewPath.absoluteFilePath());
+	}
+
+	DefaultSortProxyModel::DefaultSortProxyModel(QObject* parent) : QSortFilterProxyModel(parent) {
+		setFilterKeyColumn(0);
+	}
+	
+	void DefaultSortProxyModel::Refresh() {
+		//! invalidate will clear all order and filter, so we must sort again.
+		QSortFilterProxyModel::invalidate();
+		sort((int)mOrderBy, mSortOrder);
+	}
+	
+	void DefaultSortProxyModel::sort(int column, Qt::SortOrder order) {
+		mOrderBy = (OrderBy)column;
+		mSortOrder = order;
+		QSortFilterProxyModel::sort(column, order);
+	}
+
+	bool DefaultSortProxyModel::lessThan(const QModelIndex& source_left, const QModelIndex& source_right) const {
+		QFileSystemModel* model = (QFileSystemModel*)sourceModel();
+
+		QFileInfo leftInfo = model->fileInfo(source_left);
+		QFileInfo rightInfo = model->fileInfo(source_right);
+		bool left = leftInfo.isDir();
+		bool right = rightInfo.isDir();
+		if (left ^ right)
+			return (mSortOrder == Qt::AscendingOrder) ? left : right;
+
+		if (mOrderBy == OBName) {
+			QCollator collator;
+			return collator.compare(leftInfo.fileName(), rightInfo.fileName()) < 0;
+		}
+		if (mOrderBy == OBDate) {
+			return leftInfo.lastModified() < rightInfo.lastModified();
+		}
+		if (mOrderBy == OBSize) {
+			return leftInfo.size() < rightInfo.size();
+		}
+		if (mOrderBy == OBType) {
+			QCollator collator;
+			int compare = collator.compare(model->type(source_left), model->type(source_right));
+			if (compare == 0)
+				return collator.compare(leftInfo.fileName(), rightInfo.fileName()) < 0;
+			return compare < 0;
+		}
+
+		return false;
+	}
+	
+	bool DefaultSortProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const {
+		if (mFileFilter == nullptr)
+			return true;
+
+		QModelIndex idx = sourceModel()->index(sourceRow, 0, sourceParent);
+		QFileSystemModel* model = (QFileSystemModel*)sourceModel();
+		QString root = model->rootPath();
+		QString filePath = model->filePath(idx);
+		return filePath == root || mFileFilter->Accept(filePath);
+	}
+	
+	void DefaultSortProxyModel::SetFilterExpr(const QString& filter) {
+		mFilterExp = filter;
+		FileFilterExpr fe(filter.toStdString(), true);
+		mFileFilter = fe.Filter();
+	}
+
+	bool DefaultSortProxyModel::IsFilterSet() const {
+		return mFileFilter != nullptr && mFilterExp != "*";
 	}
 
 	/************************************************************************************************************************
@@ -81,13 +166,19 @@ namespace FFX {
 	 *
 	 *
 	/************************************************************************************************************************/
-	DefaultFileListViewEditDelegate::DefaultFileListViewEditDelegate(QFileSystemModel* fileModel, QObject* parent) 
+	DefaultFileListViewEditDelegate::DefaultFileListViewEditDelegate(QSortFilterProxyModel* fileModel, QObject* parent)
 		: QStyledItemDelegate(parent)
-		, mFileModel(fileModel) {
+		, mViewModel(fileModel) {
 	}
 
 	QWidget* DefaultFileListViewEditDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const {
 		QLineEdit* editor = new QLineEdit(parent);
+		QRect rect = option.rect;
+
+		//QRect editRect(rect.left() + 32 + mMargin * 8, rect.top() + mMargin, rect.right() - mMargin, 40);
+		editor->setFixedSize(QSize(rect.width() - 32 - mMargin * 2, 40));
+		//editor->setGeometry(editRect);
+		
 		// ignored illegal char
 		QRegExpValidator* validator = new QRegExpValidator(QRegExp(G_FILE_VALIDATOR));
 		editor->setValidator(validator);
@@ -106,7 +197,8 @@ namespace FFX {
 		// the lambda function is executed using a queued connection
 		connect(&src, &QObject::destroyed, le, [le, this, idx]() {
 			//set default selection in the line edit
-			QFileInfo file = mFileModel->filePath(idx);
+			QModelIndex index = mViewModel->mapToSource(idx);
+			QFileInfo file = ((QFileSystemModel*)mViewModel->sourceModel())->filePath(index);
 			int selectLen = 0;
 			if (file.isDir())
 				selectLen = file.fileName().size();
@@ -120,7 +212,48 @@ namespace FFX {
 		QStyleOptionViewItem opt = option;
 		if (opt.state & QStyle::State_HasFocus && !(opt.state & QStyle::State_Selected))
 			opt.state &= ~QStyle::State_HasFocus;
-		QStyledItemDelegate::paint(painter, opt, index);
+
+		QRect rect = option.rect;
+
+		if (option.state.testFlag(QStyle::State_MouseOver)) {
+			painter->fillRect(rect, QColor("#E5F3FF"));
+		}
+		if (option.state.testFlag(QStyle::State_Selected)) {
+			painter->fillRect(rect, QColor("#CCE8FF"));
+		}
+
+		QSortFilterProxyModel* model = (QSortFilterProxyModel*)index.model();
+		QModelIndex idx = model->mapToSource(index);
+		QAbstractItemModel* fm = model->sourceModel();
+		QFileSystemModel* fileModel = (QFileSystemModel*)model->sourceModel();
+
+		QFileInfo fi = fileModel->fileInfo(idx);
+
+		QFileIconProvider fip;
+		QIcon icon = fip.icon(fi);
+		QPixmap pixmap = icon.pixmap(icon.actualSize(QSize(32, 32)));
+		QRect iconRect(rect.left() + mMargin, rect.top() + mMargin, 32, 32);
+		painter->drawPixmap(iconRect, pixmap);
+
+		painter->setFont(QFont("Microsoft YaHei", 9));
+		QRect fileNameRect(iconRect.right() + mMargin, rect.top() + mMargin, rect.width() - iconRect.width() - mMargin * 3, 30);
+		painter->drawText(fileNameRect, Qt::AlignVCenter | Qt::AlignLeft, fi.fileName());
+
+		painter->setFont(QFont("Microsoft YaHei", 6));
+		QRect pathNameRect(iconRect.right() + mMargin, fileNameRect.bottom() + mMargin, rect.width() - 2 * mMargin, 30);
+
+		QString subtitle = fi.lastModified().toString("yyyy-MM-dd hh:mm:ss");
+		if (!fi.isDir()) {
+			subtitle = QString("%1 \t %2").arg(subtitle).arg(String::BytesHint(FileSize(fi)));
+		}
+		painter->drawText(pathNameRect, Qt::AlignVCenter | Qt::AlignLeft, subtitle);
+
+		// QStyledItemDelegate::paint(painter, opt, index);
+	}
+
+	QSize DefaultFileListViewEditDelegate::sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const {
+		Q_UNUSED(index)
+		return QSize(option.rect.width(), mItemHeight); // Set the item height fixed.
 	}
 
 	/************************************************************************************************************************
@@ -134,10 +267,16 @@ namespace FFX {
 		mFileModel->setReadOnly(false); // Set list view editable
 		setEditTriggers(QAbstractItemView::SelectedClicked | QAbstractItemView::EditKeyPressed); // Set edit mode.
 		setSelectionMode(QAbstractItemView::ExtendedSelection); // Multi selection.
+		setSelectionBehavior(QAbstractItemView::SelectItems);
 		setSelectionRectVisible(true); // Set select rubber bound visible.
-		setModel(mFileModel);
+		
+		mSortProxyModel = new DefaultSortProxyModel;
+		mSortProxyModel->setSourceModel(mFileModel);
 
-		DefaultFileListViewEditDelegate* itemEditDelegate = new DefaultFileListViewEditDelegate(mFileModel);
+		setModel(mSortProxyModel);
+		//mSortProxyModel->setFilterRegExp()
+
+		DefaultFileListViewEditDelegate* itemEditDelegate = new DefaultFileListViewEditDelegate(mSortProxyModel);
 		connect(itemEditDelegate, &DefaultFileListViewEditDelegate::startEditing, [=]() {
 			mEditing = true;
 			});
@@ -192,15 +331,28 @@ namespace FFX {
 
 	QStringList DefaultFileListView::SelectedFiles() {
 		QList<QString> files;
+		
 		QItemSelectionModel* m = selectionModel();
 		QModelIndexList selection = m->selectedIndexes();
 		for (const QModelIndex& index : selection) {
 			if (index.column() != 0)
 				continue;
-			QString file = mFileModel->filePath(index);
+			QModelIndex i = mSortProxyModel->mapToSource(index);
+			QString file = mFileModel->filePath(i);
 			files << file;
 		}
 		return files;
+	}
+
+	QStringList DefaultFileListView::AllFiles() {
+		QStringList ret;
+		int rowCount = mSortProxyModel->rowCount();
+		for (int i = 0; i < rowCount; i++) {
+			QModelIndex idx = mSortProxyModel->index(i, 0);
+			QModelIndex fileIdx = mSortProxyModel->mapToSource(idx);
+			ret << mFileModel->filePath(fileIdx);
+		}
+		return ret;
 	}
 
 	QString DefaultFileListView::CurrentDir() {
@@ -208,7 +360,8 @@ namespace FFX {
 	}
 
 	QModelIndex DefaultFileListView::IndexOf(const QString& file) {
-		return mFileModel->index(file);
+		//return mFileModel->index(file);
+		return mSortProxyModel->mapFromSource(mFileModel->index(file));
 	}
 
 	void DefaultFileListView::Refresh() {
@@ -218,17 +371,29 @@ namespace FFX {
 	}
 
 	void DefaultFileListView::SetRootPath(const QFileInfo& root) {
-		if (CurrentDir() == root.absoluteFilePath())
+		if (CurrentDir() == root.absoluteFilePath()) {
 			return;
+		}
 
 		if (root.isDir()) {
+			QString oldFilterExp = mSortProxyModel->FilterExp();
+			if (mSortProxyModel->IsFilterSet()) {
+				SetFilter("*");
+			}
+			
 			QModelIndex index = mFileModel->setRootPath(root.absoluteFilePath());
-			setRootIndex(index); // IMPORTANT! refresh the ui
+			setRootIndex(mSortProxyModel->mapFromSource(index)); // IMPORTANT! refresh the ui
+
+			qDebug() << "SetRootPath: " << root;
+			if (!oldFilterExp.isEmpty() || oldFilterExp != "*") {
+				SetFilter(oldFilterExp);
+			}
 		}
 	}
 
 	void DefaultFileListView::OnItemDoubleClicked(const QModelIndex& index) {
-		QFileInfo currentFileInfo = mFileModel->fileInfo(index);
+		QModelIndex idx = mSortProxyModel->mapToSource(index);
+		QFileInfo currentFileInfo = mFileModel->fileInfo(idx);
 		emit FileDoubleClicked(currentFileInfo);
 
 	}
@@ -236,6 +401,7 @@ namespace FFX {
 	void DefaultFileListView::keyPressEvent(QKeyEvent* event) {
 		if (!mEditing && (event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter)) {
 			QModelIndex idx = selectionModel()->currentIndex();
+			//mSortProxyModel->mapSelectionFromSource(idx);
 			if (idx.isValid()) {
 				OnItemDoubleClicked(idx);
 				return;
@@ -272,13 +438,14 @@ namespace FFX {
 		} else if (!newsuffix.isEmpty()) {
 			after = File(newName).BaseName();
 		}
-		FFX::FileHandlerPtr handler = std::make_shared<FFX::FileRenameHandler>(std::make_shared<FFX::FileNameReplaceByExpHandler>("*", after, QRegExp::Wildcard, true, suffixInc));
-		std::dynamic_pointer_cast<FFX::FileRenameHandler>(handler)->Append(std::make_shared<FFX::FileDuplicateHandler>());
+		FFX::FileHandlerPtr handler = std::make_shared<FFX::FileRenameHandler>(after, true, suffixInc);
+		// std::dynamic_pointer_cast<FFX::FileRenameHandler>(handler)->Append(std::make_shared<FFX::FileDuplicateHandler>());
 		QFileInfoList result = handler->Handle(FileInfoList(files));
 
 		Refresh();
 		//! Set new file selected
 		QModelIndex first = mFileModel->index(QDir(path).absoluteFilePath(newName));
+		first = mSortProxyModel->mapFromSource(first);
 		for (const QFileInfo& fi : result) {
 			QModelIndex idx = mFileModel->index(fi.absoluteFilePath());
 			if (idx.isValid() && !first.isValid()) {
@@ -299,10 +466,11 @@ namespace FFX {
 		if (selectFiles.isEmpty()) {
 			menu->addAction(MainWindow::Instance()->FileMainViewPtr()->RefreshAction());
 			menu->addAction(MainWindow::Instance()->FileMainViewPtr()->FixedToQuickPanelAction());
+			menu->addAction(MainWindow::Instance()->FileMainViewPtr()->OpenCommandPromptAction());
 			menu->addSeparator();
 			menu->addAction(MainWindow::Instance()->FileMainViewPtr()->MakeDirAction());
 			QMenu* makefileMenu = new QMenu(QObject::tr("Make File..."));
-			makefileMenu->setIcon(QIcon(":/ffx/res/image/plus.svg"));
+			makefileMenu->setIcon(QIcon(":/ffx/res/image/mk-file.svg"));
 			menu->addAction(makefileMenu->menuAction());
 			QList<QAction*> makefileActions = MainWindow::Instance()->FileMainViewPtr()->MakeFileActions();
 			for (int i = 0; i < makefileActions.size(); i++) {
@@ -314,8 +482,27 @@ namespace FFX {
 		} else if(selectFiles.size() == 1) {
 			if (QFileInfo(selectFiles[0]).isDir()) {
 				menu->addAction(MainWindow::Instance()->FileMainViewPtr()->FixedToQuickPanelAction());
+				menu->addAction(MainWindow::Instance()->FileMainViewPtr()->ClearFolderAction());
+				menu->addAction(MainWindow::Instance()->FileMainViewPtr()->OpenCommandPromptAction());
 			}
+			menu->addAction(MainWindow::Instance()->FileMainViewPtr()->CopyFilePathAction());
+			menu->addSeparator();
+			const QList<QMenu*>& subMenus = MainWindow::Instance()->FileMainViewPtr()->ContextMenus();
+			for (QMenu* subMenu : subMenus) {
+				menu->addAction(subMenu->menuAction());
+			}
+			menu->addSeparator();
+		} else {
+			menu->addAction(MainWindow::Instance()->FileMainViewPtr()->RenameAction());
+			menu->addAction(MainWindow::Instance()->FileMainViewPtr()->EnvelopeFilesAction());
+			menu->addSeparator();
+			const QList<QMenu*>& subMenus = MainWindow::Instance()->FileMainViewPtr()->ContextMenus();
+			for (QMenu* subMenu : subMenus) {
+				menu->addAction(subMenu->menuAction());
+			}
+			menu->addSeparator();
 		}
+		menu->addAction(MainWindow::Instance()->FileMainViewPtr()->PropertyAction());
 		menu->exec(QCursor::pos());
 		delete menu;
 	}
@@ -394,6 +581,7 @@ namespace FFX {
 			return;
 
 		QList<QUrl> urls = mimeData->urls();
+
 		QString targetDir = CurrentDir();
 		MainWindow::Instance()->TaskPanelPtr()->Submit(FileInfoList(urls), std::make_shared<FileCopyHandler>(targetDir, overwrite));
 	}
@@ -455,6 +643,27 @@ namespace FFX {
 		edit(idx);
 	}
 
+	void DefaultFileListView::SetSortBy(OrderBy ob, Qt::SortOrder sort) {
+		mSortProxyModel->sort(ob, sort);
+	}
+
+	void DefaultFileListView::SetFilter(const QString& filter) {
+		mSortProxyModel->SetFilterExpr(filter);
+		mSortProxyModel->Refresh();
+	}
+
+	PathEditWidget::PathEditWidget(QWidget* parent)
+		: QLineEdit(parent) {
+
+	}
+
+	void PathEditWidget::focusInEvent(QFocusEvent* event) {
+		QLineEdit::focusInEvent(event);
+		QTimer::singleShot(0, this, &QLineEdit::selectAll);
+		QClipboard* clipboard = QApplication::clipboard();
+		clipboard->setText(text());
+	}
+
 	/************************************************************************************************************************
 	 * Class： DefaultFileListViewNavigator
 	 *
@@ -478,8 +687,9 @@ namespace FFX {
 		mUpwardButton->setIcon(QIcon(":/ffx/res/image/angle-up.svg"));
 		mUpwardButton->setFixedSize(QSize(32, 32));
 		connect(mUpwardButton, &QToolButton::clicked, this, &DefaultFileListViewNavigator::OnUpward);
-		mRootPathEdit = new QLineEdit;
+		mRootPathEdit = new PathEditWidget;
 		mRootPathEdit->setFixedHeight(32);
+
 		mMainLayout = new QHBoxLayout;
 		mMainLayout->addWidget(mBackwardButton);
 		mMainLayout->addWidget(mForwardButton);
@@ -494,6 +704,12 @@ namespace FFX {
 		mBackwardShortcut = new QShortcut(Qt::Key_Backspace, this);
 		mBackwardShortcut->setContext(Qt::WindowShortcut);
 		connect(mBackwardShortcut, &QShortcut::activated, this, &DefaultFileListViewNavigator::OnBackward);
+
+		mGotoShortcut = new QShortcut(QKeySequence("Ctrl+G"), this);
+		mGotoShortcut->setContext(Qt::WindowShortcut);
+		connect(mGotoShortcut, &QShortcut::activated, this, &DefaultFileListViewNavigator::OnGoto);
+
+		mRootPathChangeStack->setUndoLimit(15);
 	}
 
 	void DefaultFileListViewNavigator::Goto(const QString& path) {
@@ -504,6 +720,10 @@ namespace FFX {
 			return;
 		}
 		mRootPathChangeStack->push(new ChangeRootPathCommand(this, path, mCurrentPath));
+	}
+
+	void DefaultFileListViewNavigator::AddWidget(QWidget* widget) {
+		mMainLayout->addWidget(widget);
 	}
 
 	void DefaultFileListViewNavigator::ChangePath(const QString& path) {
@@ -534,6 +754,10 @@ namespace FFX {
 		}
 	}
 
+	void DefaultFileListViewNavigator::OnGoto() {
+		mRootPathEdit->setFocus();
+	}
+
 	/************************************************************************************************************************
 	 * Class： FileMainView
 	 *
@@ -552,36 +776,100 @@ namespace FFX {
 	}
 
 	void FileMainView::SetupUi() {
+		setObjectName("FileMainView");
+
 		mFileViewNavigator = new DefaultFileListViewNavigator;
 		mFileListView = new DefaultFileListView;
 		mFileQuickView = new FileQuickView;
+		mClipboardPanel = new ClipboardPanel;
+
 		mMainLayout = new QVBoxLayout;
 		mMakeDirAction = new QAction(QIcon(":/ffx/res/image/mk-folder.svg"), QObject::tr("Make Directory"));
-		mMakeFileAction = new QAction(QIcon(":/ffx/res/image/mk-file.svg"), QObject::tr("New File"));
-		mPasteFilesAction = new QAction(QIcon(":/ffx/res/image/paste-files.svg"), QObject::tr("Copy Files"));
-		mRefreshAction = new QAction(QIcon(":/ffx/res/image/refresh.svg"), QObject::tr("Refresh"));
-		mMoveFilesAction = new QAction(QIcon(":/ffx/res/image/move-files.svg"), QObject::tr("Move Files"));
-		mEnvelopeFilesAction = new QAction(QIcon(":/ffx/res/image/file-envelope.svg"), QObject::tr("Envelope Files"));
-		mClearFolderAction = new QAction(QIcon(":/ffx/res/image/clear-folders.svg"), QObject::tr("Clear Folder"));
-
-		//mMoveFilesAction->setShortcut(QKeySequence("Ctrl+X"));
-		mFixedToQuickPanelAction = new QAction(QIcon(":/ffx/res/image/pin.svg"), QObject::tr("Fix to quick panel"));
-		connect(mFixedToQuickPanelAction, &QAction::triggered, this, &FileMainView::OnFixedToQuickPanel);
-
+		mMakeFileAction = new QAction(QIcon(":/ffx/res/image/file-txt.svg"), QObject::tr("File"));
 		mMakeFileActions.append(mMakeFileAction);
-		mMakeFileActions.append(new QAction("New Zip File"));
+		//mMakeFileActions.append(new QAction("New Zip File"));
+		mPasteFilesAction = new QAction(QIcon(":/ffx/res/image/paste-files.svg"), QObject::tr("Copy Files Here"));
+		mRefreshAction = new QAction(QIcon(":/ffx/res/image/refresh.svg"), QObject::tr("Refresh"));
+		mRefreshAction->setShortcut(QKeySequence("F5"));
+		mRefreshAction->setShortcutContext(Qt::WindowShortcut);
+		mMoveFilesAction = new QAction(QIcon(":/ffx/res/image/move-files.svg"), QObject::tr("Move Files Here"));
+		mEnvelopeFilesAction = new QAction(QIcon(":/ffx/res/image/file-envelope.svg"), QObject::tr("Envelope Files By Folder"));
+		mClearFolderAction = new QAction(QIcon(":/ffx/res/image/clear-folders.svg"), QObject::tr("Clear Folder"));
+		mFixedToQuickPanelAction = new QAction(QIcon(":/ffx/res/image/pin.svg"), QObject::tr("Fix in Quick Panel"));
+		mRenameAction = new QAction(QIcon(":/ffx/res/image/edit.svg"), QObject::tr("Rename"));
+		mPropertyAction = new QAction(QIcon(":/ffx/res/image/file-prop.svg"), QObject::tr("Property"));
+		mCopyFilePathAction = new QAction(QIcon(":/ffx/res/image/text-input.svg"), QObject::tr("Copy File Path"));
+		mOpenCommandPromptAction = new QAction(QIcon(":/ffx/res/image/terminal.svg"), QObject::tr("Open in Command Prompt"));
 
-		mMainLayout->addWidget(mFileViewNavigator);
+		//mMainLayout->addWidget(mFileViewNavigator);
 		QSplitter* splitter = new QSplitter(Qt::Horizontal);
-		splitter->addWidget(mFileQuickView);
-		splitter->addWidget(mFileListView);
-		splitter->setStretchFactor(0, 1);
-		splitter->setStretchFactor(1, 4);
-		mMainLayout->addWidget(splitter, 1);
+		QWidget* rightWidget = new QWidget;
+		QVBoxLayout* rightWidgetLayout = new QVBoxLayout;
+		rightWidget->setLayout(rightWidgetLayout);
+		rightWidgetLayout->setMargin(0);
+		rightWidgetLayout->addWidget(mFileViewNavigator);
+		rightWidgetLayout->addWidget(mFileListView);
 
+		splitter->addWidget(mFileQuickView);
+		splitter->addWidget(rightWidget);
+		splitter->addWidget(mClipboardPanel);
+
+		splitter->setSizes({2000, 8000, 2000});
+		splitter->setStretchFactor(0, 2);
+		splitter->setStretchFactor(1, 8);
+		splitter->setStretchFactor(2, 2);
+		mMainLayout->addWidget(splitter);
+
+		mSetFileFilterShortcut = new QShortcut(QKeySequence("Ctrl+Shift+F"), this);
+		mSetFileFilterShortcut->setContext(Qt::WindowShortcut);
+
+		mFilterEdit = new QLineEdit;
+		mFilterEdit->setPlaceholderText(QObject::tr("Set Filter"));
+		mClearFilterAction = new QAction(QIcon(":/ffx/res/image/backspace.svg"), QObject::tr("Clear"));
+		mFilterEdit->addAction(mClearFilterAction, QLineEdit::TrailingPosition);
+		mClearFilterAction->setVisible(false);
+		mFileViewNavigator->AddWidget(mFilterEdit);
+		mRefreshFileListButton = new QToolButton;
+		mRefreshFileListButton->setDefaultAction(mRefreshAction);
+		//mRefreshFileListButton->setIcon(QIcon(":/ffx/res/image/refresh.svg"));
+		mRefreshFileListButton->setFixedSize(QSize(32, 32));
+		mRefreshFileListButton->setIconSize(QSize(16, 16));
+		mFileViewNavigator->AddWidget(mRefreshFileListButton);
+		mRefreshFileListButton->setDefaultAction(mRefreshAction);
+
+		mSetFileListOrderButton = new QToolButton;
+		mSetFileListOrderButton->setIcon(QIcon(":/ffx/res/image/sort.svg"));
+		mSetFileListOrderButton->setText(QObject::tr("Order by"));
+		mSetFileListOrderButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+		mSetFileListOrderButton->setFixedHeight(32);
+		mSetFileListOrderButton->setIconSize(QSize(16, 16));
+		mSetFileListOrderButton->setPopupMode(QToolButton::InstantPopup);
+		QMenu* menu = new QMenu;
+		mOrderByActionGroup = new QActionGroup(this);
+		mOrderByActionGroup->addAction(new QAction(QObject::tr("Order by Name")))->setCheckable(true);
+		mOrderByActionGroup->addAction(new QAction(QObject::tr("Order by Date")))->setCheckable(true);
+		mOrderByActionGroup->addAction(new QAction(QObject::tr("Order by Size")))->setCheckable(true);
+		mOrderByActionGroup->addAction(new QAction(QObject::tr("Order by Type")))->setCheckable(true);
+		mOrderByActionGroup->actions()[0]->setChecked(true);
+
+		mSortActionGroup = new QActionGroup(this);
+		mSortActionGroup->addAction(new QAction(QObject::tr("Asc")))->setCheckable(true);
+		mSortActionGroup->addAction(new QAction(QObject::tr("Desc")))->setCheckable(true);
+		mSortActionGroup->actions()[0]->setChecked(true);
+		for (QAction* action : mOrderByActionGroup->actions())
+			menu->addAction(action);
+		menu->addSeparator();
+		for (QAction* action : mSortActionGroup->actions())
+			menu->addAction(action);
+
+		mSetFileListOrderButton->setMenu(menu);
+
+		mFileViewNavigator->AddWidget(mSetFileListOrderButton);
+		
 		mMainLayout->setContentsMargins(5, 0, 0, 0);
 		setLayout(mMainLayout);
 
+		connect(mFixedToQuickPanelAction, &QAction::triggered, this, &FileMainView::OnFixedToQuickPanel);
 		connect(mFileViewNavigator, &DefaultFileListViewNavigator::RootPathChanged, this, [=](const QString& path) {
 			mFileListView->SetRootPath(path);
 			emit CurrentPathChanged(path); // Transfer the signals for 
@@ -602,6 +890,20 @@ namespace FFX {
 		
 		connect(mEnvelopeFilesAction, &QAction::triggered, this, &FileMainView::OnEnvelopeFiles);
 		connect(mClearFolderAction, &QAction::triggered, this, &FileMainView::OnClearFolder);
+		connect(mRenameAction, &QAction::triggered, this, &FileMainView::OnRename);
+		connect(mPropertyAction, &QAction::triggered, this, &FileMainView::OnFileProperty);
+		connect(mCopyFilePathAction, &QAction::triggered, this, &FileMainView::OnCopyFilePath);
+		connect(mOpenCommandPromptAction, &QAction::triggered, this, &FileMainView::OnOpenCommandPrompt);
+
+		connect(mOrderByActionGroup, &QActionGroup::triggered, this, &FileMainView::OnSetOrderBy);
+		connect(mSortActionGroup, &QActionGroup::triggered, this, &FileMainView::OnSetOrderBy);
+
+		connect(mFilterEdit, &QLineEdit::returnPressed, this, &FileMainView::OnFileFilterChanged);
+
+		connect(mSetFileFilterShortcut, &QShortcut::activated, this, &FileMainView::OnFocusFileFilterSet);
+		connect(mFilterEdit, &QLineEdit::textChanged, this, &FileMainView::OnFileFilterEditTextChanged);
+		connect(mClearFilterAction, &QAction::triggered, this, &FileMainView::OnClearFileFilter);		
+		//connect(mRefreshFileListButton, &QToolButton::clicked, this, &DefaultFileListView::Refresh);
 	}
 
 	void FileMainView::RefreshFileListView() {
@@ -624,8 +926,20 @@ namespace FFX {
 		mMakeFileActions.append(action);
 	}
 
+	void FileMainView::AddContextMenu(QMenu* menu) {
+		mContextMenus.append(menu);
+	}
+
+	void FileMainView::RemoveContextMenu(QMenu* menu) {
+		mContextMenus.removeOne(menu);
+	}
+
 	QList<QAction*> FileMainView::MakeFileActions() {
 		return mMakeFileActions;
+	}
+
+	const QList<QMenu*>& FileMainView::ContextMenus() {
+		return mContextMenus;
 	}
 
 	QAction* FileMainView::PasteFilesAction() {
@@ -677,6 +991,99 @@ namespace FFX {
 	void FileMainView::OnClearFolder() {
 		QStringList selectedFiles = mFileListView->SelectedFiles();
 		MainWindow::Instance()->TaskPanelPtr()->Submit(FileInfoList(selectedFiles), std::make_shared<ClearFolderHandler>());
+	}
+
+	void FileMainView::OnRename() {
+		QStringList selectedFiles = mFileListView->SelectedFiles();
+		RenameDialog dialog(selectedFiles);
+		dialog.exec();
+	}
+
+	void FileMainView::OnFileProperty() {
+		QFileInfoList files = FileInfoList(mFileListView->SelectedFiles());
+		if (files.isEmpty())
+			files = FileInfoList(mFileListView->CurrentDir());
+		FilePropertyDialog dialog(files);
+		dialog.exec();
+	}
+
+	void FileMainView::OnCopyFilePath() {
+		QFileInfoList files = FileInfoList(mFileListView->SelectedFiles());
+		if (files.size() != 1)
+			return;
+
+		QClipboard* clipboard = QApplication::clipboard();
+		clipboard->setText(files[0].absoluteFilePath());
+	}
+
+	void FileMainView::OnOpenCommandPrompt() {
+		QString root = mFileListView->CurrentDir();
+#ifdef Q_OS_WIN
+		QString cmd = QString("/k cd /d \"%1\"").arg(root);
+		ShellExecute(NULL, NULL, L"cmd", cmd.toStdWString().c_str(), NULL, SW_SHOWNORMAL);
+#endif
+	}
+
+	void FileMainView::OnSetOrderBy() {
+		QAction* order = mOrderByActionGroup->checkedAction();
+		int column = mOrderByActionGroup->actions().indexOf(order);
+		QAction* sort = mSortActionGroup->checkedAction();
+		bool asc = mSortActionGroup->actions().indexOf(sort) == 0;
+		mFileListView->SetSortBy((OrderBy)column, asc ? Qt::AscendingOrder : Qt::DescendingOrder);
+	}
+
+	void FileMainView::OnFileFilterChanged() {
+		QString filter = mFilterEdit->text();
+		if (filter.isEmpty())
+			return;
+
+		mFileListView->SetFilter(filter);
+	}
+
+	void FileMainView::OnFocusFileFilterSet() {
+		mFilterEdit->setFocus();
+	}
+
+	void FileMainView::OnFileFilterEditTextChanged() {
+		QString text = mFilterEdit->text();
+		if (!text.isEmpty()) {
+			mClearFilterAction->setVisible(true);
+		} else {
+			mClearFilterAction->setVisible(false);
+			mFileListView->SetFilter("*");
+		}
+	}
+
+	void FileMainView::OnClearFileFilter() {
+		mFilterEdit->clear();
+		mClearFilterAction->setVisible(false);
+		mFileListView->SetFilter("*");
+	}
+
+	void FileMainView::Save(AppConfig* config) {
+		QuickNavigatePanel* quickPanel = mFileQuickView->QuickNaviPanelPtr();
+	
+		config->WritePairItemArray(objectName(), quickPanel->Items());
+		config->WriteItem(objectName(), "RootPath", RootPath());
+		
+		config->WriteItem(objectName(), "OrderBy", mFileListView->GetOrderBy());
+		config->WriteItem(objectName(), "SortOrder", mFileListView->GetSortOrder());
+	}
+
+	void FileMainView::Restore(AppConfig* config) {
+		FileQuickViewPtr()->QuickNaviPanelPtr()->AddItem(config->ReadPairItemArray(objectName()));
+		
+		int orderBy = config->ReadItem(objectName(), "OrderBy").toInt();
+		int sortOrder = config->ReadItem(objectName(), "SortOrder").toInt();
+		mOrderByActionGroup->actions()[orderBy]->setChecked(true);
+		mSortActionGroup->actions()[sortOrder]->setChecked(true);
+		mFileListView->SetSortBy((OrderBy)orderBy, (Qt::SortOrder)sortOrder);
+
+		QString rootPath = config->ReadItem(objectName(), "RootPath").toString();
+		if (rootPath.isEmpty()) {
+			rootPath = QDir::currentPath();
+		}
+		Goto(rootPath);
 	}
 }
 

@@ -5,6 +5,7 @@
 #include <QToolButton>
 #include <QTreeView>
 #include <QFileSystemModel>
+#include <QPair>
 
 class QHBoxLayout;
 class QVBoxLayout;
@@ -14,6 +15,8 @@ class QListWidgetItem;
 class QShortcut;
 
 namespace FFX {
+	typedef QPair<QString, QVariant> QuickItem;
+	typedef QList<QuickItem> QuickItemList;
 
 	class FileQuickViewHeader : public QWidget {
 		Q_OBJECT
@@ -22,6 +25,9 @@ namespace FFX {
 
 	public:
 		void AddAction(QAction* action);
+
+	protected:
+		virtual void paintEvent(QPaintEvent* event) override;
 
 	private:
 		void SetupUi();
@@ -38,10 +44,12 @@ namespace FFX {
 		QuickNavigatePanel(QWidget* parent = 0);
 
 	public:
-		void AddItem(const QString& dir);
+		void AddItem(const QString& dir, QString name = QString());
+		void AddItem(const QuickItemList& items);
 		bool IsDirFixed(const QString& dir);
 		void RemoveItem(const QString& dir);
 		bool IsFull() const;
+		QuickItemList Items() const;
 
 	private:
 		void SetupUi();
@@ -49,12 +57,16 @@ namespace FFX {
 
 	private slots:
 		void OnCurrentItemChanged(QListWidgetItem* current, QListWidgetItem* previous);
+		void OnCustomContextMenuRequested(const QPoint& pos);
+		void OnRemoveItem();
 
 	private:
 		FileQuickViewHeader* mHeader;
 		QListWidget* mItemList;
 		QVBoxLayout* mMainLayout;
 		QList<QShortcut*> mQuickNaviShortcuts;
+		QAction* mRemoveItemAction;
+		bool mFreezeSignal = false;
 		int mMaxItems = 9;
 
 	Q_SIGNALS:
@@ -105,7 +117,7 @@ namespace FFX {
 		FileTreeNavigatePanel* FileTreeNaviPanelPtr() { return mFileTreeNavigatePanel; }
 
 	protected:
-		virtual void paintEvent(QPaintEvent* event) override;
+		// virtual void paintEvent(QPaintEvent* event) override;
 
 	private:
 		void SetupUi();

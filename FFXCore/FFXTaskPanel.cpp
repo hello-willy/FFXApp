@@ -1,5 +1,4 @@
 #include "FFXTaskPanel.h"
-#include "FFXTask.h"
 #include "FFXString.h"
 
 #include <QGridLayout>
@@ -18,6 +17,31 @@ namespace FFX {
 		return mAutoincreamentId++;
 	}
 
+	TaskProgressBar::TaskProgressBar(int height, QWidget* parent)
+		: QWidget(parent) {
+		mProgressBar = new QProgressBar;
+		mProgressBar->setAlignment(Qt::AlignCenter);
+		mLayout = new QVBoxLayout;
+		mLayout->setMargin(0);
+		mLayout->setSpacing(0);
+		mLayout->addWidget(mProgressBar, 1);
+		//mLayout->setAlignment(mProgressBar, Qt::AlignCenter);
+		setLayout(mLayout);
+		mProgressBar->setFixedHeight(height);
+	}
+
+	void TaskProgressBar::setMinimum(int minimum) {
+		mProgressBar->setMinimum(minimum);
+	}
+
+	void TaskProgressBar::setMaximum(int maximum) {
+		mProgressBar->setMaximum(maximum);
+	}
+
+	void TaskProgressBar::setValue(int value) {
+		mProgressBar->setValue(value);
+	}
+
 	QMap<QString, int> HEADER = { {"ID", 0}, {"NAME", 1}, {"START", 2}, {"PROG", 5}, {"COST", 3}, {"STATE", 4}, {"MSG", 6} };
 	TaskPanel::TaskPanel(QWidget* parent)
 		: QWidget(parent) {
@@ -25,10 +49,10 @@ namespace FFX {
 	}
 
 	TaskPanel::~TaskPanel()	{
-		
+		// clear the task
 	}
 
-	int TaskPanel::Submit(const QFileInfoList& files, FileHandlerPtr handler) {
+	int TaskPanel::Submit(const QFileInfoList& files, FileHandlerPtr handler, bool showInPanel) {
 		int newTaskId = mTaskIdGenerator.Id();
 		Task* newTask = new Task(newTaskId, files, handler);
 		connect(newTask, &Task::TaskComplete, this, &TaskPanel::OnTaskComplete);
@@ -36,47 +60,52 @@ namespace FFX {
 		connect(newTask, &Task::TaskFileHandled, this, &TaskPanel::OnTaskFileHandled);
 		connect(newTask, &Task::TaskStateChanged, this, &TaskPanel::OnTaskStateChanged);
 
-		int row = 0;
-		mTaskTable->insertRow(row);
+		if (showInPanel) {
+			int row = 0;
+			mTaskTable->insertRow(row);
 
-		QTableWidgetItem* idRow = new QTableWidgetItem(QString::number(newTaskId));
-		idRow->setData(Qt::UserRole, newTaskId);
-		mTaskTable->setItem(row, HEADER["ID"], idRow);
+			QTableWidgetItem* idRow = new QTableWidgetItem(QString::number(newTaskId));
+			idRow->setData(Qt::UserRole, newTaskId);
+			mTaskTable->setItem(row, HEADER["ID"], idRow);
 
-		QTableWidgetItem* nameRow = new QTableWidgetItem(handler->DisplayName());
-		mTaskTable->setItem(row, HEADER["NAME"], nameRow);
+			QTableWidgetItem* nameRow = new QTableWidgetItem(handler->DisplayName());
+			mTaskTable->setItem(row, HEADER["NAME"], nameRow);
 
-		QTableWidgetItem* timeRow = new QTableWidgetItem(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss"));
-		mTaskTable->setItem(row, HEADER["START"], timeRow);
+			QTableWidgetItem* timeRow = new QTableWidgetItem(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss"));
+			mTaskTable->setItem(row, HEADER["START"], timeRow);
 
-		QTableWidgetItem* progressRow = new QTableWidgetItem("");
-		mTaskTable->setItem(row, HEADER["PROG"], progressRow);
-		mTaskTable->setCellWidget(row, HEADER["PROG"], new QProgressBar);
+			QTableWidgetItem* progressRow = new QTableWidgetItem("");
+			mTaskTable->setItem(row, HEADER["PROG"], progressRow);
+			mTaskTable->setCellWidget(row, HEADER["PROG"], new TaskProgressBar(30));
 
-		QTableWidgetItem* costTimeRow = new QTableWidgetItem("-");
-		mTaskTable->setItem(row, HEADER["COST"], costTimeRow);
+			QTableWidgetItem* costTimeRow = new QTableWidgetItem("-");
+			mTaskTable->setItem(row, HEADER["COST"], costTimeRow);
 
-		QTableWidgetItem* stateRow = new QTableWidgetItem(Task::StateText(newTask->Status()));
-		mTaskTable->setItem(row, HEADER["STATE"], stateRow);
+			QTableWidgetItem* stateRow = new QTableWidgetItem(Task::StateText(newTask->Status()));
+			mTaskTable->setItem(row, HEADER["STATE"], stateRow);
 
-		QTableWidgetItem* msgRow = new QTableWidgetItem("");
-		mTaskTable->setItem(row, HEADER["MSG"], msgRow);
-
+			QTableWidgetItem* msgRow = new QTableWidgetItem("");
+			mTaskTable->setItem(row, HEADER["MSG"], msgRow);
+		}
+		
 		QMutexLocker locker(&mTaskMapLocker);
-		mTaskMap.insert(newTaskId, newTask);
-		mWorkerGroup->start(newTask); // Task will be delete by QThreadPool!
+		mTaskMap.insert(newTaskId, TaskPtr(newTask));
+		mWorkerGroup->start(newTask);
+
+		emit TaskSubmit(newTaskId);
 		return newTaskId;
 	}
 
 	void TaskPanel::Cancel(int taskId) {
 		QMutexLocker locker(&mTaskMapLocker);
-		Task* task = mTaskMap.value(taskId);
+		TaskPtr task = mTaskMap.value(taskId);
 		if (task != nullptr)
 			task->Cancel();
 	}
 
 	void TaskPanel::SetupUi() {
 		resize(600, 400);
+
 		mMainGridLayout = new QGridLayout;
 		mMainGridLayout->setSpacing(6);
 		mMainGridLayout->setContentsMargins(6, 6, 6, 6);
@@ -121,6 +150,7 @@ namespace FFX {
 		mMainGridLayout->addWidget(mSeperator, 0, 3, 1, 1);
 
 		mTaskTable->verticalHeader()->setHidden(true);
+		mTaskTable->horizontalHeader()->setHighlightSections(false);
 		mTaskTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
 		mTaskTable->setSelectionMode(QAbstractItemView::ExtendedSelection);
 
@@ -271,7 +301,23 @@ namespace FFX {
 		std::sort(toRemovedRows.begin(), toRemovedRows.end());
 		for (int i = toRemovedRows.size() - 1; i >= 0; i--) {
 			mTaskTable->removeRow(toRemovedRows[i]);
+			QTableWidgetItem* stateItem = mTaskTable->item(toRemovedRows[i], HEADER["ID"]);
+			if (stateItem == nullptr)
+				continue;
+			int taskId = stateItem->data(Qt::UserRole).toInt();
+			RemoveTaskFromCache(taskId);
 		}
+	}
+
+	int TaskPanel::RunningTaskCount() const {
+		int r = 0;
+		QMap<int, TaskPtr>::const_iterator it = mTaskMap.begin();
+		for (; it != mTaskMap.end(); it++) {
+			if (it.value()->Status() == Task::State::Running || it.value()->Status() == Task::State::Queued) {
+				r++;
+			}
+		}
+		return r;
 	}
 
 	void TaskPanel::OnTaskStateChanged(int taskId, int oldState, int state) {
@@ -286,6 +332,9 @@ namespace FFX {
 	}
 
 	void TaskPanel::OnTaskComplete(int taskId, bool success, const QString& msg, qint64 timeCost) {
+		// transfer the task complete signals.
+		emit TaskComplete(taskId, success);
+
 		int row = RowOf(taskId);
 		if (row < 0)
 			return;
@@ -300,33 +349,32 @@ namespace FFX {
 		timeCostItem->setText(String::TimeHint(timeCost));
 		
 		// remove task from cache
-		QMutexLocker locker(&mTaskMapLocker);
-		mTaskMap.remove(taskId);
+		// QMutexLocker locker(&mTaskMapLocker);
+		// mTaskMap.remove(taskId);
 
 		QTableWidgetItem* msgItem = mTaskTable->item(row, HEADER["MSG"]);
 		if (msgItem == nullptr)
 			return;
 		msgItem->setText(msg);
 
-		QProgressBar* pb = static_cast<QProgressBar*>(mTaskTable->cellWidget(row, HEADER["PROG"]));
+		TaskProgressBar* pb = static_cast<TaskProgressBar*>(mTaskTable->cellWidget(row, HEADER["PROG"]));
 		if (pb != nullptr) {
 			pb->setMinimum(0);
 			pb->setMaximum(100);
 			pb->setValue(100);
 		}
-
-		// transfer the task complete signals.
-		emit TaskComplete(taskId, success);
 	}
 
 	void TaskPanel::OnTaskProgressChanged(int taskId, const QString& message, int pos) {
+		emit TaskProgressChanged(taskId, message, pos);
+
 		int row = RowOf(taskId);
 		if (row < 0)
 			return;
 		QTableWidgetItem* item = mTaskTable->item(row, HEADER["PROG"]);
 		if (item == nullptr)
 			return;
-		QProgressBar* pb = static_cast<QProgressBar*>(mTaskTable->cellWidget(row, HEADER["PROG"]));
+		TaskProgressBar* pb = static_cast<TaskProgressBar*>(mTaskTable->cellWidget(row, HEADER["PROG"]));
 		if (pb != nullptr) {
 			if (pos < 0) {
 				pb->setMinimum(0);
@@ -371,6 +419,11 @@ namespace FFX {
 
 			mTaskTable->setRowHidden(i, !(nameFlag && stateFlag));
 		}
+	}
+
+	void TaskPanel::RemoveTaskFromCache(int taskId) {
+		QMutexLocker locker(&mTaskMapLocker);
+		mTaskMap.remove(taskId);
 	}
 }
 

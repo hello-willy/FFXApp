@@ -1,7 +1,21 @@
 #include "FFXPdfHandler.h"
 #include "FFXFileFilterExpr.h"
+#include <QFont>
+#include <QFontMetrics>
 
 namespace FFX {
+	QMap<QString, int> PositionMapping = {
+		{"center", 0},
+		{"lower left corner", 1},
+		{"center left", 2},
+		{"upper left corner", 3},
+		{"center top", 4},
+		{"upper right corner", 5},
+		{"center right", 6},
+		{"lower right corner", 7},
+		{"center bottom", 8}
+	};
+
 	PdfHandler::PdfHandler() {
 	}
 
@@ -16,6 +30,15 @@ namespace FFX {
 	}
 
 	QFileInfoList PdfHandler::Filter(const QFileInfoList& files) {
+		if (mFilter == nullptr) {
+			FileFilterExpr expr(FilterExpression(), false);
+			mFilter = expr.Filter();
+		}
+
+		if (mFilter == nullptr) {
+			return files;
+		}
+
 		QFileInfoList filesTodo;
 		for (const QFileInfo& file : files) {
 			if (mFilter->Accept(file)) {
@@ -45,33 +68,135 @@ namespace FFX {
 			progress->OnComplete(false, QObject::tr("Context initialise failed."));
 			return false;
 		}
-		FileFilterExpr expr(FilterExpression(), false);
-		mFilter = expr.Filter();
-		if (mFilter == nullptr) {
-			progress->OnComplete(false, QObject::tr("Filter initialise failed."));
-			return false;
-		}
 		return true;
 	}
 
-	fz_rect PdfHandler::AddImage(pdf_document* doc, pdf_obj* resources, const char* name, const char* path) {
+	int PdfHandler::JM_insert_contents(fz_context* ctx, pdf_document* pdf,
+		pdf_obj* pageref, fz_buffer* newcont, int overlay) {
+		int xref = 0;
+		fz_try(ctx) {
+			pdf_obj* contents = pdf_dict_get(ctx, pageref, PDF_NAME(Contents));
+			pdf_obj* newconts = pdf_add_stream(ctx, pdf, newcont, NULL, 0);
+			xref = pdf_to_num(ctx, newconts);
+			if (pdf_is_array(ctx, contents)) {
+				if (overlay)
+					pdf_array_push_drop(ctx, contents, newconts);
+				else
+					pdf_array_insert_drop(ctx, contents, newconts, 0);
+			}
+			else {
+				pdf_obj* carr = pdf_new_array(ctx, pdf, 5);
+				if (overlay) {
+					if (contents)
+						pdf_array_push(ctx, carr, contents);
+					pdf_array_push_drop(ctx, carr, newconts);
+				}
+				else {
+					pdf_array_push_drop(ctx, carr, newconts);
+					if (contents)
+						pdf_array_push(ctx, carr, contents);
+				}
+				pdf_dict_put_drop(ctx, pageref, PDF_NAME(Contents), carr);
+			}
+		}
+		fz_catch(ctx)
+			fz_rethrow(ctx);
+		return xref;
+	}
+
+	void SetAlpha(fz_context* ctx, fz_pixmap* pix, int value) {
+		unsigned char* s;
+		int w, h, n;
+		ptrdiff_t stride, len;
+		int alpha = pix->alpha;
+		if (!alpha)
+			return;
+
+		w = pix->w;
+		h = pix->h;
+		if (w < 0 || h < 0)
+			return;
+
+		n = pix->n;
+		stride = pix->stride;
+		len = (ptrdiff_t)w * n;
+
+		s = pix->samples;
+		int k, x, y;
+		stride -= len;
+		for (y = 0; y < pix->h; y++) {
+			for (x = 0; x < pix->w; x++) {
+				for (k = 0; k < pix->n - 1; k++) {
+					*s++ = fz_mul255(*s, value);
+				}
+				*s++ = value;
+			}
+			s += stride;
+		}
+	}
+
+	void ClonePixmapAndSetAlpha(fz_context* ctx, fz_pixmap* pix, fz_pixmap* src, int value)	{
+		unsigned char* s;
+		int w, h, n;
+		ptrdiff_t stride, len;
+		int alpha = pix->alpha;
+
+		w = pix->w;
+		h = pix->h;
+		if (w < 0 || h < 0)
+			return;
+
+		n = pix->n;
+		stride = pix->stride;
+		len = (ptrdiff_t)w * n;
+
+		s = pix->samples;
+		unsigned char* s_src = src->samples;
+
+		int k, x, y;
+		stride -= len;
+		for (y = 0; y < pix->h; y++) {
+			for (x = 0; x < pix->w; x++) {
+				for (k = 0; k < pix->n - 1; k++)
+					*s++ = fz_mul255(*s_src++, value);
+				*s++ = value;
+			}
+			s += stride;
+		}
+	}
+
+	fz_rect PdfHandler::AddImage(pdf_document* doc, pdf_obj* resources, const char* name, const char* path, int opacity) {
 		fz_image* image;
 		pdf_obj* subres, * ref;
 
 		image = fz_new_image_from_file(mContext, path);
 		fz_rect rect = { 0, 0, (float)image->w, (float)image->h };
 
+		fz_image* alphaImage = 0;
+		fz_pixmap* pix = fz_get_pixmap_from_image(mContext, image, NULL, NULL, 0, 0);
+		int alpha = fz_pixmap_alpha(mContext, pix);
+		if (alpha == 0) {
+			fz_pixmap* alphaPixmap = fz_new_pixmap_with_bbox(mContext, pix->colorspace, fz_pixmap_bbox(mContext, pix), 0, 1);
+			ClonePixmapAndSetAlpha(mContext, alphaPixmap, pix, opacity);
+			alphaImage = fz_new_image_from_pixmap(mContext, alphaPixmap, 0);
+			fz_drop_pixmap(mContext, alphaPixmap);
+		} else {
+			SetAlpha(mContext, pix, opacity);
+			alphaImage = fz_new_image_from_pixmap(mContext, pix, 0);
+		}
+		fz_drop_image(mContext, image);
+		fz_drop_pixmap(mContext, pix);
 		subres = pdf_dict_get(mContext, resources, PDF_NAME(XObject));
 		if (!subres) {
 			subres = pdf_new_dict(mContext, doc, 10);
 			pdf_dict_put_drop(mContext, resources, PDF_NAME(XObject), subres);
 		}
 
-		ref = pdf_add_image(mContext, doc, image);
+		ref = pdf_add_image(mContext, doc, alphaImage);
 		pdf_dict_puts(mContext, subres, name, ref);
 		pdf_drop_obj(mContext, ref);
-
-		fz_drop_image(mContext, image);
+		
+		fz_drop_image(mContext, alphaImage);
 
 		return rect;
 	}
@@ -159,7 +284,7 @@ namespace FFX {
 					s = "";
 				}
 				if (s.isEmpty()) {
-					s += QString("/%1 24 Tf (").arg(ansifont);
+					s += QString("/%1 %2 Tf (").arg(ansifont).arg(fontsize);
 				}
 				s += b;
 				isAsciiCode = true;
@@ -172,7 +297,7 @@ namespace FFX {
 					s = "";
 				}
 				if (s.isEmpty()) {
-					s += QString("/%1 24 Tf <").arg(cjkfont);
+					s += QString("/%1 %2 Tf <").arg(cjkfont).arg(fontsize);
 				}
 				s += QString("%1").arg(b.unicode(), 4, 16, QChar('0'));
 				isAsciiCode = false;
@@ -182,8 +307,9 @@ namespace FFX {
 			s += isAsciiCode ? QString(") Tj") : QString("> Tj");
 			tjstr += s;
 		}
+		int notAsc = content.size() - asc;
 		//! 1.9 Value obtained based on experience, the best results are obtained
-		fz_rect r = { 0., 0., asc * fontsize / (float)1.9 + (content.size() - asc) * (float)fontsize, (float)fontsize };
+		fz_rect r = { 0., 0., asc * fontsize / (float)1.9 + notAsc * (float)fontsize, (float)fontsize };
 		return r;
 	}
 

@@ -17,9 +17,12 @@ namespace FFX {
 
 	public:
 		void Append(const QString& file);
+		void Append(const QStringList& files);
 		void Clear();
 		void RemoveRow(int row);
 		QModelIndex IndexOf(const QString& file);
+		int Count();
+		QStringList AllItems() const;
 
 	private:
 		QStringList mListFileLoaded;
@@ -41,6 +44,7 @@ namespace FFX {
 		~CommonFileListView();
 
 	public:
+		virtual QStringList AllFiles();
 		virtual QStringList SelectedFiles() override;
 		virtual QString CurrentDir() override;
 		virtual QModelIndex IndexOf(const QString& file) override;
@@ -49,17 +53,24 @@ namespace FFX {
 		QStringList AllRow();
 		void RemoveRow(int row);
 		void AddItem(const QString& file);
+		void AddItems(const QStringList& files);
 		void RemoveAll();
 		void AddAction(const QString& name, QAction* action);
 		QAction* Action(const QString& name);
+		int Count();
+	Q_SIGNALS:
+		void itemChanged();
 
 	private slots:
+		virtual void OnItemDoubleClicked(const QModelIndex& index) {}
 		virtual void OnCustomContextMenuRequested(const QPoint& pos) override;
+		void OnGotoParentDir();
 
 	private:
 		CommonFileListViewModel* mViewModel;
 		CommonFileListViewItemDelegate* mItemDelegate;
 		QMap<QString, QAction*> mActionMap;
+		QAction* mGotoFileParentDirAction;
 	};
 }
 

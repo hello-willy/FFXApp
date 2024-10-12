@@ -7,7 +7,7 @@
 #include <QUrl>
 
 namespace FFX {
-	extern QString G_FILE_VALIDATOR;
+	extern FFXCORE_EXPORT QString G_FILE_VALIDATOR;
 	class File {
 	public:
 		static FFXCORE_EXPORT QSet<QString> CustomSuffix;
@@ -96,7 +96,12 @@ namespace FFX {
 	
 	FFXCORE_EXPORT QFileInfoList FileInfoList(const QStringList& files);
 	FFXCORE_EXPORT QFileInfoList FileInfoList(const QString& file);
+	FFXCORE_EXPORT QFileInfoList FileInfoList(const QFileInfo& file);
 	FFXCORE_EXPORT QFileInfoList FileInfoList(const QList<QUrl> urls);
+	FFXCORE_EXPORT QStringList StringList(const QFileInfoList& files);
+	FFXCORE_EXPORT qint64 SymbolLinkSize(const QFileInfo& file);
+	FFXCORE_EXPORT qint64 FileSize(const QFileInfo& file);
+
 	FFXCORE_EXPORT int PathDepth(const QString& path);
 	FFXCORE_EXPORT void SortByDepth(QFileInfoList& files, bool asc = true);
 	FFXCORE_EXPORT void SortByDepth(QStringList& files, bool asc = true);

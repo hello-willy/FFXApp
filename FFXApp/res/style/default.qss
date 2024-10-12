@@ -25,7 +25,6 @@ QDockWidget::close-button:hover, QDockWidget::float-button:hover {
 QTreeView
 {
     padding: 6px;
-    border: transparent;
 }
 
 QTreeView::item
@@ -45,45 +44,55 @@ QLabel
     padding-right: 3px;
 }
 
-QToolButton
-{
+QToolButton { /* all types of tool button */
+    border: transparent;
     background-color: transparent;
-    text-align: center;
 }
-QToolButton:checked
-{
+
+QToolButton::menu-indicator{
+    subcontrol-position: right center;
+    subcontrol-origin: padding;
+}
+
+QToolButton:checked {
     background-color: #E6E6E6;
     border: 1px solid #999999;
 }
-QToolButton:hover
-{
+
+QToolButton[popupMode="1"] { /* only for MenuButtonPopup */
+    padding-right: 20px; /* make way for the popup button */
+}
+
+QToolButton:pressed {
     background-color: #E0E0E0;
     border: 1px solid #999999;
 }
 
+QToolButton:hover {
+    background-color: #E0E0E0;
+    border: 1px solid #999999;
+}
+
+/* the subcontrols below are used only in the MenuButtonPopup mode */
 QToolButton::menu-button {
-    background-color: transparent;
+    border-left-color: #E0E0E0;
     width: 16px;
 }
 
 QToolButton::menu-button:hover {
-    background-color: #E0E0E0;
     border: 1px solid #999999;
-}
-
-QToolButton:disabled
-{
-    background-color: transparent;
 }
 
 QPushButton
 {
-    background-color: transparent;
+    background-color: #E5F3FF;
+    border: 1px solid #999999;
+    border-radius: 3px;
 }
 
 QPushButton:hover
 {
-    background-color: #E0E0E0;
+    background-color: #CCE8FF;
     border: 1px solid #999999;
 }
 
@@ -95,7 +104,7 @@ QPushButton:pressed
 
 QPushButton:disabled
 {
-    background-color: transparent;
+    background-color: #E0E0E0;
 }
 
 QComboBox
@@ -119,21 +128,21 @@ QCheckBox
 }
 
 QCheckBox::indicator:checked {
-    image: url(:/cfm/resource/images/checkbox-checked.svg);
+    image: url(:/ffx/res/image/checkbox-checked.svg);
     height: 25px;
     width: 25px;
     background-color: transparent;
 }
 
 QCheckBox::indicator:unchecked {
-    image: url(:/cfm/resource/images/checkbox-unchecked.svg);
+    image: url(:/ffx/res/image/checkbox-unchecked.svg);
     height: 25px;
     width: 25px;
     background-color: transparent;
 }
 
 QCheckBox::indicator:indeterminate {
-    image: url(:/cfm/resource/images/checkbox-partially.svg);
+    image: url(:/ffx/res/image/checkbox-partially.svg);
     height: 25px;
     width: 25px;
     background-color: transparent;
@@ -155,6 +164,9 @@ QTabWidget::pane
 QTabWidget::tab-bar
 {
     left: 1px;
+}
+QTabBar::tab:selected, QTabBar::tab:hover {
+    background: #CCE8FF;
 }
 
 QToolBar {
@@ -211,7 +223,7 @@ QMenu::item:selected
 QProgressBar 
 {
     border: 1px solid #999999;
-    margin: 9px 4px 9px 4px;
+    border-radius: 3px;
     text-align: center;
 }
 
@@ -224,4 +236,9 @@ QTableWidget
 {
     selection-color: black;
     selection-background-color: #E0E0E0;
+}
+
+QTabBar::tab
+{
+    height: 37px;   
 }

@@ -1,5 +1,7 @@
 #pragma once
 #include "FFXFileHandler.h"
+#include "FFXTask.h"
+
 #include <QWidget>
 #include <QThreadPool>
 #include <QMutex>
@@ -11,14 +13,30 @@ class QComboBox;
 class QLineEdit;
 class QTableWidget;
 class QFrame;
+class QProgressBar;
+class QVBoxLayout;
 
 namespace FFX {
-	class Task;
 	class TaskIdGenerator {
 	public:
 		virtual int Id();
 	private:
 		int mAutoincreamentId = 1;
+	};
+
+	class TaskProgressBar : public QWidget {
+		Q_OBJECT
+	public:
+		TaskProgressBar(int height = 20, QWidget* parent = nullptr);
+
+	public:
+		void setMinimum(int minimum);
+		void setMaximum(int maximum);
+		void setValue(int value);
+
+	private:
+		QVBoxLayout* mLayout;
+		QProgressBar* mProgressBar;
 	};
 
 	class FFXCORE_EXPORT TaskPanel : public QWidget {
@@ -28,17 +46,21 @@ namespace FFX {
 		~TaskPanel();
 
 	public:
-		int Submit(const QFileInfoList& files, FileHandlerPtr handler);
+		int Submit(const QFileInfoList& files, FileHandlerPtr handler, bool showInPanel = true);
 		void Cancel(int taskId);
+		int RunningTaskCount() const;
 
 	Q_SIGNALS:
+		void TaskSubmit(int taskId);
 		void TaskComplete(int taskId, bool success);
 		void TaskFileHandled(int taskId, const QFileInfo& fileInput, const QFileInfo& fileOutput, bool success, const QString& message);
+		void TaskProgressChanged(int taskId, const QString& message, int pos);
 
 	private:
 		void SetupUi();
 		int RowOf(int taskId);
 		void UpdateTaskTable();
+		void RemoveTaskFromCache(int taskId);
 
 	private slots:
 		void OnTaskTableItemSelectionChanged();
@@ -54,7 +76,7 @@ namespace FFX {
 	private:
 		QThreadPool* mWorkerGroup = QThreadPool::globalInstance();
 		TaskIdGenerator mTaskIdGenerator;
-		QMap<int, Task*> mTaskMap;
+		QMap<int, TaskPtr> mTaskMap;
 		QMutex mTaskMapLocker;
 
 		QGridLayout* mMainGridLayout;

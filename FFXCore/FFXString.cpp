@@ -14,11 +14,11 @@ namespace FFX {
 
 		QString TimeHint(qint64 t) {
 			QStringList unitList;
-			unitList << QObject::tr("Seconds") << QStringLiteral("Minutes") << QStringLiteral("Hours") << QStringLiteral("Days");
+			unitList << QObject::tr("secs") << QStringLiteral("mins") << QStringLiteral("hours") << QStringLiteral("days");
 			QList<qint64> stepList;
 			stepList << 1000 << 60 << 60 << 24;
 			QStringListIterator i(unitList);
-			QString unit(QObject::tr("Milliseconds"));
+			QString unit(QObject::tr("ms"));
 			double num = (double)t;
 			//while (num > 1000 && i.hasNext())
 			for (int i = 0; i < unitList.size(); i++) {

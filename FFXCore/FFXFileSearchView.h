@@ -21,13 +21,13 @@ namespace FFX {
 		friend class MainWindow;
 	public:
 		void SetSearchDir(const QString& dir);
+		void ActivateSearch();
 
 	private slots:
 		void OnSearch();
 		void OnSearchActionTriggered();
 		void OnSearchComplete(int taskId, bool success);
 		void OnSearchFileMatched(int taskId, const QFileInfo& fileInput, const QFileInfo& fileOutput, bool success, const QString& message);
-		void OnGotoParentDir();
 
 	private:
 		void SetupUi();
@@ -42,7 +42,6 @@ namespace FFX {
 		QToolButton* mSearchFileOnlyButton;
 		QToolButton* mSearchCaseButton;
 		QGridLayout* mMainLayout;
-		QAction* mGotoFileParentDirAction;
 	};
 }
 

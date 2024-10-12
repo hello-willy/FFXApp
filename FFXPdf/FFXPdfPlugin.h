@@ -3,6 +3,8 @@
 
 class QMenu;
 class QAction;
+class QTranslator;
+
 namespace FFX {
 	class PdfPlugin : public QObject, public Plugin	{
 		Q_OBJECT
@@ -18,18 +20,34 @@ namespace FFX {
 		virtual QString Id() override { return "pdf.finalfilex.com"; };
 		virtual QString Name() override { return QObject::tr("Pdf tools"); }
 
+	private:
+		void SetupUi();
+
 	private slots:
 		void OnImageToPdfAction();
 		void OnMergePdfAction();
-		void OnAddWatermarkAction();
+		void OnAddTextWatermarkAction();
+		void OnAddImageWatermarkAction();
 		void OnExtractImageAction();
+		void OnPdfToImageAction();
+		void OnPdfToImageActionOnClipboardPanel();
 
 	private:
+		QTranslator* mTranslator;
 		QMenu* mPdfMenu;
+		QMenu* mPdfMenuInClipboard;
 		QAction* mImageToPdfAction;
+		QAction* mImageToPdfActionOnClipboardPanel;
 		QAction* mMergePdfAction;
-		QAction* mAddWatermarkAction;
+		QAction* mMergePdfActionOnClipboardPanel;
+		QAction* mAddTextWatermarkAction;
+		QAction* mAddTextWatermarkActionOnClipboardPanel;
+		QAction* mAddImageWatermarkAction;
+		QAction* mAddImageWatermarkActionOnClipboardPanel;
 		QAction* mExtractImageAction;
+		QAction* mExtractImageActionOnClipboardPanel;
+		QAction* mPdfToImageAction;
+		QAction* mPdfToImageActionOnClipboardPanel;
 	};
 
 }

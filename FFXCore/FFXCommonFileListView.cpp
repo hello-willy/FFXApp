@@ -1,4 +1,6 @@
 #include "FFXCommonFileListView.h"
+#include "FFXMainWindow.h"
+
 #include <QPainter>
 #include <QFileIconProvider>
 #include <QMenu>
@@ -18,6 +20,10 @@ namespace FFX {
 		return mListFileLoaded.size();
 	}
 
+	int CommonFileListViewModel::Count() {
+		return mListFileLoaded.size();
+	}
+
 	QVariant CommonFileListViewModel::data(const QModelIndex& index, int role) const {
 		if (role == Qt::DisplayRole)
 			return mListFileLoaded[index.row()];
@@ -28,6 +34,16 @@ namespace FFX {
 		beginResetModel();
 		mListFileLoaded << file;
 		endResetModel();
+	}
+
+	void CommonFileListViewModel::Append(const QStringList& files) {
+		beginResetModel();
+		mListFileLoaded << files;
+		endResetModel();
+	}
+
+	QStringList CommonFileListViewModel::AllItems() const {
+		return mListFileLoaded;
 	}
 
 	void CommonFileListViewModel::Clear() {
@@ -91,11 +107,18 @@ namespace FFX {
 		setItemDelegate(mItemDelegate);
 		setContextMenuPolicy(Qt::CustomContextMenu);
 
+		mGotoFileParentDirAction = new QAction(QIcon(":/ffx/res/image/goto.svg"), QObject::tr("Goto Parent Dir"));
+		connect(mGotoFileParentDirAction, &QAction::triggered, this, &CommonFileListView::OnGotoParentDir);
+		AddAction("Goto", mGotoFileParentDirAction);
 		//connect(this, &QListView::customContextMenuRequested, this, &CommonFileListView::OnCustomContextMenuRequested);
 	}
 
 	CommonFileListView::~CommonFileListView()
 	{}
+
+	QStringList CommonFileListView::AllFiles() {
+		return mViewModel->AllItems();
+	}
 
 	QStringList CommonFileListView::SelectedFiles() {
 		QList<QString> files;
@@ -108,6 +131,10 @@ namespace FFX {
 			files << file;
 		}
 		return files;
+	}
+
+	int CommonFileListView::Count() {
+		return mViewModel->Count();
 	}
 
 	QString CommonFileListView::CurrentDir() {
@@ -124,14 +151,22 @@ namespace FFX {
 
 	void CommonFileListView::RemoveRow(int row) {
 		mViewModel->RemoveRow(row);
+		emit itemChanged();
 	}
 
 	void CommonFileListView::AddItem(const QString& file) {
 		mViewModel->Append(file);
+		emit itemChanged();
+	}
+
+	void CommonFileListView::AddItems(const QStringList& files) {
+		mViewModel->Append(files);
+		emit itemChanged();
 	}
 
 	void CommonFileListView::RemoveAll() {
 		mViewModel->Clear();
+		emit itemChanged();
 	}
 
 	void CommonFileListView::AddAction(const QString& name, QAction* action) {
@@ -154,5 +189,15 @@ namespace FFX {
 		}
 		menu->exec(QCursor::pos());
 		delete menu;
+	}
+
+	void CommonFileListView::OnGotoParentDir() {
+		QStringList files = SelectedFiles();
+		if (files.isEmpty())
+			return;
+
+		QFileInfo fileInfo(files[0]);
+		QDir d = fileInfo.absoluteDir();
+		MainWindow::Instance()->FileMainViewPtr()->Goto(d.absolutePath());
 	}
 }

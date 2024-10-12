@@ -1,6 +1,7 @@
 #include "FFXFileHandler.h"
 #include <QDebug>
 #include <QDirIterator>
+#include <QThread>
 
 namespace FFX {
 	static DebugProgress dp;
@@ -11,15 +12,15 @@ namespace FFX {
 	*
 	*************************************************************************************************************************/
 	void DebugProgress::OnProgress(double percent, const QString& msg) {
-		qDebug() << percent << "% " << msg;
+		//qDebug() << percent << "% " << msg;
 	}
 
 	void DebugProgress::OnFileComplete(const QFileInfo& input, const QFileInfo& output, bool success, const QString& msg) {
-		qDebug() << input << "->" << output << ":" << success << ", " << msg;
+		//qDebug() << input << "->" << output << ":" << success << ", " << msg;
 	}
 
 	void DebugProgress::OnComplete(bool success, const QString& msg) {
-		qDebug() << "Complete:" << success << ":" << msg;
+		//qDebug() << "Complete:" << success << ":" << msg;
 	}
 
 	/************************************************************************************************************************
@@ -113,7 +114,9 @@ namespace FFX {
 		QRegExp exp(mArgMap["Pattern"].Value().toString(),
 			mArgMap["Case"].Value().toBool() ? Qt::CaseSensitive : Qt::CaseInsensitive,
 			(QRegExp::PatternSyntax)mArgMap["Syntax"].Value().toInt());
-
+		if (exp.isEmpty())
+			return files;
+		
 		bool suffixInc = mArgMap["SuffixInc"].Value().toBool();
 		QString after = mArgMap["After"].Value().toString();
 		double step = files.size() / 100.;
@@ -180,25 +183,27 @@ namespace FFX {
 	 * 
 	 * 
 	/************************************************************************************************************************/
-	FileDuplicateHandler::FileDuplicateHandler(const QString& pattern, int filedWidth, int base, QChar fill, bool after) {
-		mArgMap["Pattern"]	= Argument("Pattern", QObject::tr("Pattern"), QObject::tr("Used to add string templates when file duplication occurs, such as (N), N_N, N_, [N] Among them, N must exist."), pattern);
+	FileDuplicateHandler::FileDuplicateHandler(const QString& pattern, bool firstFileIgnored, bool after, int filedWidth, int base, QChar fill) {
+		mArgMap["Pattern"] = Argument("Pattern", QObject::tr("Pattern"), QObject::tr("Used to add string templates when file duplication occurs, such as (N), N_N, N_, [N] Among them, N must exist."), pattern);
 		mArgMap["Position"] = Argument("Position", QObject::tr("Position"), QObject::tr("Should it be placed before or after the file name, by default after."), after);
-		mArgMap["Width"]	= Argument("Width", QObject::tr("Width"), QObject::tr("Width of numbers4: 0001, 0002, ...; 2: 01, 02, 03, ..."), filedWidth);
-		mArgMap["Fill"]		= Argument("Fill", QObject::tr("Char filling"), QObject::tr("Used in conjunction with Width, defaults is '0'."), fill);
-		mArgMap["Base"]		= Argument("Base", QObject::tr("Base system"), QObject::tr("The base system for numerical output defaults to 10 (decimal)."), base);
+		mArgMap["Width"] = Argument("Width", QObject::tr("Width"), QObject::tr("Width of numbers4: 0001, 0002, ...; 2: 01, 02, 03, ..."), filedWidth);
+		mArgMap["Fill"] = Argument("Fill", QObject::tr("Char filling"), QObject::tr("Used in conjunction with Width, defaults is '0'."), fill);
+		mArgMap["Base"] = Argument("Base", QObject::tr("Base system"), QObject::tr("The base system for numerical output defaults to 10 (decimal)."), base);
+		mArgMap["FirstFileIgnored"] = Argument("FirstFileIgnored", QObject::tr("FirstFileIgnored"), QObject::tr("The first file does not participate in numbering."), firstFileIgnored);
 	}
 
 	QFileInfoList FileDuplicateHandler::Handle(const QFileInfoList& files, ProgressPtr progress) {
 		QFileInfoList result;
-		bool after		= mArgMap["Position"].Value().toBool();
-		QChar fill		= mArgMap["Fill"].Value().toChar();
-		int base		= mArgMap["Base"].Value().toInt();
-		int width		= mArgMap["Width"].Value().toInt();
+		bool after = mArgMap["Position"].Value().toBool();
+		QChar fill = mArgMap["Fill"].Value().toChar();
+		int base = mArgMap["Base"].Value().toInt();
+		int width = mArgMap["Width"].Value().toInt();
 		QString pattern = mArgMap["Pattern"].Value().toString();
+		bool firstFileIgnored = mArgMap["FirstFileIgnored"].Value().toBool();
 
 		if (!pattern.contains("N")) {
 			progress->OnComplete(false, QObject::tr("Handle failed: %s").arg(QObject::tr("Invalid pattern.")));
-			return result;
+			return files;
 		}
 		pattern.replace("N", "%1");
 
@@ -206,11 +211,16 @@ namespace FFX {
 		double step = files.size() / 100.;
 		for (const QFileInfo& fileInfo : files) {
 			QString newFile = fileInfo.filePath();
-			if (fileInfo.exists() && duplicateChecker[fileInfo.filePath()] == 0) {
+			//if(!firstFileIgnored) {
+			//	duplicateChecker[fileInfo.filePath()]++;
+			//}
+			if (fileInfo.exists() && duplicateChecker[fileInfo.filePath()] == 0 && firstFileIgnored) {
 				duplicateChecker[fileInfo.filePath()]++;
 			} else {
-				if (duplicateChecker[fileInfo.filePath()] > 0) {
+				if (duplicateChecker[fileInfo.filePath()] > 0 || !firstFileIgnored) {
 					while (true) {
+						if (duplicateChecker[fileInfo.filePath()] == 0)
+							duplicateChecker[fileInfo.filePath()]++;
 						QString newFileName;
 						QString suffix = fileInfo.suffix();
 						if (after) {
@@ -259,8 +269,8 @@ namespace FFX {
 			} else if (file.isSymLink()) {
 				AppendLink(file);
 			} else if(file.isDir()) {
-				mDirCount++;
-				QDirIterator fit(file.absoluteFilePath(), QDir::Files | QDir::Dirs | QDir::System | QDir::Hidden | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
+				AppendDir(file);
+				QDirIterator fit(file.absoluteFilePath(), QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
 				while (fit.hasNext() && r)
 				{
 					fit.next();
@@ -271,7 +281,7 @@ namespace FFX {
 						AppendFile(fi);
 						continue;
 					} else if (fi.isDir()) {
-						mDirCount++;
+						AppendDir(fi);
 					}
 				}
 			}
@@ -289,17 +299,36 @@ namespace FFX {
 		mFileCount++;
 		if (file.isHidden())
 			mHiddenFileCount++;
+		QDateTime dt = file.lastModified();
+		if (dt < mOldestTime)
+			mOldestTime = dt;
+		if (dt > mNewestTime)
+			mNewestTime = dt;
 	}
 
 	void FileStatHandler::AppendLink(const QFileInfo& file) {
-		QFile link(file.absoluteFilePath());
-		link.open(QIODevice::ReadOnly);
-		qint64 size = link.size();
-		link.close();
-		mTotalSize += size;
+		mTotalSize += SymbolLinkSize(file);
 		mLinkFileCount++;
 		if (file.isHidden())
 			mHiddenFileCount++;
+
+		QDateTime dt = file.lastModified();
+		if (dt < mOldestTime)
+			mOldestTime = dt;
+		if (dt > mNewestTime)
+			mNewestTime = dt;
+	}
+
+	void FileStatHandler::AppendDir(const QFileInfo& file) {
+		mDirCount++;
+		if (file.isHidden())
+			mHiddenDirCount++;
+
+		QDateTime dt = file.lastModified();
+		if (dt < mOldestTime)
+			mOldestTime = dt;
+		if (dt > mNewestTime)
+			mNewestTime = dt;
 	}
 
 	/************************************************************************************************************************
@@ -307,6 +336,11 @@ namespace FFX {
 	 *
 	 *
 	/************************************************************************************************************************/
+	FileRenameHandler::FileRenameHandler(const QString& after, bool caseSensitive, bool suffixInc) {
+		mHandlers << std::make_shared<FFX::FileNameReplaceByExpHandler>("*", after, QRegExp::Wildcard, true, suffixInc);
+		mHandlers << std::make_shared<FFX::FileDuplicateHandler>();
+	}
+
 	QFileInfoList FileRenameHandler::Filter(const QFileInfoList& files) {
 		QFileInfoList result(files);
 		SortByDepth(result, false);
@@ -331,7 +365,7 @@ namespace FFX {
 				result << tempFiles[i];
 			progress->OnProgress(pencent += step);
 		}
-		progress->OnComplete();
+		progress->OnComplete(true, QObject::tr("Finish."));
 		return result;
 	}
 
@@ -350,14 +384,13 @@ namespace FFX {
 	QFileInfoList FileSearchHandler::Handle(const QFileInfoList& files, ProgressPtr progress) {
 		QFileInfoList result;
 		for (QFileInfo file : files) {
-			if (file.isFile()) {
-				progress->OnProgress(-1, QObject::tr("Matching: %1").arg(file.absoluteFilePath()));
-				if (mFileFilter->Accept(file))
-					result << file;
-				continue;
+			progress->OnProgress(-1, QObject::tr("Matching: %1").arg(file.absoluteFilePath()));
+			if (mFileFilter->Accept(file)) {
+				result << file;
+				progress->OnFileComplete(file, file, true);
 			}
 			if (file.isDir()) {
-				QDirIterator fit(file.absoluteFilePath(), QDir::Files | QDir::Dirs | QDir::NoSymLinks | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
+				QDirIterator fit(file.absoluteFilePath(), QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
 				while (fit.hasNext() && !mCancelled) {
 					fit.next();
 					QFileInfo fi = fit.fileInfo();
@@ -365,6 +398,7 @@ namespace FFX {
 					if (mFileFilter->Accept(fi)) {
 						result << fi;
 						progress->OnFileComplete(file, fi, true);
+						QThread::usleep(1);
 					}
 				}
 			}
@@ -378,13 +412,72 @@ namespace FFX {
 	}
 
 	/************************************************************************************************************************
+	 * Class： FileModifyAttributeHandler
+	 *
+	 *
+	/************************************************************************************************************************/
+	FileModifyAttributeHandler::FileModifyAttributeHandler(bool readonly, bool hidden, bool recursion) {
+		mArgMap["Recursion"] = Argument("Recursion", QObject::tr("Recursion"), QObject::tr("Recursive of all directories to set the attributes, default is false"), recursion);
+		mArgMap["Readonly"] = Argument("Readonly", QObject::tr("Readonly"), QObject::tr("Set the files to readonly or not."), readonly);
+		mArgMap["Hidden"] = Argument("Hidden", QObject::tr("Hidden"), QObject::tr("Set the files to hidden or not."), hidden);
+	}
+
+	QFileInfoList FileModifyAttributeHandler::Handle(const QFileInfoList& files, ProgressPtr progress) {
+		bool recursion = mArgMap["Recursion"].Value().toBool();
+		QFileInfoList result;
+		for (QFileInfo file : files) {
+			progress->OnProgress(-1, QObject::tr("Handling: %1").arg(file.absoluteFilePath()));
+			SetFileReadonly(file);
+			if (file.isDir() && recursion) {
+				QDirIterator fit(file.absoluteFilePath(), QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
+				while (fit.hasNext() && !mCancelled) {
+					fit.next();
+					QFileInfo fi = fit.fileInfo();
+					progress->OnProgress(-1, QObject::tr("Matching: %1").arg(fi.absoluteFilePath()));
+					SetFileReadonly(fi);
+				}
+			}
+		}
+		progress->OnComplete(true, QObject::tr("Finish.").arg(result.size()));
+		return result;
+	}
+
+	void FileModifyAttributeHandler::SetFileHidden(const QFileInfo& file) {
+		if (!file.exists())
+			return;
+
+		bool hidden = mArgMap["Hidden"].Value().toBool();
+		QFile f(file.absoluteFilePath());
+		if (hidden) {
+		}
+	}
+
+	void FileModifyAttributeHandler::SetFileReadonly(const QFileInfo& file) {
+		if (!file.exists())
+			return;
+
+		bool readonly = mArgMap["Readonly"].Value().toBool();
+		QFile theFile(file.absoluteFilePath());
+		if(readonly) {
+			theFile.setPermissions(QFile::ReadOther);
+		} else {
+			theFile.setPermissions(QFile::ReadOther | QFile::WriteOther);
+		}
+		
+	}
+
+	std::shared_ptr<FileHandler> FileModifyAttributeHandler::Clone() {
+		return FileHandlerPtr(new FileModifyAttributeHandler(*this));
+	}
+
+	/************************************************************************************************************************
 	 * Class： FileCopyHandler
 	 *
 	 *
 	/************************************************************************************************************************/
-	FileCopyHandler::FileCopyHandler(const QString& destPath, bool overwrite) {
+	FileCopyHandler::FileCopyHandler(const QString& destPath, int dupMode) {
 		mArgMap["DestPath"] = Argument("DestPath", QObject::tr("DestPath"), QObject::tr("Target directory for files copying."), destPath);
-		mArgMap["Overwrite"] = Argument("Overwrite", QObject::tr("Overwrite"), QObject::tr("Is it overwrite the existing file, default is false."), overwrite);
+		mArgMap["DupMode"] = Argument("DupMode", QObject::tr("DupMode"), QObject::tr("How to handle duplicate files, 0: rename, 1: overwrite, 2: ignored."), dupMode);
 	}
 
 	QFileInfoList FileCopyHandler::Handle(const QFileInfoList& files, ProgressPtr progress) {
@@ -415,17 +508,26 @@ namespace FFX {
 	}
 
 	void FileCopyHandler::CopyFile(const QFileInfo& file, const QString& dest, ProgressPtr progress) {
-		if (QFile::exists(dest) && !mArgMap["Overwrite"].Value().toBool())
+		int dupMode = mArgMap["DupMode"].IntValue();
+
+		QString theTargetFile(dest);
+		if (QFile::exists(dest) && dupMode == 2)
 			return;
 
-		if(QFile::exists(dest)) {
+		if(QFile::exists(dest) && dupMode == 1) {
 			QFile::setPermissions(dest, QFileDevice::ReadOther | QFileDevice::WriteOther);
 			QFile::remove(dest);
 		}
+
+		if (QFile::exists(dest) && dupMode == 0) {
+			FileDuplicateHandler duph("_N", false);
+			QFileInfoList r = duph.Handle(FileInfoList(dest));
+			theTargetFile = r[0].absoluteFilePath();
+		}
 		double p = (mCopiedFile++ / (double)mTotalFile) * 100;
 		progress->OnProgress(p, QObject::tr("Copying: %1").arg(file.absoluteFilePath()));
-		bool flag = QFile::copy(file.absoluteFilePath(), dest);
-		progress->OnFileComplete(file, dest, flag);
+		bool flag = QFile::copy(file.absoluteFilePath(), theTargetFile);
+		progress->OnFileComplete(file, theTargetFile, flag);
 	}
 
 	void FileCopyHandler::CopyDir(const QFileInfo& dir, const QString& dest, ProgressPtr progress) {
@@ -451,8 +553,8 @@ namespace FFX {
 	 *
 	/************************************************************************************************************************/
 	FileMoveHandler::FileMoveHandler(const QString& destPath, bool overwrite) {
-		mArgMap["DestPath"] = Argument("DestPath", QObject::tr("DestPath"), QObject::tr("Target directory for files moving."), destPath);
-		mArgMap["Overwrite"] = Argument("Overwrite", QObject::tr("Overwrite"), QObject::tr("Is it overwrite the existing file, default is false."), overwrite);
+		mArgMap["DestPath"] = Argument("DestPath", QObject::tr("Dest Path"), QObject::tr("Target directory for files moving."), destPath, Argument::Dir, true);
+		mArgMap["Overwrite"] = Argument("Overwrite", QObject::tr("Overwrite"), QObject::tr("Is it overwrite the existing file, default is false."), overwrite, Argument::Bool);
 	}
 
 	QFileInfoList FileMoveHandler::Handle(const QFileInfoList& files, ProgressPtr progress) {
@@ -530,14 +632,14 @@ namespace FFX {
 	 *
 	/************************************************************************************************************************/
 	FileDeleteHandler::FileDeleteHandler(bool forced) {
-		mArgMap["Forced"] = Argument("Overwrite", QObject::tr("Overwrite"), QObject::tr("Is it overwrite the existing file, default is false."), forced);
+		mArgMap["Forced"] = Argument("Forced", QObject::tr("Forced"), QObject::tr("Delete file with forced."), forced);
 	}
 
 	QFileInfoList FileDeleteHandler::Handle(const QFileInfoList& files, ProgressPtr progress) {
 		bool forced = mArgMap["Forced"].Value().toBool();
 		if (forced) {
 			FileStatHandler scaner;
-			scaner.Handle(files, progress);
+			scaner.Handle(files);
 			mTotalFile = scaner.FileCount();
 			for (const QFileInfo& file : files) {
 				if (file.isFile())
@@ -572,6 +674,7 @@ namespace FFX {
 		progress->OnProgress(p, QObject::tr("Deleting: %1").arg(file.absoluteFilePath()));
 		QFile f(file.absoluteFilePath());
 		bool flag = f.remove();
+		QString fs = file.absoluteFilePath();
 		progress->OnFileComplete(file, QFileInfo(), flag, flag ? "" : f.errorString());
 	}
 
@@ -656,5 +759,28 @@ namespace FFX {
 			QString theFilePath = fi.absoluteFilePath();
 			DeleteFile(theFilePath, progress);
 		}
+	}
+
+	HandlerFactory::HandlerFactory() {
+		Append(std::make_shared<FileRenameHandler>(""));
+		Append(std::make_shared<FileCopyHandler>(""));
+		Append(std::make_shared<FileMoveHandler>(""));
+		Append(std::make_shared<FileDeleteHandler>());
+		Append(std::make_shared<FileEnvelopeByDirHandler>());
+		Append(std::make_shared<ClearFolderHandler>());
+	}
+
+	void HandlerFactory::Append(FileHandlerPtr handler) {
+		mFileHandlerMap[handler->Name()] = handler;
+	}
+
+	void HandlerFactory::Remove(const QString& name) {
+		mFileHandlerMap.remove(name);
+	}
+
+	FileHandlerPtr HandlerFactory::Handler(const QString& name) const {
+		if (mFileHandlerMap.contains(name))
+			return mFileHandlerMap[name];
+		return FileHandlerPtr();
 	}
 }

@@ -10,6 +10,8 @@
 #include <QPainter>
 #include <QSizePolicy>
 #include <QShortcut>
+#include <QMenu>
+#include <QDebug>
 
 namespace FFX {
 
@@ -25,11 +27,23 @@ namespace FFX {
     }
 
     void FileQuickViewHeader::SetupUi() {
-        mHeaderLabel = new QLabel;
+        mHeaderLabel = new QLabel(QObject::tr("Quick Panel"));
+        mHeaderLabel->setFixedHeight(32);
         mMainLayout = new QHBoxLayout;
-        mMainLayout->setMargin(0);
+        mMainLayout->setContentsMargins(0, 9, 0, 0);
 
         mMainLayout->addWidget(mHeaderLabel, 1);
+        setLayout(mMainLayout);
+    }
+
+    void FileQuickViewHeader::paintEvent(QPaintEvent* event) {
+        QPainter painter(this);
+        painter.setRenderHint(QPainter::Antialiasing);
+        painter.fillRect(rect().marginsAdded(QMargins(0, -9, 0, 0)), QColor("#EAEAEA"));
+        //QPen borderPen(Qt::black);
+        //borderPen.setWidth(1);
+        //painter.setPen(borderPen);
+        //painter.drawRect(rect());
     }
 
     QuickNavigatePanel::QuickNavigatePanel(QWidget* parent)
@@ -41,30 +55,46 @@ namespace FFX {
         mHeader = new FileQuickViewHeader;
         mMainLayout = new QVBoxLayout;
         mItemList = new QListWidget;
+        mRemoveItemAction = new QAction(QIcon(":/ffx/res/image/unpin.svg"), "Cancel from quick panel");
         InitShortcuts();
 
         //! Init list widget
-        mItemList->setStyleSheet("QListView { border: transparent; }"); // set the list no border
+        //mItemList->setStyleSheet("QListView { border: transparent; }"); // set the list no border
+        mItemList->setEditTriggers(QAbstractItemView::SelectedClicked | QAbstractItemView::EditKeyPressed); // Set edit mode.
+        mItemList->setContextMenuPolicy(Qt::CustomContextMenu);
 
-        mMainLayout->setContentsMargins(9, 0, 0, 0);
+        mMainLayout->setContentsMargins(0, 0, 0, 0);
         mMainLayout->addWidget(mHeader);
         mMainLayout->addWidget(mItemList, 1);
 
         setLayout(mMainLayout);
 
         connect(mItemList, &QListWidget::currentItemChanged, this, &QuickNavigatePanel::OnCurrentItemChanged);
+
+        connect(mItemList, &QListView::customContextMenuRequested, this, &QuickNavigatePanel::OnCustomContextMenuRequested);
+        connect(mRemoveItemAction, &QAction::triggered, this, &QuickNavigatePanel::OnRemoveItem);
     }
 
-    void QuickNavigatePanel::AddItem(const QString& dir) {
+    void QuickNavigatePanel::AddItem(const QString& dir, QString name) {
         QFileInfo fileInfo(dir);
         if (!fileInfo.exists(dir) || !fileInfo.isDir())
             return;
 
         QFileIconProvider fip;
         QIcon icon = fip.icon(dir);
-        QListWidgetItem* item = new QListWidgetItem(icon, fileInfo.isRoot() ? fileInfo.absoluteFilePath() : fileInfo.fileName());
+        QString displayName = name;
+        if (displayName.isEmpty())
+            displayName = fileInfo.isRoot() ? fileInfo.absoluteFilePath() : fileInfo.fileName();
+        QListWidgetItem* item = new QListWidgetItem(icon, displayName);
+        item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled | Qt::ItemIsEditable);
         item->setData(Qt::UserRole, dir);
         mItemList->addItem(item);
+    }
+
+    void QuickNavigatePanel::AddItem(const QuickItemList& items) {
+        for (const QuickItem& item : items) {
+            AddItem(item.second.toString(), item.first);
+        }
     }
 
     bool QuickNavigatePanel::IsDirFixed(const QString& dir) {
@@ -95,11 +125,28 @@ namespace FFX {
         return mMaxItems <= mItemList->count();
     }
 
+    QuickItemList QuickNavigatePanel::Items() const {
+        QuickItemList ret;
+        int count = mItemList->count();
+        for (int i = 0; i < count; i++) {
+            QListWidgetItem* item = mItemList->item(i);
+            if (item == nullptr)
+                continue;
+            ret << QuickItem(item->text(), item->data(Qt::UserRole));
+        }
+        return ret;
+    }
+
     void QuickNavigatePanel::OnCurrentItemChanged(QListWidgetItem* current, QListWidgetItem* previous) {
-        if (current == nullptr)
+        //! This slot will be triggered at system startup, SO ADD the previous == nullptr
+        if (current == nullptr || previous == nullptr)
             return;
         QString path = current->data(Qt::UserRole).toString();
-        emit RootPathChanged(path);
+        if (!mFreezeSignal) {
+            emit RootPathChanged(path);
+        } else {
+            qDebug() << "Freeze Signal";
+        }
     }
 
     void QuickNavigatePanel::InitShortcuts() {
@@ -112,6 +159,20 @@ namespace FFX {
                     return;
                 mItemList->setCurrentRow(i);
                 });
+        }
+    }
+
+    void QuickNavigatePanel::OnCustomContextMenuRequested(const QPoint& pos) {
+        QMenu* menu = new QMenu(this);
+        menu->addAction(mRemoveItemAction);
+        menu->exec(QCursor::pos());
+        delete menu;
+    }
+
+    void QuickNavigatePanel::OnRemoveItem() {
+        int row = mItemList->currentRow();
+        if (row >= 0) {
+            delete mItemList->takeItem(row);
         }
     }
 
@@ -155,34 +216,37 @@ namespace FFX {
 	FileQuickView::~FileQuickView()
 	{}
 
+    /*
     void FileQuickView::paintEvent(QPaintEvent* event) {
+        
         QPainter painter(this);
         painter.setRenderHint(QPainter::Antialiasing);
         QPen borderPen(Qt::black);
         borderPen.setWidth(1);
         painter.setPen(borderPen);
         painter.drawRect(rect());
+        
     }
-
+    */
     void FileQuickView::SetupUi() {
         mQuickNaviPanel = new QuickNavigatePanel;
         mFileTreeNavigatePanel = new FileTreeNavigatePanel;
         mMainLayout = new QVBoxLayout;
 
-        mMainLayout->setContentsMargins(5, 0, 5, 1);
+        mMainLayout->setContentsMargins(0, 0, 0, 0);
         mMainLayout->addWidget(mQuickNaviPanel, 2);
-        QFrame* line = new QFrame;
-        line->setFrameShape(QFrame::HLine);
-        line->setFrameShadow(QFrame::Sunken);
-        mMainLayout->addWidget(line);
-        mMainLayout->addWidget(mFileTreeNavigatePanel, 3);
-        mMainLayout->setSpacing(9);
+        //QFrame* line = new QFrame;
+        //line->setFrameShape(QFrame::HLine);
+        //line->setFrameShadow(QFrame::Sunken);
+        //mMainLayout->addWidget(line);
+        mMainLayout->addWidget(mFileTreeNavigatePanel, 5);
+        //mMainLayout->setSpacing(9);
         setLayout(mMainLayout);
 
         //! Init item list, fill the drivers.
-        QFileInfoList drivers = QDir::drives();
-        for (const QFileInfo& driver : drivers) {
-            mQuickNaviPanel->AddItem(driver.absoluteFilePath());
-        }
+        //QFileInfoList drivers = QDir::drives();
+        //for (const QFileInfo& driver : drivers) {
+        //    mQuickNaviPanel->AddItem(driver.absoluteFilePath());
+        //}
     }
 }

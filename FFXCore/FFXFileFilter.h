@@ -13,6 +13,11 @@ namespace FFX {
 	};
 	typedef std::shared_ptr<FileFilter> FileFilterPtr;
 
+	class EmptyFilter : public FileFilter {
+	public:
+		virtual bool Accept(const QFileInfo& file) const;
+	};
+
 	class ComposeFileFilter : public FileFilter
 	{
 	public:

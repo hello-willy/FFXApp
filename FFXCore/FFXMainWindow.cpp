@@ -5,6 +5,10 @@
 #include "FFXTaskPanel.h"
 #include "FFXString.h"
 #include "FFXClipboardPanel.h"
+#include "FFXFileQuickView.h"
+#include "FFXFileHandler.h"
+#include "FFXHandlerSettingDialog.h"
+#include "FFXAboutDialog.h"
 
 #include <QtWidgets/QMessageBox>
 #include <QSplitter>
@@ -17,6 +21,7 @@
 #include <QClipboard>
 #include <QApplication>
 #include <QMimeData>
+#include <QShortcut>
 
 namespace FFX {
 	MainWindow* MainWindow::sInstance = nullptr;
@@ -30,29 +35,39 @@ namespace FFX {
 			abort();
 		}
 		sInstance = this;
-
+		
 		SetupUi();
-		mPluginManager = new PluginManager;
 	}
 
-	MainWindow::~MainWindow()
-	{}
+	MainWindow::~MainWindow() {
+		delete mAppConfig;
+		delete mPluginManager;
+		delete mHandlerFactory;
+	}
 
 	void MainWindow::SetupUi() {
+		setObjectName("MainWindow");
+		
 		mMenuBar = new QMenuBar;
 		mMainToolBar = new QToolBar;
 		mStatusBar = new QStatusBar;
+		mAppConfig = new AppConfig;
 		mTaskPanel = new TaskPanel;
 		mFileMainView = new FileMainView(this);
 		mFileSearchView = new FileSearchView(this);
+		mHandlerFactory = new HandlerFactory;
+		mPluginManager = new PluginManager;
 
 		//! Init menubar
 		setMenuBar(mMenuBar);
 		mFileMenu = new QMenu(QObject::tr("&File"));
 		mViewMenu = new QMenu(QObject::tr("&View"));
+		mPluginMenu = new QMenu(QObject::tr("&Plugin"));
+		mHelpMenu = new QMenu(QObject::tr("&Help"));
 		mMenuBar->addAction(mFileMenu->menuAction());
 		mMenuBar->addAction(mViewMenu->menuAction());
-
+		mMenuBar->addAction(mPluginMenu->menuAction());
+		mMenuBar->addAction(mHelpMenu->menuAction());
 		//! Init main toolbar
 		addToolBar(mMainToolBar);
 		mMainToolBar->addAction(mFileMainView->MakeDirAction());
@@ -62,7 +77,7 @@ namespace FFX {
 		//! Init File Menu
 		mFileMenu->addAction(mFileMainView->MakeDirAction());
 		QMenu* makefileMenu = new QMenu(QObject::tr("Make File..."));
-		makefileMenu->setIcon(QIcon(":/ffx/res/image/plus.svg"));
+		makefileMenu->setIcon(QIcon(":/ffx/res/image/mk-file.svg"));
 		mFileMenu->addAction(makefileMenu->menuAction());
 		for (int i = 0; i < makefileActions.size(); i++) {
 			makefileMenu->addAction(makefileActions[i]);
@@ -70,31 +85,37 @@ namespace FFX {
 		mFileMenu->addSeparator();
 		mFileMenu->addAction(mFileMainView->PasteFilesAction());
 		mFileMenu->addAction(mFileMainView->MoveFilesAction());
+		mFileMenu->addAction(mFileMainView->RenameAction());
 		mFileMenu->addAction(mFileMainView->EnvelopeFilesAction());
 		mFileMenu->addAction(mFileMainView->ClearFolderAction());
+
+		//! Init plugin menu
+		mPluginMenu->addAction(mPluginManager->InstallPluginAction());
+		mPluginMenu->addSeparator();
+
+		mShowAboutAction = new QAction(QIcon(":/ffx/res/image/info.svg"), QObject::tr("About"));
+		connect(mShowAboutAction, &QAction::triggered, this, &MainWindow::OnAbout);
+		mHelpMenu->addAction(mShowAboutAction);
 
 		//! Init status bar
 		mShowTaskBoardButton = new QToolButton;
 		mCurrentDirInfoLabel = new QLabel;
 		mSelectFilesInfoLabel = new QLabel;
-		mClipboardInfoLabel = new QLabel;
+		mFileSearchFileInfoLabel = new QLabel;
 		mClipboardButton = new QToolButton;
+		mTaskInfoLabel = new QLabel(QObject::tr("Ready"));
 		//mClipboardButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
 		
-		mStatusBar->addPermanentWidget(mCurrentDirInfoLabel);
-		mStatusBar->addPermanentWidget(mSelectFilesInfoLabel);
+		mStatusBar->addWidget(mCurrentDirInfoLabel);
+		mStatusBar->addWidget(mSelectFilesInfoLabel);
 		mStatusBar->addPermanentWidget(mClipboardButton);
-		mStatusBar->addPermanentWidget(mClipboardInfoLabel);
+		mStatusBar->addPermanentWidget(mFileSearchFileInfoLabel);
 		mStatusBar->addPermanentWidget(mShowTaskBoardButton);
+		mStatusBar->addPermanentWidget(mTaskInfoLabel);
 		setStatusBar(mStatusBar);
 
 		//! Init central widget
-		QSplitter* splitterMain = new QSplitter(Qt::Horizontal);
-		splitterMain->addWidget(mFileMainView);
-		splitterMain->addWidget(mFileSearchView);
-		splitterMain->setStretchFactor(0, 4);
-		splitterMain->setStretchFactor(1, 1);
-		setCentralWidget(splitterMain);
+		setCentralWidget(mFileMainView);
 
 		//! Init task panel
 		mTaskDocker = new QDockWidget;
@@ -103,23 +124,24 @@ namespace FFX {
 		addDockWidget(Qt::BottomDockWidgetArea, mTaskDocker);
 		mViewMenu->addAction(mTaskDocker->toggleViewAction());
 		mTaskDocker->toggleViewAction()->setIcon(QIcon(":/ffx/res/image/task.svg"));
+		mTaskDocker->setHidden(true);
 
-		//! Init clipboard panel
-		mClipboardPanel = new ClipboardPanel;
-		mClipboardPanelDocker = new QDockWidget;
-		mClipboardPanelDocker->setWidget(mClipboardPanel);
-		mClipboardPanelDocker->setWindowTitle(QObject::tr("Clipboard Panel"));
-		addDockWidget(Qt::RightDockWidgetArea, mClipboardPanelDocker);
-		mClipboardPanelDocker->setHidden(true);
-		mViewMenu->addAction(mClipboardPanelDocker->toggleViewAction());
-		mClipboardPanelDocker->toggleViewAction()->setIcon(QIcon(":/ffx/res/image/clipboard.svg"));
-		mClipboardInfoLabel->setText(QObject::tr(" %1 items").arg(0));
-		mClipboardButton->setDefaultAction(mClipboardPanelDocker->toggleViewAction());
+		//! Init file search panel
+		mFileSearchDocker = new QDockWidget;
+		mFileSearchDocker->setWidget(mFileSearchView);
+		mFileSearchDocker->setWindowTitle(QObject::tr("File Search Panel"));
+		addDockWidget(Qt::RightDockWidgetArea, mFileSearchDocker);
+		mFileSearchDocker->setHidden(true);
+		mViewMenu->addAction(mFileSearchDocker->toggleViewAction());
+		mFileSearchDocker->toggleViewAction()->setIcon(QIcon(":/ffx/res/image/search.svg"));
+		mFileSearchFileInfoLabel->setText(QObject::tr(" %1 files").arg(0));
+		mClipboardButton->setDefaultAction(mFileSearchDocker->toggleViewAction());
 
-		//QSize statusBarSize = mStatusBar->sizeHint();
-		//mShowTaskBoardButton->setFixedSize(QSize(statusBarSize.height() - 8, statusBarSize.height() - 8));
-		//mShowTaskBoardButton->setIconSize(QSize(20, 20));
 		mShowTaskBoardButton->setDefaultAction(mTaskDocker->toggleViewAction());
+
+		mActiveSearchShortcut = new QShortcut(QKeySequence("Ctrl+F"), this);
+		mActiveSearchShortcut->setContext(Qt::WindowShortcut);
+		connect(mActiveSearchShortcut, &QShortcut::activated, this, &MainWindow::OnActivateFileSearch);
 
 		//! Setup signals/slots
 		connect(mFileMainView, &FileMainView::CurrentPathChanged, this, [=](const QString& path) { 
@@ -129,15 +151,25 @@ namespace FFX {
 			});
 		connect(mTaskPanel, &TaskPanel::TaskComplete, mFileSearchView, &FileSearchView::OnSearchComplete);
 		connect(mTaskPanel, &TaskPanel::TaskComplete, mFileMainView, &FileMainView::RefreshFileListView);
+		connect(mTaskPanel, &TaskPanel::TaskComplete, this, &MainWindow::OnTaskInfoUpdate);
+		connect(mTaskPanel, &TaskPanel::TaskSubmit, this, &MainWindow::OnTaskInfoUpdate);
+		connect(mTaskPanel, &TaskPanel::TaskFileHandled, mFileMainView, &FileMainView::RefreshFileListView);
 		connect(mTaskPanel, &TaskPanel::TaskFileHandled, mFileSearchView, &FileSearchView::OnSearchFileMatched);
 		connect(mFileMainView, &FileMainView::SelectionChanged, this, [=](QStringList files) {
 			UpdateSelectFilesInfo(files);
 			});
-		QClipboard* clipboard = QApplication::clipboard();
-		connect(clipboard, &QClipboard::dataChanged, this, &MainWindow::OnClipboardDataChanged);
+		//QClipboard* clipboard = QApplication::clipboard();
+		//connect(clipboard, &QClipboard::dataChanged, this, &MainWindow::OnClipboardDataChanged);
 
-		
-		mFileMainView->Goto(QString("D:\\"));
+		mFileMainView->Restore(mAppConfig);
+
+		mPluginManager->AutoLoad();
+	}
+
+	void MainWindow::closeEvent(QCloseEvent* event) {
+		Save(mAppConfig);
+
+		mFileMainView->Save(mAppConfig);
 	}
 
 	MainWindow* MainWindow::Instance() {
@@ -156,12 +188,54 @@ namespace FFX {
 		return mTaskPanel;
 	}
 
+	AppConfig* MainWindow::AppConfigPtr() {
+		return mAppConfig;
+	}
+
+	HandlerFactory* MainWindow::HandlerFactoryPtr() {
+		return mHandlerFactory;
+	}
+
+	ClipboardPanel* MainWindow::ClipboardPanelPtr() {
+		return mFileMainView->ClipboardPanelPtr();
+	}
+
+	void MainWindow::Save(AppConfig* config) {
+		// save window pos
+		int isFull = this->isMaximized();
+		if (!isFull)
+		{
+			QRect r = rect();
+			QPoint p = pos();
+			mAppConfig->WriteItem(objectName(), "WinPos", QRect(p.x(), p.y(), r.width(), r.height()));
+			//mAppConfig->SaveMainWindowPos(QRect(p.x(), p.y(), r.width(), r.height()));
+		}
+		else {
+			mAppConfig->WriteItem(objectName(), "WinPos", QRect(-1, -1, 0, 0));
+			//mAppConfig->SaveMainWindowPos(QRect(-1, -1, 0, 0));
+		}
+	}
+
+	void MainWindow::Restore(AppConfig* config) {
+		QRect rect = config->ReadItem(objectName(), "WinPos").toRect();
+		if (!rect.isValid()) {
+			showMaximized();
+			setWindowFlags(Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint | Qt::WindowMinimizeButtonHint);
+		}
+		else {
+			resize(rect.width(), rect.height());
+			move(rect.x(), rect.y());
+		}
+	}
+
 	void MainWindow::AddMenu(QMenu* menu) {
-		mMenuBar->insertAction(mViewMenu->menuAction(), menu->menuAction());
+		mPluginMenu->addAction(menu->menuAction());
+		//mMenuBar->addAction(menu->menuAction());
 	}
 
 	void MainWindow::RemoveMenu(QMenu* menu) {
-		mMenuBar->removeAction(menu->menuAction());
+		mPluginMenu->removeAction(menu->menuAction());
+		//mMenuBar->removeAction(menu->menuAction());
 	}
 
 	void MainWindow::AddToolbar(QToolBar* toolbar, Qt::ToolBarArea area) {
@@ -176,10 +250,16 @@ namespace FFX {
 		mStatusBar->showMessage(message, timeout);
 	}
 
+	QString MainWindow::PluginPath() const {
+		QDir currentDir(QCoreApplication::applicationDirPath());
+		currentDir.cd("ffxplugins");
+		return currentDir.absolutePath();
+	}
+
 	void MainWindow::UpdateCurrentDirInfo() {
 		QString root = mFileMainView->RootPath();
 		QDir f(root);
-		QFileInfoList files = f.entryInfoList(QDir::AllEntries | QDir::NoDotAndDotDot);
+		QFileInfoList files = f.entryInfoList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot);
 		FileStatHandler handler(false);
 		handler.Handle(files);
 		QString info = QObject::tr("%1 files%2 %3, %4 directories").arg(handler.FileCount()).arg(handler.HiddenFileCount() > 0 ? QObject::tr("(%1 Hidden files/directories)").arg(handler.HiddenFileCount()) : "")
@@ -190,9 +270,10 @@ namespace FFX {
 
 	void MainWindow::UpdateSelectFilesInfo(QStringList files) {
 		if (files.isEmpty()) {
-			mSelectFilesInfoLabel->setText("0 files selected");
+			mSelectFilesInfoLabel->setVisible(false);
 			return;
 		}
+		mSelectFilesInfoLabel->setVisible(true);
 		FileStatHandler handler(false);
 		handler.Handle(FileInfoList(files));
 		QString info = QObject::tr("%1 files %2 directories selected (%3)").arg(handler.FileCount())
@@ -200,14 +281,31 @@ namespace FFX {
 		mSelectFilesInfoLabel->setText(info);
 	}
 
-	void MainWindow::OnClipboardDataChanged() {
-		QClipboard* clipboard = QApplication::clipboard();
-		const QMimeData* mimeData = clipboard->mimeData();
-		int count = 0;
-		if (!(mimeData == nullptr || !mimeData->hasUrls())) {
-			count = mimeData->urls().size();
+	void MainWindow::UpdateFileSearchInfo(int count) {
+		mFileSearchFileInfoLabel->setText(QObject::tr(" %1 files").arg(count));
+	}
+
+	void MainWindow::OnTaskInfoUpdate() {
+		int running = mTaskPanel->RunningTaskCount();
+		if (running == 0) {
+			mTaskInfoLabel->setText(QObject::tr("Ready"));
+		} else {
+			mTaskInfoLabel->setText(QObject::tr("%1 task running").arg(running));
 		}
-		mClipboardInfoLabel->setText(QObject::tr(" %1 items").arg(count));
+	}
+
+	void MainWindow::OnActivateFileSearch() {
+		if (mFileSearchDocker->isHidden()) {
+			mFileSearchDocker->setHidden(false);
+			mFileSearchView->ActivateSearch();
+		} else {
+			mFileSearchDocker->setHidden(true);
+		}
+	}
+
+	void MainWindow::OnAbout() {
+		AboutDialog dlg;
+		dlg.exec();
 	}
 }
 

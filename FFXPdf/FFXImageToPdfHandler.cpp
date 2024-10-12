@@ -3,12 +3,14 @@
 namespace FFX {
 
 	ImageToPdfHandler::ImageToPdfHandler(const QString& outPdf, const QSize& size, const QRect& boundary, bool portrait, bool autoRotate, bool stretch) {
-		mArgMap["OutPdf"] = Argument("OutPdf", QObject::tr("OutPdf"), QObject::tr("Output PDF file, absolute path."), outPdf);
-		mArgMap["PageSize"] = Argument("PageSize", QObject::tr("PageSize"), QObject::tr("Size of output PDF file, default is A4(595, 842)."), size);
-		mArgMap["Portrait"] = Argument("Portrait", QObject::tr("Portrait"), QObject::tr("Page orientaion, default is portrait."), portrait);
-		mArgMap["AutoRotate"] = Argument("AutoRotate", QObject::tr("AutoRotate"), QObject::tr("Automatically determine whether the image has been rotated."), autoRotate);
-		mArgMap["Boundary"] = Argument("Boundary", QObject::tr("Boundary"), QObject::tr("The maximum boundary occupied by the image."), boundary);
-		mArgMap["Stretch"] = Argument("Stretch", QObject::tr("Stretch"), QObject::tr("If the image is smaller than the page, stretch it to cover the entire page. default is false"), stretch);
+		mArgMap["OutPdf"] = Argument("OutPdf", QObject::tr("Output pdf path"), QObject::tr("Output PDF file, absolute path."), outPdf, Argument::SaveFile, true);
+		mArgMap["OutPdf"].AddLimit("Pdf file(*.pdf)");
+
+		mArgMap["PageSize"] = Argument("PageSize", QObject::tr("Page Size"), QObject::tr("Size of output PDF file, default is A4(595, 842)."), size, Argument::Size);
+		mArgMap["Portrait"] = Argument("Portrait", QObject::tr("Portrait"), QObject::tr("Page orientaion, default is portrait."), portrait, Argument::Bool);
+		mArgMap["AutoRotate"] = Argument("AutoRotate", QObject::tr("Auto Rotate"), QObject::tr("Automatically determine whether the image has been rotated."), autoRotate, Argument::Bool);
+		mArgMap["Boundary"] = Argument("Boundary", QObject::tr("Boundary"), QObject::tr("The maximum boundary occupied by the image."), boundary, Argument::Rect);
+		mArgMap["Stretch"] = Argument("Stretch", QObject::tr("Stretch"), QObject::tr("If the image is smaller than the page, stretch it to cover the entire page. default is false"), stretch, Argument::Bool);
 	}
 
 	std::string ImageToPdfHandler::FilterExpression() {
@@ -24,8 +26,18 @@ namespace FFX {
 	}
 
 	QFileInfoList ImageToPdfHandler::DoHandle(const QFileInfoList& files, ProgressPtr progress) {
+		if (files.isEmpty()) {
+			progress->OnComplete(true, QObject::tr("Finish, nothing to do"));
+			return QFileInfoList();
+		}
+		QSize pageSize = mArgMap["PageSize"].SizeValue();
+		if (pageSize.isEmpty()) {
+			// A4
+			pageSize.setWidth(595);
+			pageSize.setHeight(842);
+		}
 		pdf_document* doc = NULL;
-		fz_rect	mediabox = { 0, 0, 595, 842 }; // A4
+		fz_rect	mediabox = { 0, 0, (float)pageSize.width(), (float)pageSize.height() };
 		int	rotate = 0;
 		pdf_write_options opts = pdf_default_write_options;
 		QString	out = mArgMap["OutPdf"].Value().toString();
@@ -43,6 +55,7 @@ namespace FFX {
 				CreateImagePage(doc, file.absoluteFilePath().toStdString().c_str(), name, mediabox, portrait);
 			}
 			pdf_save_document(mContext, doc, out.toStdString().c_str(), &opts);
+			progress->OnFileComplete(files[0], out);
 		}
 		fz_always(mContext) {
 			pdf_drop_document(mContext, doc);
@@ -64,7 +77,6 @@ namespace FFX {
 		fz_try(mContext) {
 			contents = fz_new_buffer(mContext, 1024);
 			resources = pdf_new_dict(mContext, doc, 2);
-			contents = fz_new_buffer(mContext, 1024);
 
 			fz_rect box = AddImage(doc, resources, imageName, image);
 

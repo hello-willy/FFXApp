@@ -42,7 +42,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'" Label="QtSettings">
     <QtInstall>5.15.2_msvc2019_64</QtInstall>
-    <QtModules>core</QtModules>
+    <QtModules>core;gui;widgets</QtModules>
     <QtBuildConfig>release</QtBuildConfig>
   </PropertyGroup>
   <Target Name="QtMsBuildNotFound" BeforeTargets="CustomBuild;ClCompile" Condition="!Exists('$(QtMsBuild)\qt.targets') or !Exists('$(QtMsBuild)\qt.props')">
@@ -64,14 +64,25 @@
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\ffxplugins\$(ProjectName)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\ffxplugins\$(ProjectName)\</OutDir>
+    <IntDir>..\build\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <AdditionalIncludeDirectories>..\FFXCore;.\3rd\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>..\$(Platform)\$(Configuration)\FFXCore.lib;libmupdf.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>..\$(Platform)\$(Configuration)\FFXCore.lib;libmupdfd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>.\3rd\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>..\FFXCore;.\3rd\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>.\3rd\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>..\$(Platform)\$(Configuration)\FFXCore.lib;libmupdf.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="Configuration">
@@ -110,19 +121,27 @@
     <ClInclude Include="FFXImageToPdfHandler.h" />
     <ClInclude Include="FFXMergePdfHandler.h" />
     <ClInclude Include="FFXPdf.h" />
+    <ClInclude Include="FFXPdfAddImageWatermarkHandler.h" />
+    <ClInclude Include="FFXPdfAddTextWatermarkHandler.h" />
     <ClInclude Include="FFXPdfHandler.h" />
+    <ClInclude Include="FFXPdfToImageHandler.h" />
     <QtMoc Include="FFXPdfPlugin.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="FFXAddWatermarkToPdfHandler.cpp" />
     <ClCompile Include="FFXExtractImageHandler.cpp" />
     <ClCompile Include="FFXImageToPdfHandler.cpp" />
     <ClCompile Include="FFXMergePdfHandler.cpp" />
+    <ClCompile Include="FFXPdfAddImageWatermarkHandler.cpp" />
+    <ClCompile Include="FFXPdfAddTextWatermarkHandler.cpp" />
     <ClCompile Include="FFXPdfHandler.cpp" />
     <ClCompile Include="FFXPdfPlugin.cpp" />
+    <ClCompile Include="FFXPdfToImageHandler.cpp" />
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="FFXPdf.qrc" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtTranslation Include="ffx-pdf_zh_CN.ts" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">
